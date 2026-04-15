@@ -1,0 +1,68 @@
+import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import type { NextRequest } from 'next/server';
+
+export async function GET() {
+  if (!prisma) return new Response('Service unavailable', { status: 503 });
+
+  const session = await auth();
+  if (!session?.user) return new Response('Unauthorized', { status: 401 });
+
+  const associationId = (session.user as any).associationId as string;
+
+  const categories = await prisma.category.findMany({
+    where: { associationId },
+    orderBy: { displayOrder: 'asc' },
+    include: {
+      products: {
+        orderBy: { displayOrder: 'asc' },
+        include: {
+          variantGroups: {
+            orderBy: { displayOrder: 'asc' },
+            include: {
+              options: { orderBy: { displayOrder: 'asc' } },
+            },
+          },
+          modifiers: { orderBy: { displayOrder: 'asc' } },
+        },
+      },
+    },
+  });
+
+  return Response.json(categories);
+}
+
+export async function POST(request: NextRequest) {
+  if (!prisma) return new Response('Service unavailable', { status: 503 });
+
+  const session = await auth();
+  if (!session?.user) return new Response('Unauthorized', { status: 401 });
+
+  const { role, associationId } = session.user as any;
+  if (role !== 'ADMIN') return new Response('Forbidden', { status: 403 });
+
+  const body = await request.json();
+  const { name, type } = body;
+
+  if (!name || !type) {
+    return new Response('name and type are required', { status: 400 });
+  }
+
+  // Auto-assign displayOrder as max + 1
+  const max = await prisma.category.findFirst({
+    where: { associationId },
+    orderBy: { displayOrder: 'desc' },
+    select: { displayOrder: true },
+  });
+
+  const category = await prisma.category.create({
+    data: {
+      name,
+      type,
+      displayOrder: (max?.displayOrder ?? -1) + 1,
+      associationId,
+    },
+  });
+
+  return Response.json(category, { status: 201 });
+}

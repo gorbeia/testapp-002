@@ -1,5 +1,6 @@
 # Txosna App — Requirements Document
-*Session 17 — April 2026*
+
+_Session 17 — April 2026_
 
 ---
 
@@ -27,11 +28,13 @@ The application is **multitenant** — a single instance serves multiple associa
 
 ## 3. Actors
 
-| Actor | Access method | Description |
-|-------|--------------|-------------|
-| Association admin | Email + password | Full access: configuration, menu, events, txosnak, volunteer management; can also perform all volunteer operational tasks |
-| Volunteer | Email + password + session PIN | Operational access: food counter, drinks counter, kitchen, status overview |
-| Customer | No account | Places and edits phone orders, receives notifications, shows pickup proof, downloads receipt |
+| Actor             | Access method                  | Description                                                                                                               |
+| ----------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Association admin | Email + password               | Full access: association configuration, payment providers, menu, events, txosnak, volunteer management; can also perform all volunteer operational tasks |
+| Volunteer         | Email + password + session PIN | Operational access: food counter, drinks counter, kitchen, status overview                                                |
+| Customer          | No account                     | Places and edits phone orders, receives notifications, shows pickup proof, downloads receipt                              |
+
+> **Volunteer management is association-level only.** Volunteers have access to all txosnak in their association; there is no per-txosna volunteer assignment.
 
 ---
 
@@ -46,11 +49,13 @@ The application is **multitenant** — a single instance serves multiple associa
 ## 5. Association Self-Registration & Onboarding
 
 ### Registration
+
 1. Representative fills in association name, email, and password
 2. Account created with Admin role — first admin of the association
 3. Admin is taken directly into the **onboarding guide**
 
 ### Onboarding guide
+
 - A checklist-style guided setup flow shown to new admins after registration
 - Walks the admin through: create first event, set up txosna, build menu, invite volunteers
 - Step-by-step, skippable, and resumable — stays visible until all steps are completed
@@ -62,26 +67,30 @@ The application is **multitenant** — a single instance serves multiple associa
 
 ### Roles
 
-| Role | Access |
-|------|--------|
-| Admin | Full configuration and management + all operational screens |
+| Role      | Access                                                                           |
+| --------- | -------------------------------------------------------------------------------- |
+| Admin     | Full configuration and management + all operational screens                      |
 | Volunteer | Operational screens only: food counter, drinks counter, kitchen, status overview |
 
 ### Volunteer accounts
+
 - Personal email and password per volunteer
 - Access to all txosnak in the association
 - Admin manages accounts (create, deactivate)
 
 ### Device login flow
+
 **Step 1 — Device login:** personal email and password
 **Step 2 — Session PIN:** selects food counter, drinks counter, or kitchen mode
 
 ### Password reset
+
 - Volunteer requests a password reset from the login screen
 - Reset link sent by email; volunteer sets a new password
 - Standard email-based flow; link expires after a short period
 
 ### Counter mode is a view filter, not an access restriction
+
 - Default view shows the current counter's tickets only
 - Cross-counter access always available but not prominently displayed
 - Supports flexible volunteer coverage in a volunteer-run organisation
@@ -91,19 +100,52 @@ The application is **multitenant** — a single instance serves multiple associa
 ## 7. Infrastructure
 
 ### Cloud hosting
+
 - No festival-side server needed; accessible from any browser-capable device with Internet
 - Connectivity indicator on all screens; auto-reload of active order state on reconnection
 
 ### Real-time communication
+
 - **Server-Sent Events (SSE)** for all real-time updates: order status, stock changes, pause/close events
 
 ### Device access & accessibility
+
 - Any modern browser, any device — mobile-first, responsive design is a hard requirement
 - Semantic HTML, screen reader support, high colour contrast for outdoor use, large touch targets
 
 ### Localisation
+
 - Basque, Spanish, French, English — user-selectable
 - All UI text, notifications, and receipts translatable
+
+---
+
+## 7a. Association Configuration
+
+The following are configured once at association level and shared across all txosnak in the association:
+
+| Setting                  | Notes                                                                        |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| Association name         | Displayed throughout the admin UI                                            |
+| Contact email            | Administrative contact for the association                                   |
+| Payment providers        | Configure Stripe and/or Redsys credentials once; each provider can be enabled or disabled |
+| Volunteer management     | Create, deactivate, and manage roles for all volunteers in the association   |
+
+### Payment providers
+
+- An association can configure one or more payment providers (Stripe, Redsys)
+- Each provider stores its credentials (encrypted, AES-256-GCM) and a test-mode flag
+- Individual txosnak select which of the association's enabled providers they accept
+- If no provider is configured at association level, a txosna cannot accept online payments
+- Credentials are masked in the UI; only administrators can view/update them
+- Webhook URLs are displayed for each configured provider
+
+### Provider credentials
+
+| Provider | Fields                                          |
+| -------- | ----------------------------------------------- |
+| Stripe   | `publishableKey`, `secretKey`, `webhookSecret`  |
+| Redsys   | `merchantCode` (FUC), `secretKey`, `terminal`   |
 
 ---
 
@@ -111,18 +153,27 @@ The application is **multitenant** — a single instance serves multiple associa
 
 Each txosna is independently configurable:
 
-| Setting | Options |
-|---------|---------|
-| Counter setup | SINGLE or SEPARATE — whether food and drinks share a counter |
-| Enabled ordering channels | COUNTER, PHONE_TO_COUNTER, SELF_SERVICE (future) |
-| Enabled payment methods | CASH, ONLINE (future) |
-| Notification modes | display, push, manual |
-| QR validation | On/off |
-| Pending payment timeout | Minutes before unclaimed phone orders are auto-cancelled |
-| Printing | On/off |
-| Demo mode | On/off — marks txosna as a sandbox for testing; never visible to customers |
+| Setting                   | Options                                                                    |
+| ------------------------- | -------------------------------------------------------------------------- |
+| Counter setup             | SINGLE or SEPARATE — whether food and drinks share a counter               |
+| Enabled ordering channels | COUNTER, PHONE_TO_COUNTER, SELF_SERVICE (future)                           |
+| Enabled payment methods   | CASH, ONLINE                                                               |
+| Enabled payment providers | Select from providers configured at association level                      |
+| Notification modes        | display, push, manual                                                      |
+| QR validation             | On/off                                                                     |
+| Pending payment timeout   | Minutes before unclaimed phone orders are auto-cancelled                   |
+| Printing                  | On/off                                                                     |
+| Demo mode                 | On/off — marks txosna as a sandbox for testing; never visible to customers |
+
+### Payment provider selection
+
+- Txosnak cannot configure payment credentials directly
+- They select from the pool of providers configured at association level
+- At least one payment provider must be enabled for card/online payments to work
+- If no providers are configured at association level, the txosna shows a prompt linking to association settings
 
 ### Public URL
+
 - Each txosna has a **unique public URL** (e.g. via subdomain: `elkartea.txosna.app`)
 - Used to access the order board and customer ordering screens without login
 - Admin displays or shares this URL/QR at the stall
@@ -136,62 +187,102 @@ Each txosna is independently configurable:
 - Admin can place test orders, verify the KDS, test QR scanning, and check notifications
 - Demo txosnak are **never visible to customers** — the public URL is not active for demo txosnak
 - Once the setup is validated, the admin can **copy the demo txosna's configuration** to a real txosna
-- Copying transfers: counter setup, enabled channels, enabled payment methods, notification modes, QR settings, pending timeout, TxosnaProduct entries (price overrides, availability, instruction overrides)
+
+### Cloning any txosna
+
+- Any txosna (not just demo) can be cloned from the txosnak overview page via a "Klonatu" button
+- Admin provides a new name for the clone
+- The following are copied to the new txosna:
+  - Counter setup (SINGLE/SEPARATE)
+  - Enabled ordering channels
+  - Enabled payment methods and selected providers
+  - Notification modes
+  - QR validation setting
+  - Pending payment timeout
+  - All TxosnaProduct entries (price overrides, availability, instruction overrides)
+- The clone is created with status CLOSED — admin opens it when ready
+- A new slug and PIN are generated for the clone
+- The clone belongs to the same event and association as the original
 
 ---
 
 ## 10. Menu Management
 
 ### Master menu
+
 - Defined at association level; shared across all txosnak
 - Contains: categories (FOOD or DRINKS), products, variants, modifiers, images, preparation instructions, ingredients, display order, allergens, dietary flags
 
 ### Categories
+
 - Admin defines categories with a **type**: FOOD or DRINKS
 - Category type drives routing to the correct counter when separate counters are enabled
 - Categories and products have **manually configurable display order**
 
 ### Product fields
 
-| Field | Notes |
-|-------|-------|
-| Name | Required |
-| Category | Required; determines FOOD or DRINKS routing |
-| Default price | Required |
-| Description | Optional |
-| Customer-facing image | Optional |
-| Allergens | Multi-select from 14 standard EU allergens |
-| Dietary flags | Vegetarian, vegan, gluten-free |
-| Age-restricted | Drink requires ID verification at counter before serving |
-| Splittable | For food products ordered in multiple units |
-| Requires preparation | For drink products needing active preparation (e.g. mojito) |
-| Display order | Within its category |
-| Ingredients list | Simple text reference for volunteers; not used for inventory |
-| Preparation instructions | Markdown with embedded images; general method |
+| Field                    | Notes                                                        |
+| ------------------------ | ------------------------------------------------------------ |
+| Name                     | Required                                                     |
+| Category                 | Required; determines FOOD or DRINKS routing                  |
+| Default price            | Required                                                     |
+| Description              | Optional                                                     |
+| Customer-facing image    | Optional                                                     |
+| Allergens                | Multi-select from 14 standard EU allergens                   |
+| Dietary flags            | Vegetarian, vegan, gluten-free                               |
+| Age-restricted           | Drink requires ID verification at counter before serving     |
+| Splittable               | For food products ordered in multiple units                  |
+| Requires preparation     | For drink products needing active preparation (e.g. mojito)  |
+| Display order            | Within its category                                          |
+| Ingredients list         | Simple text reference for volunteers; not used for inventory |
+| Preparation instructions | Markdown with embedded images; general method                |
 
 ### Variant groups
+
 - Required choices per product; each option has name, price delta, allergens
 - Drinks counter UI simplified for speed
 
 ### Modifiers
+
 - Optional additions/removals; each has name, price, allergens
 
 ### Effective order line price
+
 ```
 base price (or override) + sum of variant deltas + sum of modifier prices
 ```
 
 ### Allergens
+
 - Effective allergens = union of product + selected variants + selected modifiers
 - Shown in real time as customer configures each order line
 
 ### Preparation instructions
+
 - Two levels: product-level (master menu) and txosna-level override (event-specific)
 - Shown on counter/KDS screens on demand — one tap per ticket card
 
 ### Per-txosna configuration (TxosnaProduct)
+
 - Price override, available flag, preparation instructions override, sold out flag
 - Admin can copy TxosnaProduct entries from a previous txosna or from a demo txosna
+
+### Screens
+
+**Master menu management** (`/admin/[locale]/menu`)
+
+- Lists all association categories and their products
+- Full CRUD on categories, products, variant groups/options, modifiers
+- Display order configurable per category and per product
+- Association-wide — not tied to any specific txosna
+
+**Txosna product selection** (`/admin/[locale]/txosnak/[id]/products`)
+
+- Shows the full master catalog grouped by category
+- Toggle switch per product: enabled at this txosna / not offered
+- When enabled: optional price override and preparation instructions override fields
+- Sold out flag is operational (managed at the counter) — not editable here
+- Writes only to `TxosnaProduct`; master catalog is read-only from this screen
 
 ---
 
@@ -206,20 +297,24 @@ base price (or override) + sum of variant deltas + sum of modifier prices
 ## 12. Order Tickets and Counter Routing
 
 ### Single counter
+
 - One ticket per order; full RECEIVED → IN_PREPARATION → READY → COMPLETED lifecycle
 - Customer picks up everything together
 
 ### Separate counters
+
 - Order split into food ticket and drinks ticket on confirmation
 - Each ticket has its own independent lifecycle
 - Customer picks up food and drinks separately; notified independently per ticket
 - Pickup proof shows which ticket is ready and at which counter
 
 ### Drinks ticket lifecycle
+
 - Full lifecycle if any product has `requires_preparation = true`; otherwise RECEIVED → READY → COMPLETED
 - Volunteer can always manually move to IN_PREPARATION
 
 ### Drinks counter interface
+
 - Optimised for speed — a two-beer order in two taps
 - Different measures are separate products in the master menu
 
@@ -350,41 +445,44 @@ base price (or override) + sum of variant deltas + sum of modifier prices
 
 ## 29. Features Evaluated and Deferred
 
-| Feature | Status |
-|---------|--------|
-| Portion size and yield | Deferred |
-| Preparation time per product | Deferred |
-| Time-based product availability | Deferred |
-| Serving temperature flags | Deferred |
-| More than two counter types | Deferred |
-| Pre-preparation vs made-to-order flag | Deferred |
-| Packaging and presentation notes | Deferred |
-| Last orders announcement | Deferred |
-| Running tabs | Out of scope |
-| Alcohol content information | Deferred |
-| Drink temperature preferences | Deferred |
-| Waste and leftover tracking | Out of scope |
-| Stock quantity tracking | Out of scope |
-| Cross-event analytics | Deferred — per-event report sufficient for now |
-| Data retention policy | Not defined — no policy for now |
+| Feature                               | Status                                         |
+| ------------------------------------- | ---------------------------------------------- |
+| Portion size and yield                | Deferred                                       |
+| Preparation time per product          | Deferred                                       |
+| Time-based product availability       | Deferred                                       |
+| Serving temperature flags             | Deferred                                       |
+| More than two counter types           | Deferred                                       |
+| Pre-preparation vs made-to-order flag | Deferred                                       |
+| Packaging and presentation notes      | Deferred                                       |
+| Last orders announcement              | Deferred                                       |
+| Running tabs                          | Out of scope                                   |
+| Alcohol content information           | Deferred                                       |
+| Drink temperature preferences         | Deferred                                       |
+| Waste and leftover tracking           | Out of scope                                   |
+| Stock quantity tracking               | Out of scope                                   |
+| Cross-event analytics                 | Deferred — per-event report sufficient for now |
+| Data retention policy                 | Not defined — no policy for now                |
 
 ---
 
 ## 30. Ordering Channels
 
 ### Channel 1 — Counter
+
 1. Volunteer logs in → PIN → counter mode
 2. Customer tells volunteer what they want; pays cash
 3. Volunteer configures order; age prompt if applicable; optionally calculates change
 4. Order confirmed; tickets routed to correct counter(s)
 
 ### Channel 2 — Phone to counter
+
 1. Customer selects language; browses menu with full product details
 2. Configures items; age declaration if applicable; enters name; optionally allows push notifications
 3. Sees wait time estimate; confirms order as PENDING PAYMENT
 4. Goes to counter; volunteer confirms payment (QR scan or manual); tickets routed
 
 ### Channel 3 — Self-service online (future)
+
 1. Customer places and pays online; tickets routed immediately
 
 ---
@@ -420,22 +518,25 @@ All tickets COMPLETED → receipt available for download
 
 ## 32. Screens Overview
 
-| Screen | Used by | Device | Notes |
-|--------|---------|--------|-------|
-| Registration | First admin | Any | One-time setup |
-| Onboarding guide | First admin | Any | Checklist-style setup walkthrough |
-| Admin configuration | Admin | Any | Full txosna config, menu, volunteers, demo txosna |
-| Volunteer login | Any volunteer | Any | Email + password; password reset available |
-| Session PIN entry | Any volunteer | Any | Selects food counter, drinks counter, or kitchen |
-| Menu & ordering | Customer | Their phone | Images, allergens, dietary flags, variants, age declaration, wait time; public URL |
-| Food counter screen | Volunteer (food mode) | Any | Food tickets primary; drinks accessible; change calculator; age prompt; pause |
-| Drinks counter screen | Volunteer (drinks mode) | Any | Drinks tickets primary; food accessible; speed-optimised; age prompt; pause |
-| Kitchen screen (KDS) | Volunteer (kitchen mode) | Any | All tickets; preparation instructions on demand; sold out; slow order highlights; pause and close |
-| Status overview | Any logged-in volunteer | Any | Live snapshot; handover tool |
-| Order board | Everyone | Any (best on large screen) | Live ticket status; accessible via public txosna URL |
-| Pickup proof | Customer | Their phone | Per ticket; QR if enabled; counter type shown; high contrast |
-| Order status / receipt | Customer | Their phone | Current ticket statuses; PDF download when all completed |
-| Event report | Admin | Any | Post-event summary; downloadable PDF |
+| Screen                 | Used by                  | Device                     | Notes                                                                                             |
+| ---------------------- | ------------------------ | -------------------------- | ------------------------------------------------------------------------------------------------- |
+| Registration              | First admin              | Any                        | One-time setup                                                                                                                          |
+| Onboarding guide          | First admin              | Any                        | Checklist-style setup walkthrough                                                                                                       |
+| Association settings      | Admin                    | Any                        | Association name, payment providers (Stripe/Redsys credentials), volunteer management                                                  |
+| Master menu management    | Admin                    | Any                        | Association-level catalog: categories, products, variants, modifiers, allergens, dietary flags, preparation instructions, display order |
+| Txosna configuration      | Admin                    | Any                        | Per-txosna config (counter setup, channels, enabled providers from association, QR, demo mode)                                         |
+| Txosna product selection  | Admin                    | Any                        | Per-txosna: toggle which master catalog products to serve; optionally override price and preparation instructions                       |
+| Volunteer login           | Any volunteer            | Any                        | Email + password; password reset available                                                                                              |
+| Session PIN entry      | Any volunteer            | Any                        | Selects food counter, drinks counter, or kitchen                                                  |
+| Menu & ordering        | Customer                 | Their phone                | Images, allergens, dietary flags, variants, age declaration, wait time; public URL                |
+| Food counter screen    | Volunteer (food mode)    | Any                        | Food tickets primary; drinks accessible; change calculator; age prompt; pause                     |
+| Drinks counter screen  | Volunteer (drinks mode)  | Any                        | Drinks tickets primary; food accessible; speed-optimised; age prompt; pause                       |
+| Kitchen screen (KDS)   | Volunteer (kitchen mode) | Any                        | All tickets; preparation instructions on demand; sold out; slow order highlights; pause and close |
+| Status overview        | Any logged-in volunteer  | Any                        | Live snapshot; handover tool                                                                      |
+| Order board            | Everyone                 | Any (best on large screen) | Live ticket status; accessible via public txosna URL                                              |
+| Pickup proof           | Customer                 | Their phone                | Per ticket; QR if enabled; counter type shown; high contrast                                      |
+| Order status / receipt | Customer                 | Their phone                | Current ticket statuses; PDF download when all completed                                          |
+| Event report           | Admin                    | Any                        | Post-event summary; downloadable PDF                                                              |
 
 ---
 
@@ -448,4 +549,4 @@ All tickets COMPLETED → receipt available for download
 
 ---
 
-*Last updated: session 17*
+_Last updated: session 17_

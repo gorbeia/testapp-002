@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -46,6 +46,35 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ── Admin theme tokens ──────────────────────────────────────────────────── */
+:root {
+  --adm-bg: #f8fafc;
+  --adm-surface: #ffffff;
+  --adm-surface-hi: #f1f5f9;
+  --adm-border: #e5e7eb;
+  --adm-text-pri: #111827;
+  --adm-text-sec: #6b7280;
+  --adm-text-dim: #9ca3af;
+  --adm-sidebar-bg: #1e293b;
+  --adm-sidebar-text: #94a3b8;
+  --adm-sidebar-border: #334155;
+  --adm-sidebar-label: #64748b;
+}
+
+html.dark {
+  --adm-bg: #0f172a;
+  --adm-surface: #1e293b;
+  --adm-surface-hi: #273449;
+  --adm-border: #334155;
+  --adm-text-pri: #f1f5f9;
+  --adm-text-sec: #94a3b8;
+  --adm-text-dim: #64748b;
+  --adm-sidebar-bg: #0b1120;
+  --adm-sidebar-text: #64748b;
+  --adm-sidebar-border: #1e293b;
+  --adm-sidebar-label: #475569;
 }
 
 :root {
@@ -117,6 +146,104 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* ── Operational theme (dark) — volunteer screens ──────────────────────── */
+.ops-theme {
+  --ops-bg: #0d0f14;
+  --ops-surface: #151821;
+  --ops-surface-hi: #1c2030;
+  --ops-border: #252836;
+  --ops-border-hi: #2e3348;
+  --ops-orange: #e8622f;
+  --ops-orange-dim: #7a3218;
+  --ops-green: #22c55e;
+  --ops-green-dark: #14532d;
+  --ops-amber: #f59e0b;
+  --ops-amber-dark: #78350f;
+  --ops-red: #ef4444;
+  --ops-blue: #3b82f6;
+  --ops-text-pri: #f0f2f8;
+  --ops-text-sec: #8b92a8;
+  --ops-text-dim: #4b5268;
+
+  background-color: var(--ops-bg);
+  color: var(--ops-text-pri);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+}
+
+/* ── Operational theme: force-dark override (KDS, always-dark screens) ──── */
+.ops-theme.ops-always-dark {
+  --ops-bg: #0d0f14;
+  --ops-surface: #151821;
+  --ops-surface-hi: #1c2030;
+  --ops-border: #252836;
+  --ops-border-hi: #2e3348;
+  --ops-text-pri: #f0f2f8;
+  --ops-text-sec: #8b92a8;
+  --ops-text-dim: #4b5268;
+  background-color: var(--ops-bg);
+  color: var(--ops-text-pri);
+}
+
+/* ── Operational theme light variant (counter, drinks — follows global theme) */
+html:not(.dark) .ops-theme:not(.ops-always-dark) {
+  --ops-bg: #f0f4f8;
+  --ops-surface: #ffffff;
+  --ops-surface-hi: #f1f5f9;
+  --ops-border: #e2e8f0;
+  --ops-border-hi: #cbd5e1;
+  --ops-text-pri: #0f172a;
+  --ops-text-sec: #475569;
+  --ops-text-dim: #94a3b8;
+
+  background-color: var(--ops-bg);
+  color: var(--ops-text-pri);
+}
+
+/* ── Customer theme (light) — customer-facing screens ───────────────────── */
+.cust-theme {
+  --cust-bg: #faf8f5;
+  --cust-surface: #ffffff;
+  --cust-border: #e5e0d8;
+  --cust-primary: #e85d2f;
+  --cust-accent: #2d5a3d;
+  --cust-text-pri: #1a1209;
+  --cust-text-sec: #6b6460;
+  --cust-text-dim: #a8a29e;
+  --cust-green: #22c55e;
+  --cust-amber: #f59e0b;
+  --cust-red: #ef4444;
+
+  background-color: var(--cust-bg);
+  color: var(--cust-text-pri);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+}
+
+/* Customer theme dark variant */
+html.dark .cust-theme {
+  --cust-bg: #0d0f14;
+  --cust-surface: #1a1d27;
+  --cust-border: #2a2d3a;
+  --cust-text-pri: #f8f9fa;
+  --cust-text-sec: #9ca3af;
+  --cust-text-dim: #6b7280;
+}
+
+/* ── Shared animations ───────────────────────────────────────────────────── */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-24px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes pulseGreen {
+  0%, 100% { box-shadow: 0 0 18px rgba(34, 197, 94, 0.22); }
+  50%       { box-shadow: 0 0 32px rgba(34, 197, 94, 0.5); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -125,6 +252,6 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans;
+    font-family: var(--font-dm-sans), system-ui, sans-serif;
   }
 }

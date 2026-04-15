@@ -1,5 +1,6 @@
 # Txosna App — Online Payments
-*Session 19 — April 2026*
+
+_Session 19 — April 2026_
 
 ---
 
@@ -25,6 +26,7 @@ A txosna can have **multiple active payment providers simultaneously**. For exam
 The recommended default path for new associations. Self-service onboarding, no bank visit required, excellent developer API.
 
 **Why it fits:**
+
 - Fully online signup — no branch visit, no guarantees deposit
 - Single integration covers cards, Apple Pay, Google Pay, and Bizum (where supported)
 - EEA domestic card fee: 1.5% + €0.25 per transaction
@@ -32,6 +34,7 @@ The recommended default path for new associations. Self-service onboarding, no b
 - Webhooks for reliable payment confirmation
 
 **What the association configures:**
+
 - Stripe Publishable Key (client-side)
 - Stripe Secret Key (server-side only, encrypted at rest)
 - Stripe Webhook Secret (for verifying incoming events)
@@ -44,9 +47,10 @@ The recommended default path for new associations. Self-service onboarding, no b
 
 ### 2.2 Redsys (Bank TPV Virtual)
 
-The dominant online payment infrastructure in Spain. Most Spanish banks (Kutxabank, BBVA, CaixaBank, Santander, Sabadell, Bankinter, etc.) offer a *TPV Virtual* (virtual POS) that runs on Redsys rails. Associations that already bank with Kutxabank — the dominant bank in the Basque Country and Navarre — may find this the most natural path.
+The dominant online payment infrastructure in Spain. Most Spanish banks (Kutxabank, BBVA, CaixaBank, Santander, Sabadell, Bankinter, etc.) offer a _TPV Virtual_ (virtual POS) that runs on Redsys rails. Associations that already bank with Kutxabank — the dominant bank in the Basque Country and Navarre — may find this the most natural path.
 
 **Why it fits:**
+
 - Associations likely already have a banking relationship with the issuing bank
 - Fees are negotiated directly with the bank: typically 0.4–0.9% for European cards
 - Includes native Bizum integration (activated separately with the bank)
@@ -54,8 +58,9 @@ The dominant online payment infrastructure in Spain. Most Spanish banks (Kutxaba
 - Sandbox environment (Redsys test credentials) available before contracting
 
 **What the association needs to do:**
+
 1. Visit their bank branch (or use the bank's online business portal if available)
-2. Request a *TPV Virtual* for e-commerce
+2. Request a _TPV Virtual_ for e-commerce
 3. Provide proof of activity (association statutes, NIF, bank account)
 4. Receive merchant credentials: `Ds_MerchantCode`, `Ds_Terminal`, and the signing key
 5. Activate Bizum as an additional payment method if desired
@@ -63,6 +68,7 @@ The dominant online payment infrastructure in Spain. Most Spanish banks (Kutxaba
 Setup typically takes 1–2 weeks. Some banks require a guarantees deposit for new merchants.
 
 **What the association configures in the app:**
+
 - Merchant Code (`Ds_MerchantCode`)
 - Terminal number (`Ds_Terminal`)
 - Signing key (HMAC-SHA256, encrypted at rest)
@@ -79,11 +85,13 @@ Setup typically takes 1–2 weeks. Some banks require a guarantees deposit for n
 Bizum is a Spanish instant payment network with over 25 million registered users. It is not a standalone provider — it is offered as an add-on through both Stripe and Redsys. For festivals in the Basque Country, Bizum is a natural fit for local customers who use it daily.
 
 **Constraints:**
+
 - Requires a Spanish phone number and a Spanish bank account
 - Not available to tourists or international customers
 - Should be offered alongside card payments, not instead of them
 
 **Recommended approach:**
+
 - Bizum via Redsys if the association has a TPV Virtual (most reliable, widest bank coverage)
 - Bizum via Stripe as an alternative (newer, coverage still expanding)
 
@@ -91,12 +99,12 @@ Bizum is a Spanish instant payment network with over 25 million registered users
 
 ## 3. Payment Methods Matrix
 
-| Method | Provider | Typical customer | Notes |
-|--------|----------|-----------------|-------|
-| Visa / Mastercard (debit, credit) | Stripe or Redsys | Any | Primary method for tourists and non-Bizum users |
-| Apple Pay / Google Pay | Stripe | Mobile-first customers | Wallet wraps the underlying card |
-| Bizum | Redsys (preferred) or Stripe | Local Spanish customers | Fastest checkout for locals |
-| American Express | Redsys (if activated by bank) | Less common in festival context | Optional |
+| Method                            | Provider                      | Typical customer                | Notes                                           |
+| --------------------------------- | ----------------------------- | ------------------------------- | ----------------------------------------------- |
+| Visa / Mastercard (debit, credit) | Stripe or Redsys              | Any                             | Primary method for tourists and non-Bizum users |
+| Apple Pay / Google Pay            | Stripe                        | Mobile-first customers          | Wallet wraps the underlying card                |
+| Bizum                             | Redsys (preferred) or Stripe  | Local Spanish customers         | Fastest checkout for locals                     |
+| American Express                  | Redsys (if activated by bank) | Less common in festival context | Optional                                        |
 
 ---
 
@@ -104,32 +112,32 @@ Bizum is a Spanish instant payment network with over 25 million registered users
 
 ### PaymentProvider (new entity)
 
-| Attribute | Type | Notes |
-|-----------|------|-------|
-| txosna | Txosna | Which stall this provider is configured for |
-| provider_type | enum | STRIPE, REDSYS |
-| display_name | text | Optional label shown to admin (e.g. "Kutxabank TPV") |
-| enabled | boolean | Whether this provider is currently active |
-| credentials | encrypted JSON | Provider-specific credentials — see below |
-| bizum_enabled | boolean | Whether Bizum is activated on this provider |
-| verified_at | datetime | When the test transaction last passed |
-| created_at | datetime | |
+| Attribute     | Type           | Notes                                                |
+| ------------- | -------------- | ---------------------------------------------------- |
+| txosna        | Txosna         | Which stall this provider is configured for          |
+| provider_type | enum           | STRIPE, REDSYS                                       |
+| display_name  | text           | Optional label shown to admin (e.g. "Kutxabank TPV") |
+| enabled       | boolean        | Whether this provider is currently active            |
+| credentials   | encrypted JSON | Provider-specific credentials — see below            |
+| bizum_enabled | boolean        | Whether Bizum is activated on this provider          |
+| verified_at   | datetime       | When the test transaction last passed                |
+| created_at    | datetime       |                                                      |
 
 **Credential schemas by provider:**
 
 ```typescript
 // STRIPE
 {
-  publishable_key: string;       // pk_live_...
-  secret_key: string;            // sk_live_... — encrypted at rest
-  webhook_secret: string;        // whsec_... — encrypted at rest
+  publishable_key: string; // pk_live_...
+  secret_key: string; // sk_live_... — encrypted at rest
+  webhook_secret: string; // whsec_... — encrypted at rest
 }
 
 // REDSYS
 {
-  merchant_code: string;         // Ds_MerchantCode
-  terminal: string;              // Ds_Terminal
-  signing_key: string;           // HMAC-SHA256 key — encrypted at rest
+  merchant_code: string; // Ds_MerchantCode
+  terminal: string; // Ds_Terminal
+  signing_key: string; // HMAC-SHA256 key — encrypted at rest
 }
 ```
 
@@ -137,11 +145,11 @@ Bizum is a Spanish instant payment network with over 25 million registered users
 
 ### Order — updated fields
 
-| Attribute | Type | Notes |
-|-----------|------|-------|
-| payment_provider | PaymentProvider | Which provider processed this payment; null for cash |
-| payment_session_id | text | Provider-specific session/intent ID; stored for manual refund lookup in provider dashboard |
-| payment_method_detail | enum | CARD, APPLE_PAY, GOOGLE_PAY, BIZUM — captured at payment time |
+| Attribute             | Type            | Notes                                                                                      |
+| --------------------- | --------------- | ------------------------------------------------------------------------------------------ |
+| payment_provider      | PaymentProvider | Which provider processed this payment; null for cash                                       |
+| payment_session_id    | text            | Provider-specific session/intent ID; stored for manual refund lookup in provider dashboard |
+| payment_method_detail | enum            | CARD, APPLE_PAY, GOOGLE_PAY, BIZUM — captured at payment time                              |
 
 ### Txosna — updated `enabled_payment_methods`
 
@@ -165,11 +173,13 @@ Before a txosna can go live with online payments, its configured providers must 
 ### Validation checks per provider
 
 **Stripe:**
+
 - `GET /v1/account` using the secret key — confirms the key is valid and the account is active
 - Attempt to create and immediately cancel a PaymentIntent for €0.50 in the Stripe test mode if publishable key starts with `pk_test_`, or validate against live mode otherwise
 - Verify the webhook secret format (starts with `whsec_`)
 
 **Redsys:**
+
 - Construct a signed test transaction against the Redsys sandbox endpoint (`https://sis-t.redsys.es:25443/sis/rest/trataPeticionREST`)
 - A response code of `0000` (authorised) or a recognised test error confirms that credentials and signing are correct
 - Note: Redsys sandbox requires specific test card numbers; the app uses a hardcoded test card for the validation call
@@ -177,6 +187,7 @@ Before a txosna can go live with online payments, its configured providers must 
 ### Re-validation
 
 Credentials should be re-validated:
+
 - Whenever credentials are updated
 - Automatically before the first order of a new event (background check on txosna OPEN)
 - Shown as a warning (not a blocker) if `verified_at` is older than 30 days
@@ -339,7 +350,7 @@ Bizum              [☐ Activated on this TPV]
 
 interface PaymentSession {
   session_id: string;
-  redirect_url: string;       // where to send the customer
+  redirect_url: string; // where to send the customer
   expires_at: Date;
 }
 
@@ -360,13 +371,15 @@ interface PaymentProvider {
 
 ```typescript
 // lib/payments/factory.ts
-import { StripeProvider }  from './stripe';
-import { RedsysProvider }  from './redsys';
+import { StripeProvider } from './stripe';
+import { RedsysProvider } from './redsys';
 
 export function getProvider(config: TxosnaPaymentProvider): PaymentProvider {
   switch (config.provider_type) {
-    case 'STRIPE':  return new StripeProvider(config.credentials);
-    case 'REDSYS':  return new RedsysProvider(config.credentials);
+    case 'STRIPE':
+      return new StripeProvider(config.credentials);
+    case 'REDSYS':
+      return new RedsysProvider(config.credentials);
   }
 }
 ```
@@ -378,9 +391,9 @@ export function getProvider(config: TxosnaPaymentProvider): PaymentProvider {
 export async function POST(request: Request) {
   const { orderId, providerType, returnUrl } = await request.json();
 
-  const order    = await getOrder(orderId);           // validates order is PENDING_PAYMENT
+  const order = await getOrder(orderId); // validates order is PENDING_PAYMENT
   const provider = await getActiveProvider(order.txosna, providerType);
-  const session  = await provider.createSession(order, returnUrl);
+  const session = await provider.createSession(order, returnUrl);
 
   await savePaymentSession(order, provider, session);
   return Response.json({ redirect_url: session.redirect_url });
@@ -392,11 +405,11 @@ export async function POST(request: Request) {
 // One route per provider; called by the provider's servers
 
 export async function POST(request: Request, { params }) {
-  const provider = getProviderByType(params.provider);   // no credentials needed for webhook
-  const event    = await provider.verifyWebhook(request);
+  const provider = getProviderByType(params.provider); // no credentials needed for webhook
+  const event = await provider.verifyWebhook(request);
 
   if (event.status === 'succeeded') {
-    await confirmOrder(event.session_id, event.method);  // idempotent
+    await confirmOrder(event.session_id, event.method); // idempotent
   }
 
   return new Response('ok', { status: 200 });
@@ -409,30 +422,30 @@ export async function POST(request: Request, { params }) {
 
 ## 10. Glossary Additions
 
-| Term | English | Definition |
-|------|---------|------------|
-| PaymentProvider | Payment provider | A configured online payment integration on a txosna; an association can have multiple active providers simultaneously |
-| TPV Virtual | Virtual POS | A virtual point-of-sale contract with a Spanish bank, running on Redsys infrastructure; used for card and Bizum payments |
-| Redsys | Redsys | The dominant Spanish payment processing infrastructure; accessed via a TPV Virtual contracted through a bank |
-| Bizum | Bizum | A Spanish instant payment network offered as a payment method through Redsys and Stripe; requires a Spanish phone number and bank account |
-| Stripe | Stripe | An international payment platform supporting cards, Apple Pay, Google Pay, and Bizum; self-service signup, no bank visit required |
-| Payment session | Payment session | A short-lived payment intent created by the app when the customer initiates an online payment; has its own expiry independent of the order timeout |
-| Webhook | Webhook | An HTTPS callback from the payment provider to the app server confirming payment outcome; the authoritative signal for order confirmation |
-| Credential validation | Credential validation | A test API call confirming that a provider's credentials are correct before the txosna goes live |
-| Payment method detail | Payment method detail | How the specific online payment was made: CARD, APPLE_PAY, GOOGLE_PAY, or BIZUM; captured per order |
+| Term                  | English               | Definition                                                                                                                                         |
+| --------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PaymentProvider       | Payment provider      | A configured online payment integration on a txosna; an association can have multiple active providers simultaneously                              |
+| TPV Virtual           | Virtual POS           | A virtual point-of-sale contract with a Spanish bank, running on Redsys infrastructure; used for card and Bizum payments                           |
+| Redsys                | Redsys                | The dominant Spanish payment processing infrastructure; accessed via a TPV Virtual contracted through a bank                                       |
+| Bizum                 | Bizum                 | A Spanish instant payment network offered as a payment method through Redsys and Stripe; requires a Spanish phone number and bank account          |
+| Stripe                | Stripe                | An international payment platform supporting cards, Apple Pay, Google Pay, and Bizum; self-service signup, no bank visit required                  |
+| Payment session       | Payment session       | A short-lived payment intent created by the app when the customer initiates an online payment; has its own expiry independent of the order timeout |
+| Webhook               | Webhook               | An HTTPS callback from the payment provider to the app server confirming payment outcome; the authoritative signal for order confirmation          |
+| Credential validation | Credential validation | A test API call confirming that a provider's credentials are correct before the txosna goes live                                                   |
+| Payment method detail | Payment method detail | How the specific online payment was made: CARD, APPLE_PAY, GOOGLE_PAY, or BIZUM; captured per order                                                |
 
 ---
 
 ## 11. Decisions
 
-| # | Question | Decision |
-|---|----------|----------|
-| 1 | Can the customer switch payment method mid-flow (e.g. card fails, retry with Bizum)? | **Yes.** The order stays PENDING_PAYMENT until timeout, so the customer can return to the payment method screen and try a different method. UX for the retry flow to be designed. |
-| 2 | Refunds via provider API? | **Not in scope.** Refunds are always handled in cash at the counter. The `payment_session_id` is stored on the order so the admin can locate the transaction in the provider dashboard if needed. No refund API integration planned. |
-| 3 | Webhook URL display in admin config? | **Yes.** The Stripe credential form shows the correct webhook URL as a read-only field with a copy button. Instructions explain that this URL must be registered in the Stripe dashboard before going live. Redsys does not require webhook registration — the return URL is passed per-transaction. |
-| 4 | Webhook delay / polling fallback? | **Yes.** If the customer returns via the success redirect URL and the order is still PENDING_PAYMENT, the server queries the provider for the session status before rendering the post-order screen. This handles restarts and delayed webhooks. |
-| 5 | Multi-currency? | **EUR only.** All txosnak price in EUR. No multi-currency support. |
+| #   | Question                                                                             | Decision                                                                                                                                                                                                                                                                                             |
+| --- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Can the customer switch payment method mid-flow (e.g. card fails, retry with Bizum)? | **Yes.** The order stays PENDING_PAYMENT until timeout, so the customer can return to the payment method screen and try a different method. UX for the retry flow to be designed.                                                                                                                    |
+| 2   | Refunds via provider API?                                                            | **Not in scope.** Refunds are always handled in cash at the counter. The `payment_session_id` is stored on the order so the admin can locate the transaction in the provider dashboard if needed. No refund API integration planned.                                                                 |
+| 3   | Webhook URL display in admin config?                                                 | **Yes.** The Stripe credential form shows the correct webhook URL as a read-only field with a copy button. Instructions explain that this URL must be registered in the Stripe dashboard before going live. Redsys does not require webhook registration — the return URL is passed per-transaction. |
+| 4   | Webhook delay / polling fallback?                                                    | **Yes.** If the customer returns via the success redirect URL and the order is still PENDING_PAYMENT, the server queries the provider for the session status before rendering the post-order screen. This handles restarts and delayed webhooks.                                                     |
+| 5   | Multi-currency?                                                                      | **EUR only.** All txosnak price in EUR. No multi-currency support.                                                                                                                                                                                                                                   |
 
 ---
 
-*Last updated: session 19*
+_Last updated: session 19_

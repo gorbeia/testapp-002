@@ -1,0 +1,905 @@
+"use client";
+import React, { useState, useCallback } from "react";
+import { MaskedInput } from "@/components/ui/masked-input";
+import { MOCK_ASSOCIATION } from "@/lib/mock-data";
+import { Dialog } from "@base-ui/react/dialog";
+import { X, Plus, CreditCard, Building2, Power, Trash2, Edit2, Check } from "lucide-react";
+
+const TABS = ["Elkartea", "Ordainketa"];
+
+// ── Dialog Component ─────────────────────────────────────────────────────────
+function ProviderDialog({
+  open,
+  onOpenChange,
+  title,
+  children,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Backdrop
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            zIndex: 50,
+          }}
+        />
+        <Dialog.Popup
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "var(--adm-surface, #1a1d27)",
+            border: "1px solid var(--adm-border, #2a2d3a)",
+            borderRadius: 16,
+            padding: 0,
+            width: "90vw",
+            maxWidth: 520,
+            maxHeight: "85vh",
+            overflow: "auto",
+            zIndex: 51,
+            outline: "none",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "20px 24px",
+              borderBottom: "1px solid var(--adm-border, #2a2d3a)",
+            }}
+          >
+            <Dialog.Title
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: "var(--adm-text-pri, #f8f9fa)",
+                margin: 0,
+              }}
+            >
+              {title}
+            </Dialog.Title>
+            <Dialog.Close
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                border: "none",
+                background: "transparent",
+                color: "var(--adm-text-sec, #9ca3af)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <X size={20} />
+            </Dialog.Close>
+          </div>
+          <div style={{ padding: 24 }}>{children}</div>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+// ── Shared form helpers ─────────────────────────────────────────────────────────
+function FormLabel({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return <div style={{ fontSize: 14, fontWeight: 600, color: "var(--adm-text-pri)", marginBottom: 6, ...style }}>{children}</div>;
+}
+
+function FormHint({ children }: { children: React.ReactNode }) {
+  return <div style={{ fontSize: 12, color: "var(--adm-text-sec)", marginTop: 4 }}>{children}</div>;
+}
+
+function ToggleRow({
+  label,
+  hint,
+  checked,
+  onChange,
+}: {
+  label: string;
+  hint?: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px", background: "var(--adm-surface)", border: "1px solid var(--adm-border)", borderRadius: 12 }}>
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 500, color: "var(--adm-text-pri)" }}>{label}</div>
+        {hint && <div style={{ fontSize: 12, color: "var(--adm-text-sec)", marginTop: 2 }}>{hint}</div>}
+      </div>
+      <button
+        onClick={() => onChange(!checked)}
+        style={{ width: 44, height: 24, borderRadius: 99, border: "none", background: checked ? "#e85d2f" : "var(--adm-border)", cursor: "pointer", position: "relative", transition: "background 0.2s" }}
+      >
+        <span style={{ position: "absolute", top: 2, left: checked ? 22 : 2, width: 20, height: 20, borderRadius: "50%", background: "var(--adm-surface)", transition: "left 0.2s" }} />
+      </button>
+    </div>
+  );
+}
+
+function SaveButton({ saved, onClick }: { saved: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{ alignSelf: "flex-start", padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, color: "#fff", background: saved ? "#22c55e" : "#e85d2f", border: "none", cursor: "pointer" }}
+    >
+      {saved ? "✓ Gordeta" : "Gorde"}
+    </button>
+  );
+}
+
+// ── Tab 1: General (Association) ───────────────────────────────────────────────
+function GeneralTab() {
+  const [name, setName] = useState(MOCK_ASSOCIATION.name);
+  const [email, setEmail] = useState("kontaktua@elkartea.eus");
+  const [phone, setPhone] = useState("");
+  const [cif, setCif] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  return (
+    <div style={{ maxWidth: 520, display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <FormLabel>Elkartearen izena</FormLabel>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--adm-border)", background: "var(--adm-surface)", color: "var(--adm-text-pri)", fontSize: 14, outline: "none" }}
+        />
+      </div>
+
+      <div>
+        <FormLabel>Kontaktua (e-maila)</FormLabel>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="kontaktua@elkartea.eus"
+          style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--adm-border)", background: "var(--adm-surface)", color: "var(--adm-text-pri)", fontSize: 14, outline: "none" }}
+        />
+        <FormHint>Erabilera administratiboetarako</FormHint>
+      </div>
+
+      <div>
+        <FormLabel>Telefono zenbakia</FormLabel>
+        <input
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="600 000 000"
+          style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--adm-border)", background: "var(--adm-surface)", color: "var(--adm-text-pri)", fontSize: 14, outline: "none" }}
+        />
+      </div>
+
+      <div>
+        <FormLabel>IFK / CIF</FormLabel>
+        <input
+          type="text"
+          value={cif}
+          onChange={(e) => setCif(e.target.value)}
+          placeholder="A00000000"
+          style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--adm-border)", background: "var(--adm-surface)", color: "var(--adm-text-pri)", fontSize: 14, outline: "none" }}
+        />
+        <FormHint>Elkartearen identifikazio fiskala</FormHint>
+      </div>
+
+      <SaveButton
+        saved={saved}
+        onClick={() => {
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        }}
+      />
+    </div>
+  );
+}
+
+// ── Tab 2: Payment Providers ─────────────────────────────────────────────────
+type ProviderType = "stripe" | "redsys";
+
+interface PaymentCredentials {
+  // Stripe
+  stripePublic?: string;
+  stripeSecret?: string;
+  stripeWebhook?: string;
+  // Redsys
+  redsysMerchant?: string;
+  redsysKey?: string;
+  redsysTerminal?: string;
+}
+
+interface PaymentProvider {
+  id: string;
+  type: ProviderType;
+  displayName: string;
+  enabled: boolean;
+  testMode: boolean;
+  credentials: PaymentCredentials;
+}
+
+const PROVIDER_CONFIG = {
+  stripe: {
+    icon: CreditCard,
+    name: "Stripe",
+    hint: "Nazioarteko plataforma",
+    color: "#635bff",
+  },
+  redsys: {
+    icon: Building2,
+    name: "Redsys",
+    hint: "Banku espainiarrak",
+    color: "#e85d2f",
+  },
+};
+
+function ProviderCard({
+  provider,
+  onToggle,
+  onEdit,
+  onDelete,
+}: {
+  provider: PaymentProvider;
+  onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const config = PROVIDER_CONFIG[provider.type];
+  const Icon = config.icon;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 16,
+        padding: 16,
+        background: "var(--adm-surface)",
+        border: "1px solid var(--adm-border)",
+        borderRadius: 12,
+        transition: "all 0.15s",
+      }}
+    >
+      <div
+        style={{
+          width: 48,
+          height: 48,
+          borderRadius: 12,
+          background: config.color + "15",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <Icon size={24} style={{ color: config.color }} />
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            color: "var(--adm-text-pri)",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          {provider.displayName || config.name}
+          {provider.testMode && (
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 500,
+                padding: "2px 8px",
+                background: "#f59e0b20",
+                color: "#f59e0b",
+                borderRadius: 99,
+              }}
+            >
+              Test
+            </span>
+          )}
+        </div>
+        <div style={{ fontSize: 12, color: "var(--adm-text-sec)", marginTop: 2 }}>
+          {provider.enabled ? "Gaituta" : "Desgaituta"} · {config.hint}
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 6 }}>
+        <button
+          onClick={onToggle}
+          title={provider.enabled ? "Desgaitu" : "Gaitu"}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            border: "none",
+            background: provider.enabled ? "#22c55e20" : "var(--adm-surface-hi)",
+            color: provider.enabled ? "#22c55e" : "var(--adm-text-sec)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "all 0.15s",
+          }}
+        >
+          <Power size={18} />
+        </button>
+        <button
+          onClick={onEdit}
+          title="Editatu"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            border: "none",
+            background: "var(--adm-surface-hi)",
+            color: "var(--adm-text-sec)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "all 0.15s",
+          }}
+        >
+          <Edit2 size={18} />
+        </button>
+        <button
+          onClick={onDelete}
+          title="Ezabatu"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            border: "none",
+            background: "var(--adm-surface-hi)",
+            color: "#ef4444",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "all 0.15s",
+          }}
+        >
+          <Trash2 size={18} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ProviderForm({
+  mode,
+  initialData,
+  onSave,
+  onCancel,
+}: {
+  mode: "add" | "edit";
+  initialData?: PaymentProvider;
+  onSave: (provider: Omit<PaymentProvider, "id">) => void;
+  onCancel: () => void;
+}) {
+  const [providerType, setProviderType] = useState<ProviderType>(initialData?.type || "stripe");
+  const [displayName, setDisplayName] = useState(initialData?.displayName || "");
+  const [testMode, setTestMode] = useState(initialData?.testMode ?? true);
+  const [stripePublic, setStripePublic] = useState(initialData?.credentials?.stripePublic || "");
+  const [stripeSecret, setStripeSecret] = useState(initialData?.credentials?.stripeSecret || "");
+  const [stripeWebhook, setStripeWebhook] = useState(initialData?.credentials?.stripeWebhook || "");
+  const [redsysMerchant, setRedsysMerchant] = useState(initialData?.credentials?.redsysMerchant || "");
+  const [redsysKey, setRedsysKey] = useState(initialData?.credentials?.redsysKey || "");
+  const [redsysTerminal, setRedsysTerminal] = useState(initialData?.credentials?.redsysTerminal || "1");
+
+  const handleSave = useCallback(() => {
+    const credentials: PaymentCredentials =
+      providerType === "stripe"
+        ? { stripePublic, stripeSecret, stripeWebhook }
+        : { redsysMerchant, redsysKey, redsysTerminal };
+
+    onSave({
+      type: providerType,
+      displayName: displayName || PROVIDER_CONFIG[providerType].name,
+      enabled: initialData?.enabled ?? true,
+      testMode,
+      credentials,
+    });
+  }, [providerType, displayName, testMode, stripePublic, stripeSecret, stripeWebhook, redsysMerchant, redsysKey, redsysTerminal, initialData, onSave]);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Provider type selection (only when adding) */}
+      {mode === "add" && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          {(Object.entries(PROVIDER_CONFIG) as [ProviderType, typeof PROVIDER_CONFIG.stripe][]).map(
+            ([type, config]) => {
+              const Icon = config.icon;
+              const isSelected = providerType === type;
+              return (
+                <button
+                  key={type}
+                  onClick={() => setProviderType(type)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: 16,
+                    borderRadius: 12,
+                    border: "2px solid",
+                    borderColor: isSelected ? config.color : "var(--adm-border)",
+                    background: isSelected ? config.color + "10" : "var(--adm-surface)",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <Icon size={24} style={{ color: config.color, flexShrink: 0 }} />
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: isSelected ? config.color : "var(--adm-text-pri)",
+                      }}
+                    >
+                      {config.name}
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--adm-text-sec)", marginTop: 2 }}>
+                      {config.hint}
+                    </div>
+                  </div>
+                </button>
+              );
+            }
+          )}
+        </div>
+      )}
+
+      {/* Display name */}
+      <div>
+        <FormLabel>Izena (aukerakoa)</FormLabel>
+        <input
+          type="text"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          placeholder={PROVIDER_CONFIG[providerType].name}
+          style={{
+            width: "100%",
+            padding: "10px 12px",
+            borderRadius: 8,
+            border: "1px solid var(--adm-border)",
+            background: "var(--adm-surface)",
+            color: "var(--adm-text-pri)",
+            fontSize: 14,
+            outline: "none",
+          }}
+        />
+      </div>
+
+      {/* Test mode toggle */}
+      <ToggleRow
+        label="Test modua"
+        hint="Ordainketa errealak ez dira prozesatzen"
+        checked={testMode}
+        onChange={setTestMode}
+      />
+
+      {/* Stripe credentials */}
+      {providerType === "stripe" && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+            background: "var(--adm-surface)",
+            padding: 20,
+            borderRadius: 12,
+            border: "1px solid var(--adm-border)",
+          }}
+        >
+          <div>
+            <FormLabel>Publishable key</FormLabel>
+            <FormHint>pk_test_… edo pk_live_…</FormHint>
+            <div style={{ marginTop: 8 }}>
+              <MaskedInput value={stripePublic} onChange={setStripePublic} placeholder="pk_test_..." />
+            </div>
+          </div>
+          <div>
+            <FormLabel>Secret key</FormLabel>
+            <FormHint>sk_test_… edo sk_live_… — ez partekatu inoiz</FormHint>
+            <div style={{ marginTop: 8 }}>
+              <MaskedInput value={stripeSecret} onChange={setStripeSecret} placeholder="sk_test_..." />
+            </div>
+          </div>
+          <div>
+            <FormLabel>Webhook secret</FormLabel>
+            <FormHint>whsec_… — ordainketa egoera jakinarazpenak</FormHint>
+            <div style={{ marginTop: 8 }}>
+              <MaskedInput value={stripeWebhook} onChange={setStripeWebhook} placeholder="whsec_..." />
+            </div>
+          </div>
+          <div
+            style={{
+              background: "var(--adm-surface-hi)",
+              border: "1px solid var(--adm-border)",
+              borderRadius: 8,
+              padding: "10px 12px",
+              fontSize: 12,
+              color: "var(--adm-text-sec)",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <span>Webhook URL:</span>
+            <code
+              style={{
+                fontFamily: "JetBrains Mono, monospace",
+                background: "var(--adm-surface)",
+                padding: "2px 8px",
+                borderRadius: 4,
+                fontSize: 11,
+              }}
+            >
+              https://txosna.app/api/webhooks/stripe
+            </code>
+          </div>
+        </div>
+      )}
+
+      {/* Redsys credentials */}
+      {providerType === "redsys" && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+            background: "var(--adm-surface)",
+            padding: 20,
+            borderRadius: 12,
+            border: "1px solid var(--adm-border)",
+          }}
+        >
+          <div>
+            <FormLabel>Merkatari kodea (FUC)</FormLabel>
+            <FormHint>Bankuak emandako 9 digituko kodea</FormHint>
+            <div style={{ marginTop: 8 }}>
+              <input
+                type="text"
+                value={redsysMerchant}
+                onChange={(e) => setRedsysMerchant(e.target.value)}
+                placeholder="999008881"
+                maxLength={9}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  border: "1px solid var(--adm-border)",
+                  background: "var(--adm-surface)",
+                  color: "var(--adm-text-pri)",
+                  fontSize: 14,
+                  fontFamily: "JetBrains Mono, monospace",
+                  outline: "none",
+                }}
+              />
+            </div>
+          </div>
+          <div>
+            <FormLabel>Gako sekretua (SHA-256)</FormLabel>
+            <FormHint>Redsys administraziotik lortu</FormHint>
+            <div style={{ marginTop: 8 }}>
+              <MaskedInput value={redsysKey} onChange={setRedsysKey} placeholder="sq7HjrUOBfKmC57m..." />
+            </div>
+          </div>
+          <div>
+            <FormLabel>Terminal zenbakia</FormLabel>
+            <div style={{ marginTop: 8 }}>
+              <input
+                type="text"
+                value={redsysTerminal}
+                onChange={(e) => setRedsysTerminal(e.target.value)}
+                placeholder="1"
+                style={{
+                  width: 96,
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  border: "1px solid var(--adm-border)",
+                  background: "var(--adm-surface)",
+                  color: "var(--adm-text-pri)",
+                  fontSize: 14,
+                  fontFamily: "JetBrains Mono, monospace",
+                  outline: "none",
+                }}
+              />
+            </div>
+          </div>
+          <div
+            style={{
+              background: "var(--adm-surface-hi)",
+              border: "1px solid var(--adm-border)",
+              borderRadius: 8,
+              padding: "10px 12px",
+              fontSize: 12,
+              color: "var(--adm-text-sec)",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <span>URL notifikazioa:</span>
+            <code
+              style={{
+                fontFamily: "JetBrains Mono, monospace",
+                background: "var(--adm-surface)",
+                padding: "2px 8px",
+                borderRadius: 4,
+                fontSize: 11,
+              }}
+            >
+              https://txosna.app/api/webhooks/redsys
+            </code>
+          </div>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+        <button
+          onClick={onCancel}
+          style={{
+            padding: "10px 20px",
+            borderRadius: 8,
+            fontSize: 14,
+            fontWeight: 500,
+            color: "var(--adm-text-sec)",
+            background: "var(--adm-surface-hi)",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          Utzi
+        </button>
+        <button
+          onClick={handleSave}
+          style={{
+            padding: "10px 24px",
+            borderRadius: 8,
+            fontSize: 14,
+            fontWeight: 600,
+            color: "#fff",
+            background: "#e85d2f",
+            border: "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <Check size={18} />
+          {mode === "add" ? "Gehitu hornitzailea" : "Gorde aldaketak"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PaymentProvidersTab() {
+  const [providers, setProviders] = useState<PaymentProvider[]>([
+    {
+      id: "prov-1",
+      type: "stripe",
+      displayName: "Stripe (test)",
+      enabled: true,
+      testMode: true,
+      credentials: {},
+    },
+  ]);
+  const [saved, setSaved] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingProvider, setEditingProvider] = useState<PaymentProvider | null>(null);
+
+  const handleAddProvider = useCallback(
+    (data: Omit<PaymentProvider, "id">) => {
+      const newProvider: PaymentProvider = {
+        ...data,
+        id: `prov-${Date.now()}`,
+      };
+      setProviders([...providers, newProvider]);
+      setIsAddModalOpen(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    },
+    [providers]
+  );
+
+  const handleUpdateProvider = useCallback(
+    (data: Omit<PaymentProvider, "id">) => {
+      if (!editingProvider) return;
+      setProviders(
+        providers.map((p) => (p.id === editingProvider.id ? { ...data, id: p.id } : p))
+      );
+      setEditingProvider(null);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    },
+    [providers, editingProvider]
+  );
+
+  const handleToggleProvider = useCallback((id: string) => {
+    setProviders((prev) => prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)));
+  }, []);
+
+  const handleDeleteProvider = useCallback((id: string) => {
+    setProviders((prev) => prev.filter((p) => p.id !== id));
+  }, []);
+
+  return (
+    <div style={{ maxWidth: 680, display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* Header with add button */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <FormLabel style={{ marginBottom: 4 }}>Konfiguratutako hornitzaileak</FormLabel>
+          <div style={{ fontSize: 13, color: "var(--adm-text-sec)" }}>
+            {providers.length} hornitzaile · {providers.filter((p) => p.enabled).length} gaituta
+          </div>
+        </div>
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "10px 16px",
+            background: "#e85d2f",
+            color: "#fff",
+            fontSize: 14,
+            fontWeight: 600,
+            borderRadius: 8,
+            border: "none",
+            cursor: "pointer",
+            transition: "all 0.15s",
+          }}
+        >
+          <Plus size={18} />
+          Hornitzaile berria
+        </button>
+      </div>
+
+      {/* Provider list */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {providers.map((provider) => (
+          <ProviderCard
+            key={provider.id}
+            provider={provider}
+            onToggle={() => handleToggleProvider(provider.id)}
+            onEdit={() => setEditingProvider(provider)}
+            onDelete={() => handleDeleteProvider(provider.id)}
+          />
+        ))}
+
+        {providers.length === 0 && (
+          <div
+            style={{
+              padding: 48,
+              textAlign: "center",
+              background: "var(--adm-surface)",
+              border: "1px dashed var(--adm-border)",
+              borderRadius: 12,
+            }}
+          >
+            <CreditCard
+              size={40}
+              style={{ color: "var(--adm-text-sec)", marginBottom: 12, opacity: 0.5 }}
+            />
+            <div style={{ fontSize: 14, color: "var(--adm-text-pri)", fontWeight: 500, marginBottom: 4 }}>
+              Ez dago ordainketa hornitzailerik konfiguratuta
+            </div>
+            <div style={{ fontSize: 13, color: "var(--adm-text-sec)" }}>
+              Gehitu Stripe edo Redsys ordainketak jaso ditzazun
+            </div>
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              style={{
+                marginTop: 16,
+                padding: "8px 16px",
+                background: "var(--adm-surface-hi)",
+                color: "var(--adm-text-pri)",
+                fontSize: 14,
+                fontWeight: 500,
+                borderRadius: 8,
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              + Gehitu hornitzailea
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Global save indicator */}
+      {saved && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "12px 16px",
+            background: "#22c55e20",
+            border: "1px solid #22c55e40",
+            borderRadius: 8,
+            color: "#22c55e",
+            fontSize: 14,
+            fontWeight: 500,
+          }}
+        >
+          <Check size={18} />
+          Aldaketak ondo gorde dira
+        </div>
+      )}
+
+      {/* Add Provider Modal */}
+      <ProviderDialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen} title="Hornitzaile berria">
+        <ProviderForm
+          mode="add"
+          onSave={handleAddProvider}
+          onCancel={() => setIsAddModalOpen(false)}
+        />
+      </ProviderDialog>
+
+      {/* Edit Provider Modal */}
+      <ProviderDialog
+        open={editingProvider !== null}
+        onOpenChange={(open) => !open && setEditingProvider(null)}
+        title="Editatu hornitzailea"
+      >
+        {editingProvider && (
+          <ProviderForm
+            mode="edit"
+            initialData={editingProvider}
+            onSave={handleUpdateProvider}
+            onCancel={() => setEditingProvider(null)}
+          />
+        )}
+      </ProviderDialog>
+    </div>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
+export default function AssociationSettingsPage() {
+  const [activeTab, setActiveTab] = useState(0);
+
+  return (
+    <div style={{ padding: "32px 32px 60px" }}>
+      <h1 style={{ fontFamily: "var(--font-nunito, sans-serif)", fontSize: 24, fontWeight: 800, color: "var(--adm-text-pri)", marginBottom: 20 }}>
+        Elkartearen ezarpenak
+      </h1>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", borderBottom: "1px solid var(--adm-border)", marginBottom: 24 }}>
+        {TABS.map((tab, i) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(i)}
+            style={{ padding: "10px 16px", fontSize: 14, fontWeight: 500, border: "none", borderBottom: "2px solid", borderColor: activeTab === i ? "#e85d2f" : "transparent", background: "transparent", color: activeTab === i ? "#e85d2f" : "var(--adm-text-sec)" }}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 0 && <GeneralTab />}
+      {activeTab === 1 && <PaymentProvidersTab />}
+    </div>
+  );
+}

@@ -1,5 +1,6 @@
 # Txosna App — Test Plan
-*Session 18 — April 2026*
+
+_Session 18 — April 2026_
 
 ---
 
@@ -337,4 +338,4 @@ E2E tests run a real browser against a running instance. Use Playwright. Test th
 
 ---
 
-*Last updated: session 18*
+_Last updated: session 18_

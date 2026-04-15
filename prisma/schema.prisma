@@ -1,0 +1,386 @@
+// Txosna App — Prisma Schema
+// Based on domain model (session 17) + online payments (session 19)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  VOLUNTEER
+}
+
+enum CategoryType {
+  FOOD
+  DRINKS
+}
+
+enum CounterSetup {
+  SINGLE
+  SEPARATE
+}
+
+enum OrderingChannel {
+  COUNTER
+  PHONE_TO_COUNTER
+  SELF_SERVICE
+}
+
+enum PaymentMethod {
+  CASH
+  ONLINE
+}
+
+enum NotificationMode {
+  DISPLAY
+  PUSH
+  MANUAL
+}
+
+enum TxosnaStatus {
+  OPEN
+  PAUSED
+  CLOSED
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+}
+
+enum CancellationReason {
+  CUSTOMER
+  SOLD_OUT
+  TIMEOUT
+  END_OF_SERVICE
+  VOLUNTEER
+}
+
+enum TicketStatus {
+  RECEIVED
+  IN_PREPARATION
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum CounterType {
+  FOOD
+  DRINKS
+}
+
+enum PaymentProviderType {
+  STRIPE
+  REDSYS
+}
+
+enum PaymentMethodDetail {
+  CARD
+  APPLE_PAY
+  GOOGLE_PAY
+  BIZUM
+}
+
+// ── Models ───────────────────────────────────────────────────────────────────
+
+model Association {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  cif       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  volunteers        Volunteer[]
+  events            Event[]
+  categories        Category[]
+  txosnak           Txosna[]
+  paymentProviders PaymentProvider[]
+}
+
+model Volunteer {
+  id                     String    @id @default(cuid())
+  name                   String
+  email                  String    @unique
+  passwordHash           String
+  passwordResetToken     String?
+  passwordResetExpiresAt DateTime?
+  role                   Role      @default(VOLUNTEER)
+  active                 Boolean   @default(true)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  associationId String
+  association   Association @relation(fields: [associationId], references: [id])
+
+  confirmedOrders Order[] @relation("ConfirmedBy")
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  name      String
+  date      DateTime
+  location  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  associationId String
+  association   Association @relation(fields: [associationId], references: [id])
+
+  txosnak Txosna[]
+}
+
+model Category {
+  id           String       @id @default(cuid())
+  name         String
+  type         CategoryType
+  displayOrder Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  associationId String
+  association   Association @relation(fields: [associationId], references: [id])
+
+  products Product[]
+}
+
+model Product {
+  id                      String   @id @default(cuid())
+  name                    String
+  defaultPrice            Decimal  @db.Decimal(10, 2)
+  description             String?
+  customerImageUrl        String?
+  allergens               String[] // EU allergen codes
+  dietaryFlags            String[] // "vegetarian" | "vegan" | "gluten_free"
+  ageRestricted           Boolean  @default(false)
+  splittable              Boolean  @default(false)
+  requiresPreparation     Boolean  @default(false)
+  displayOrder            Int      @default(0)
+  ingredients             String?
+  preparationInstructions String? // Markdown
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  variantGroups  VariantGroup[]
+  modifiers      Modifier[]
+  txosnaProducts TxosnaProduct[]
+  orderLines     OrderLine[]
+}
+
+model VariantGroup {
+  id           String   @id @default(cuid())
+  name         String
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  options VariantOption[]
+}
+
+model VariantOption {
+  id           String   @id @default(cuid())
+  name         String
+  priceDelta   Decimal  @default(0) @db.Decimal(10, 2)
+  allergens    String[]
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  variantGroupId String
+  variantGroup   VariantGroup @relation(fields: [variantGroupId], references: [id], onDelete: Cascade)
+
+  selectedVariants SelectedVariant[]
+}
+
+model Modifier {
+  id           String   @id @default(cuid())
+  name         String
+  price        Decimal  @default(0) @db.Decimal(10, 2)
+  allergens    String[]
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  selectedModifiers SelectedModifier[]
+}
+
+model Txosna {
+  id                    String             @id @default(cuid())
+  name                  String
+  slug                  String             @unique
+  pinHash               String
+  counterSetup          CounterSetup       @default(SINGLE)
+  enabledChannels       OrderingChannel[]
+  enabledPaymentMethods PaymentMethod[]
+  notificationModes     NotificationMode[]
+  qrValidationEnabled   Boolean            @default(false)
+  printingEnabled       Boolean            @default(false)
+  status                TxosnaStatus       @default(OPEN)
+  isDemo                Boolean            @default(false)
+  pendingPaymentTimeout Int                @default(15) // minutes
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id])
+
+  associationId String
+  association   Association @relation(fields: [associationId], references: [id])
+
+  txosnaProducts        TxosnaProduct[]
+  orders                Order[]
+  txosnaPaymentProviders TxosnaPaymentProvider[]
+}
+
+model TxosnaProduct {
+  id                      String   @id @default(cuid())
+  priceOverride           Decimal? @db.Decimal(10, 2)
+  available               Boolean  @default(true)
+  soldOut                 Boolean  @default(false)
+  preparationInstructions String? // Markdown override
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  txosnaId  String
+  txosna    Txosna  @relation(fields: [txosnaId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([txosnaId, productId])
+}
+
+model Order {
+  id                  String              @id @default(cuid())
+  orderNumber         Int
+  verificationCode    String
+  status              OrderStatus         @default(PENDING_PAYMENT)
+  cancellationReason  CancellationReason?
+  channel             OrderingChannel
+  paymentMethod       PaymentMethod?
+  createdAt           DateTime            @default(now())
+  confirmedAt         DateTime?
+  expiresAt           DateTime?
+  customerName        String?
+  notificationToken   String?
+  localStorageKey     String?
+  notes               String?
+  fiscalReceiptRef    String? // Future: TicketBAI
+  paymentSessionId    String?
+  paymentMethodDetail PaymentMethodDetail?
+  updatedAt           DateTime            @updatedAt
+
+  txosnaId          String
+  txosna            Txosna      @relation(fields: [txosnaId], references: [id])
+  registeredById    String?
+  registeredBy      Volunteer?  @relation("ConfirmedBy", fields: [registeredById], references: [id])
+  paymentProviderId String?
+  paymentProvider   PaymentProvider? @relation(fields: [paymentProviderId], references: [id])
+
+  tickets OrderTicket[]
+
+  @@unique([txosnaId, orderNumber])
+}
+
+model OrderTicket {
+  id                  String       @id @default(cuid())
+  counterType         CounterType
+  status              TicketStatus @default(RECEIVED)
+  requiresPreparation Boolean      @default(false)
+  flagged             Boolean      @default(false)
+  orderChangedAlert   Boolean      @default(false)
+  createdAt           DateTime     @default(now())
+  readyAt             DateTime?
+  completedAt         DateTime?
+  updatedAt           DateTime     @updatedAt
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  lines OrderLine[]
+}
+
+model OrderLine {
+  id                String   @id @default(cuid())
+  unitPrice         Decimal  @db.Decimal(10, 2)
+  quantity          Int
+  splitInstructions String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  ticketId  String
+  ticket    OrderTicket @relation(fields: [ticketId], references: [id])
+  productId String
+  product   Product     @relation(fields: [productId], references: [id])
+
+  selectedVariants  SelectedVariant[]
+  selectedModifiers SelectedModifier[]
+}
+
+model SelectedVariant {
+  id         String  @id @default(cuid())
+  priceDelta Decimal @db.Decimal(10, 2)
+
+  orderLineId     String
+  orderLine       OrderLine     @relation(fields: [orderLineId], references: [id])
+  variantOptionId String
+  variantOption   VariantOption @relation(fields: [variantOptionId], references: [id])
+}
+
+model SelectedModifier {
+  id    String  @id @default(cuid())
+  price Decimal @db.Decimal(10, 2)
+
+  orderLineId String
+  orderLine   OrderLine @relation(fields: [orderLineId], references: [id])
+  modifierId  String
+  modifier    Modifier  @relation(fields: [modifierId], references: [id])
+}
+
+model PaymentProvider {
+  id           String              @id @default(cuid())
+  providerType PaymentProviderType
+  displayName  String?
+  enabled      Boolean             @default(true)
+  testMode     Boolean             @default(true)
+  credentials  String // Encrypted JSON (AES-256-GCM, server-side key)
+  bizumEnabled Boolean             @default(false)
+  verifiedAt   DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  associationId String
+  association   Association @relation(fields: [associationId], references: [id])
+
+  txosnaPaymentProviders TxosnaPaymentProvider[]
+  orders                 Order[]
+}
+
+model TxosnaPaymentProvider {
+  id String @id @default(cuid())
+
+  txosnaId String
+  txosna   Txosna @relation(fields: [txosnaId], references: [id], onDelete: Cascade)
+
+  paymentProviderId String
+  paymentProvider   PaymentProvider @relation(fields: [paymentProviderId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([txosnaId, paymentProviderId])
+}

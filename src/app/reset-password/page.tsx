@@ -1,0 +1,81 @@
+"use client";
+import { useState } from "react";
+import Link from "next/link";
+
+export default function ResetPasswordPage() {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSent(true);
+  }
+
+  return (
+    <div className="ops-theme min-h-screen flex items-center justify-center px-4">
+      <div style={{ width: "100%", maxWidth: 360 }}>
+        <div className="text-center mb-8">
+          <div
+            className="text-2xl font-black mb-1"
+            style={{ fontFamily: "var(--font-nunito), sans-serif", color: "var(--ops-text-pri)" }}
+          >
+            Txosna
+          </div>
+        </div>
+
+        <div
+          className="rounded-2xl p-6"
+          style={{ background: "var(--ops-surface)", border: "1px solid var(--ops-border)" }}
+        >
+          {!sent ? (
+            <>
+              <h1 className="text-lg font-bold mb-2" style={{ color: "var(--ops-text-pri)" }}>
+                Pasahitza berrezarri
+              </h1>
+              <p className="text-sm mb-5" style={{ color: "var(--ops-text-sec)" }}>
+                Zure posta elektronikoa sartu eta esteka bat bidaliko dizugu.
+              </p>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="zure@posta.eus"
+                  className="w-full rounded-xl px-4 py-3 text-sm outline-none"
+                  style={{
+                    background: "var(--ops-surface-hi)",
+                    border: "1px solid var(--ops-border)",
+                    color: "var(--ops-text-pri)",
+                  }}
+                />
+                <button
+                  type="submit"
+                  className="w-full rounded-xl py-3.5 font-bold text-sm"
+                  style={{ background: "var(--ops-orange)", color: "#fff", minHeight: 52 }}
+                >
+                  Esteka bidali
+                </button>
+              </form>
+            </>
+          ) : (
+            <div className="text-center py-4">
+              <div className="text-4xl mb-4">📬</div>
+              <h2 className="font-bold text-lg mb-2" style={{ color: "var(--ops-text-pri)" }}>
+                Egiaztatu zure posta
+              </h2>
+              <p className="text-sm" style={{ color: "var(--ops-text-sec)" }}>
+                Esteka bat bidali dizugu <strong style={{ color: "var(--ops-text-pri)" }}>{email}</strong> helbidera. Esteka 30 minututan iraungiko da.
+              </p>
+            </div>
+          )}
+
+          <div className="mt-5 text-center">
+            <Link href="/login" className="text-sm hover:underline" style={{ color: "var(--ops-text-sec)" }}>
+              ← Itzuli saioa hasteko
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
