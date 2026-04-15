@@ -1,1 +1,1 @@
-export { default } from "../../../txosna/page";
+export { default } from '../../../txosna/page';

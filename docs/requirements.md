@@ -28,11 +28,11 @@ The application is **multitenant** — a single instance serves multiple associa
 
 ## 3. Actors
 
-| Actor             | Access method                  | Description                                                                                                               |
-| ----------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Actor             | Access method                  | Description                                                                                                                                              |
+| ----------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Association admin | Email + password               | Full access: association configuration, payment providers, menu, events, txosnak, volunteer management; can also perform all volunteer operational tasks |
-| Volunteer         | Email + password + session PIN | Operational access: food counter, drinks counter, kitchen, status overview                                                |
-| Customer          | No account                     | Places and edits phone orders, receives notifications, shows pickup proof, downloads receipt                              |
+| Volunteer         | Email + password + session PIN | Operational access: food counter, drinks counter, kitchen, status overview                                                                               |
+| Customer          | No account                     | Places and edits phone orders, receives notifications, shows pickup proof, downloads receipt                                                             |
 
 > **Volunteer management is association-level only.** Volunteers have access to all txosnak in their association; there is no per-txosna volunteer assignment.
 
@@ -124,12 +124,12 @@ The application is **multitenant** — a single instance serves multiple associa
 
 The following are configured once at association level and shared across all txosnak in the association:
 
-| Setting                  | Notes                                                                        |
-| ------------------------ | ---------------------------------------------------------------------------- |
-| Association name         | Displayed throughout the admin UI                                            |
-| Contact email            | Administrative contact for the association                                   |
-| Payment providers        | Configure Stripe and/or Redsys credentials once; each provider can be enabled or disabled |
-| Volunteer management     | Create, deactivate, and manage roles for all volunteers in the association   |
+| Setting              | Notes                                                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------- |
+| Association name     | Displayed throughout the admin UI                                                         |
+| Contact email        | Administrative contact for the association                                                |
+| Payment providers    | Configure Stripe and/or Redsys credentials once; each provider can be enabled or disabled |
+| Volunteer management | Create, deactivate, and manage roles for all volunteers in the association                |
 
 ### Payment providers
 
@@ -142,10 +142,10 @@ The following are configured once at association level and shared across all txo
 
 ### Provider credentials
 
-| Provider | Fields                                          |
-| -------- | ----------------------------------------------- |
-| Stripe   | `publishableKey`, `secretKey`, `webhookSecret`  |
-| Redsys   | `merchantCode` (FUC), `secretKey`, `terminal`   |
+| Provider | Fields                                         |
+| -------- | ---------------------------------------------- |
+| Stripe   | `publishableKey`, `secretKey`, `webhookSecret` |
+| Redsys   | `merchantCode` (FUC), `secretKey`, `terminal`  |
 
 ---
 
@@ -518,25 +518,25 @@ All tickets COMPLETED → receipt available for download
 
 ## 32. Screens Overview
 
-| Screen                 | Used by                  | Device                     | Notes                                                                                             |
-| ---------------------- | ------------------------ | -------------------------- | ------------------------------------------------------------------------------------------------- |
-| Registration              | First admin              | Any                        | One-time setup                                                                                                                          |
-| Onboarding guide          | First admin              | Any                        | Checklist-style setup walkthrough                                                                                                       |
-| Association settings      | Admin                    | Any                        | Association name, payment providers (Stripe/Redsys credentials), volunteer management                                                  |
-| Master menu management    | Admin                    | Any                        | Association-level catalog: categories, products, variants, modifiers, allergens, dietary flags, preparation instructions, display order |
-| Txosna configuration      | Admin                    | Any                        | Per-txosna config (counter setup, channels, enabled providers from association, QR, demo mode)                                         |
-| Txosna product selection  | Admin                    | Any                        | Per-txosna: toggle which master catalog products to serve; optionally override price and preparation instructions                       |
-| Volunteer login           | Any volunteer            | Any                        | Email + password; password reset available                                                                                              |
-| Session PIN entry      | Any volunteer            | Any                        | Selects food counter, drinks counter, or kitchen                                                  |
-| Menu & ordering        | Customer                 | Their phone                | Images, allergens, dietary flags, variants, age declaration, wait time; public URL                |
-| Food counter screen    | Volunteer (food mode)    | Any                        | Food tickets primary; drinks accessible; change calculator; age prompt; pause                     |
-| Drinks counter screen  | Volunteer (drinks mode)  | Any                        | Drinks tickets primary; food accessible; speed-optimised; age prompt; pause                       |
-| Kitchen screen (KDS)   | Volunteer (kitchen mode) | Any                        | All tickets; preparation instructions on demand; sold out; slow order highlights; pause and close |
-| Status overview        | Any logged-in volunteer  | Any                        | Live snapshot; handover tool                                                                      |
-| Order board            | Everyone                 | Any (best on large screen) | Live ticket status; accessible via public txosna URL                                              |
-| Pickup proof           | Customer                 | Their phone                | Per ticket; QR if enabled; counter type shown; high contrast                                      |
-| Order status / receipt | Customer                 | Their phone                | Current ticket statuses; PDF download when all completed                                          |
-| Event report           | Admin                    | Any                        | Post-event summary; downloadable PDF                                                              |
+| Screen                   | Used by                  | Device                     | Notes                                                                                                                                   |
+| ------------------------ | ------------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Registration             | First admin              | Any                        | One-time setup                                                                                                                          |
+| Onboarding guide         | First admin              | Any                        | Checklist-style setup walkthrough                                                                                                       |
+| Association settings     | Admin                    | Any                        | Association name, payment providers (Stripe/Redsys credentials), volunteer management                                                   |
+| Master menu management   | Admin                    | Any                        | Association-level catalog: categories, products, variants, modifiers, allergens, dietary flags, preparation instructions, display order |
+| Txosna configuration     | Admin                    | Any                        | Per-txosna config (counter setup, channels, enabled providers from association, QR, demo mode)                                          |
+| Txosna product selection | Admin                    | Any                        | Per-txosna: toggle which master catalog products to serve; optionally override price and preparation instructions                       |
+| Volunteer login          | Any volunteer            | Any                        | Email + password; password reset available                                                                                              |
+| Session PIN entry        | Any volunteer            | Any                        | Selects food counter, drinks counter, or kitchen                                                                                        |
+| Menu & ordering          | Customer                 | Their phone                | Images, allergens, dietary flags, variants, age declaration, wait time; public URL                                                      |
+| Food counter screen      | Volunteer (food mode)    | Any                        | Food tickets primary; drinks accessible; change calculator; age prompt; pause                                                           |
+| Drinks counter screen    | Volunteer (drinks mode)  | Any                        | Drinks tickets primary; food accessible; speed-optimised; age prompt; pause                                                             |
+| Kitchen screen (KDS)     | Volunteer (kitchen mode) | Any                        | All tickets; preparation instructions on demand; sold out; slow order highlights; pause and close                                       |
+| Status overview          | Any logged-in volunteer  | Any                        | Live snapshot; handover tool                                                                                                            |
+| Order board              | Everyone                 | Any (best on large screen) | Live ticket status; accessible via public txosna URL                                                                                    |
+| Pickup proof             | Customer                 | Their phone                | Per ticket; QR if enabled; counter type shown; high contrast                                                                            |
+| Order status / receipt   | Customer                 | Their phone                | Current ticket statuses; PDF download when all completed                                                                                |
+| Event report             | Admin                    | Any                        | Post-event summary; downloadable PDF                                                                                                    |
 
 ---
 

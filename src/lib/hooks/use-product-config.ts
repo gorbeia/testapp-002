@@ -1,6 +1,6 @@
-"use client";
-import { useState } from "react";
-import type { MockProduct } from "@/lib/mock-data";
+'use client';
+import { useState } from 'react';
+import type { MockProduct } from '@/lib/mock-data';
 
 interface UseProductConfigOptions {
   initialQty?: number;
@@ -15,11 +15,10 @@ export function calcUnitPrice(
   modifierNames: string[]
 ): number {
   const variantDelta =
-    product.variantGroups
-      .flatMap(vg => vg.options)
-      .find(o => o.name === variantName)?.priceDelta ?? 0;
+    product.variantGroups.flatMap((vg) => vg.options).find((o) => o.name === variantName)
+      ?.priceDelta ?? 0;
   const modifiersTotal = modifierNames.reduce(
-    (sum, name) => sum + (product.modifiers.find(m => m.name === name)?.price ?? 0),
+    (sum, name) => sum + (product.modifiers.find((m) => m.name === name)?.price ?? 0),
     0
   );
   return product.price + variantDelta + modifiersTotal;
@@ -32,17 +31,13 @@ export function useProductConfig(options: UseProductConfigOptions = {}) {
   const [removals, setRemovals] = useState<string[]>(options.initialRemovals ?? []);
 
   const setQty = (q: number | ((prev: number) => number)) =>
-    setQtyState(prev => Math.max(1, typeof q === "function" ? q(prev) : q));
+    setQtyState((prev) => Math.max(1, typeof q === 'function' ? q(prev) : q));
 
   const toggleMod = (name: string) =>
-    setMods(prev =>
-      prev.includes(name) ? prev.filter(m => m !== name) : [...prev, name]
-    );
+    setMods((prev) => (prev.includes(name) ? prev.filter((m) => m !== name) : [...prev, name]));
 
   const toggleRemoval = (name: string) =>
-    setRemovals(prev =>
-      prev.includes(name) ? prev.filter(r => r !== name) : [...prev, name]
-    );
+    setRemovals((prev) => (prev.includes(name) ? prev.filter((r) => r !== name) : [...prev, name]));
 
   const reset = () => {
     setQtyState(1);

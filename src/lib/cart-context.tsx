@@ -1,6 +1,6 @@
-"use client";
-import { createContext, useContext, useState, ReactNode } from "react";
-import type { CartItem } from "./mock-data";
+'use client';
+import { createContext, useContext, useState, ReactNode } from 'react';
+import type { CartItem } from './mock-data';
 
 interface CartContextValue {
   items: CartItem[];
@@ -22,9 +22,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   function addItem(item: CartItem) {
     setItems((prev) => {
       const existing = prev.find(
-        (i) =>
-          i.productId === item.productId &&
-          i.selectedVariant === item.selectedVariant
+        (i) => i.productId === item.productId && i.selectedVariant === item.selectedVariant
       );
       if (existing) {
         return prev.map((i) =>
@@ -41,17 +39,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   function updateQty(productId: string, qty: number) {
     if (qty <= 0) return removeItem(productId);
-    setItems((prev) =>
-      prev.map((i) => (i.productId === productId ? { ...i, quantity: qty } : i))
-    );
+    setItems((prev) => prev.map((i) => (i.productId === productId ? { ...i, quantity: qty } : i)));
   }
 
   function updateItem(index: number, patch: Partial<CartItem>) {
-    setItems(prev => prev.map((item, i) => i === index ? { ...item, ...patch } : item));
+    setItems((prev) => prev.map((item, i) => (i === index ? { ...item, ...patch } : item)));
   }
 
   function removeAt(index: number) {
-    setItems(prev => prev.filter((_, i) => i !== index));
+    setItems((prev) => prev.filter((_, i) => i !== index));
   }
 
   function clear() {
@@ -73,6 +69,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
 export function useCart() {
   const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart must be used within CartProvider");
+  if (!ctx) throw new Error('useCart must be used within CartProvider');
   return ctx;
 }

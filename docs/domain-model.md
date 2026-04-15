@@ -146,23 +146,23 @@ _Session 17 — April 2026_
 
 ### PaymentProvider
 
-| Attribute    | Type        | Notes                                                                 |
-| ------------ | ----------- | --------------------------------------------------------------------- |
-| provider_type | enum       | STRIPE or REDSYS                                                      |
-| display_name | text        | Optional friendly label (e.g. "Stripe test")                          |
-| enabled      | boolean     | Whether the provider is active for the association                    |
-| credentials  | encrypted   | Provider-specific API keys/secrets; AES-256-GCM server-side encrypted |
-| bizum_enabled | boolean    | Whether Bizum is offered (Redsys only)                                |
-| test_mode    | boolean     | Whether live or test credentials are in use                           |
-| verified_at  | datetime    | Last time credentials were verified against the provider              |
-| association  | Association | Owner — payment providers belong to the association, not per txosna   |
+| Attribute     | Type        | Notes                                                                 |
+| ------------- | ----------- | --------------------------------------------------------------------- |
+| provider_type | enum        | STRIPE or REDSYS                                                      |
+| display_name  | text        | Optional friendly label (e.g. "Stripe test")                          |
+| enabled       | boolean     | Whether the provider is active for the association                    |
+| credentials   | encrypted   | Provider-specific API keys/secrets; AES-256-GCM server-side encrypted |
+| bizum_enabled | boolean     | Whether Bizum is offered (Redsys only)                                |
+| test_mode     | boolean     | Whether live or test credentials are in use                           |
+| verified_at   | datetime    | Last time credentials were verified against the provider              |
+| association   | Association | Owner — payment providers belong to the association, not per txosna   |
 
 **Credentials shape by provider:**
 
-| Provider | Fields                                          |
-| -------- | ----------------------------------------------- |
-| Stripe   | `publishableKey`, `secretKey`, `webhookSecret`  |
-| Redsys   | `merchantCode` (FUC), `secretKey`, `terminal`   |
+| Provider | Fields                                         |
+| -------- | ---------------------------------------------- |
+| Stripe   | `publishableKey`, `secretKey`, `webhookSecret` |
+| Redsys   | `merchantCode` (FUC), `secretKey`, `terminal`  |
 
 ---
 
@@ -170,9 +170,9 @@ _Session 17 — April 2026_
 
 Junction table linking a txosna to the association's payment providers it accepts.
 
-| Attribute       | Type            | Notes                                      |
-| --------------- | --------------- | ------------------------------------------ |
-| txosna          | Txosna          | The stall                                  |
+| Attribute        | Type            | Notes                                      |
+| ---------------- | --------------- | ------------------------------------------ |
+| txosna           | Txosna          | The stall                                  |
 | payment_provider | PaymentProvider | The provider being enabled for this txosna |
 
 A txosna can only enable providers that exist in its association.
@@ -464,25 +464,25 @@ All tickets COMPLETED → receipt available for download
 
 ## Screens Overview
 
-| Screen                 | Used by                  | Device                     | Notes                                                                                             |
-| ---------------------- | ------------------------ | -------------------------- | ------------------------------------------------------------------------------------------------- |
-| Registration              | First admin              | Any                        | One-time setup                                                                                                                              |
-| Onboarding guide          | First admin              | Any                        | Checklist-style setup walkthrough                                                                                                           |
-| Association settings      | Admin                    | Any                        | Association name, payment providers (Stripe/Redsys credentials), volunteer management                                                      |
-| Master menu management    | Admin                    | Any                        | Association-level catalog: categories, products, variants, modifiers, allergens, dietary flags, preparation instructions, display order     |
-| Txosna configuration      | Admin                    | Any                        | Per-txosna config (counter setup, channels, enabled providers from association, QR, demo mode)                                             |
-| Txosna product selection  | Admin                    | Any                        | Per-txosna: toggle which master catalog products to serve; optionally override price and preparation instructions                          |
-| Volunteer login           | Any volunteer            | Any                        | Email + password; password reset available                                                                                                  |
-| Session PIN entry      | Any volunteer            | Any                        | Selects food counter, drinks counter, or kitchen                                                  |
-| Menu & ordering        | Customer                 | Their phone                | Public txosna URL; images, allergens, dietary flags, variants, age declaration, wait time         |
-| Food counter screen    | Volunteer (food mode)    | Any                        | Food tickets primary; drinks accessible; change calculator; age prompt; pause                     |
-| Drinks counter screen  | Volunteer (drinks mode)  | Any                        | Speed-optimised; drinks primary; food accessible; age prompt; pause                               |
-| Kitchen screen (KDS)   | Volunteer (kitchen mode) | Any                        | All tickets; preparation instructions on demand; sold out; slow order highlights; pause and close |
-| Status overview        | Any logged-in volunteer  | Any                        | Live snapshot; handover tool                                                                      |
-| Order board            | Everyone                 | Any (best on large screen) | Live ticket status; public txosna URL                                                             |
-| Pickup proof           | Customer                 | Their phone                | Per ticket; QR if enabled; counter type shown; high contrast                                      |
-| Order status / receipt | Customer                 | Their phone                | Current statuses; PDF download when all completed                                                 |
-| Event report           | Admin                    | Any                        | Post-event summary; downloadable PDF                                                              |
+| Screen                   | Used by                  | Device                     | Notes                                                                                                                                   |
+| ------------------------ | ------------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Registration             | First admin              | Any                        | One-time setup                                                                                                                          |
+| Onboarding guide         | First admin              | Any                        | Checklist-style setup walkthrough                                                                                                       |
+| Association settings     | Admin                    | Any                        | Association name, payment providers (Stripe/Redsys credentials), volunteer management                                                   |
+| Master menu management   | Admin                    | Any                        | Association-level catalog: categories, products, variants, modifiers, allergens, dietary flags, preparation instructions, display order |
+| Txosna configuration     | Admin                    | Any                        | Per-txosna config (counter setup, channels, enabled providers from association, QR, demo mode)                                          |
+| Txosna product selection | Admin                    | Any                        | Per-txosna: toggle which master catalog products to serve; optionally override price and preparation instructions                       |
+| Volunteer login          | Any volunteer            | Any                        | Email + password; password reset available                                                                                              |
+| Session PIN entry        | Any volunteer            | Any                        | Selects food counter, drinks counter, or kitchen                                                                                        |
+| Menu & ordering          | Customer                 | Their phone                | Public txosna URL; images, allergens, dietary flags, variants, age declaration, wait time                                               |
+| Food counter screen      | Volunteer (food mode)    | Any                        | Food tickets primary; drinks accessible; change calculator; age prompt; pause                                                           |
+| Drinks counter screen    | Volunteer (drinks mode)  | Any                        | Speed-optimised; drinks primary; food accessible; age prompt; pause                                                                     |
+| Kitchen screen (KDS)     | Volunteer (kitchen mode) | Any                        | All tickets; preparation instructions on demand; sold out; slow order highlights; pause and close                                       |
+| Status overview          | Any logged-in volunteer  | Any                        | Live snapshot; handover tool                                                                                                            |
+| Order board              | Everyone                 | Any (best on large screen) | Live ticket status; public txosna URL                                                                                                   |
+| Pickup proof             | Customer                 | Their phone                | Per ticket; QR if enabled; counter type shown; high contrast                                                                            |
+| Order status / receipt   | Customer                 | Their phone                | Current statuses; PDF download when all completed                                                                                       |
+| Event report             | Admin                    | Any                        | Post-event summary; downloadable PDF                                                                                                    |
 
 ---
 

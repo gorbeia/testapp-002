@@ -1,5 +1,5 @@
-"use client";
-import { useEffect, useState, ReactNode } from "react";
+'use client';
+import { useEffect, useState, ReactNode } from 'react';
 
 interface BottomSheetProps {
   open: boolean;
@@ -33,8 +33,8 @@ export function BottomSheet({ open, onClose, children, title }: BottomSheetProps
       <div
         className="relative bg-white rounded-t-2xl max-h-[90vh] overflow-y-auto"
         style={{
-          transform: open ? "translateY(0)" : "translateY(100%)",
-          transition: "transform 0.3s ease-out",
+          transform: open ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.3s ease-out',
         }}
         onTransitionEnd={handleTransitionEnd}
       >

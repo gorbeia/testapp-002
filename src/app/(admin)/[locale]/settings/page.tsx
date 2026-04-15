@@ -1,11 +1,11 @@
-"use client";
-import React, { useState, useCallback } from "react";
-import { MaskedInput } from "@/components/ui/masked-input";
-import { MOCK_ASSOCIATION } from "@/lib/mock-data";
-import { Dialog } from "@base-ui/react/dialog";
-import { X, Plus, CreditCard, Building2, Power, Trash2, Edit2, Check } from "lucide-react";
+'use client';
+import React, { useState, useCallback } from 'react';
+import { MaskedInput } from '@/components/ui/masked-input';
+import { MOCK_ASSOCIATION } from '@/lib/mock-data';
+import { Dialog } from '@base-ui/react/dialog';
+import { X, Plus, CreditCard, Building2, Power, Trash2, Edit2, Check } from 'lucide-react';
 
-const TABS = ["Elkartea", "Ordainketa"];
+const TABS = ['Elkartea', 'Ordainketa'];
 
 // ── Dialog Component ─────────────────────────────────────────────────────────
 function ProviderDialog({
@@ -24,44 +24,44 @@ function ProviderDialog({
       <Dialog.Portal>
         <Dialog.Backdrop
           style={{
-            position: "fixed",
+            position: 'fixed',
             inset: 0,
-            background: "rgba(0,0,0,0.5)",
+            background: 'rgba(0,0,0,0.5)',
             zIndex: 50,
           }}
         />
         <Dialog.Popup
           style={{
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            background: "var(--adm-surface, #1a1d27)",
-            border: "1px solid var(--adm-border, #2a2d3a)",
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'var(--adm-surface, #1a1d27)',
+            border: '1px solid var(--adm-border, #2a2d3a)',
             borderRadius: 16,
             padding: 0,
-            width: "90vw",
+            width: '90vw',
             maxWidth: 520,
-            maxHeight: "85vh",
-            overflow: "auto",
+            maxHeight: '85vh',
+            overflow: 'auto',
             zIndex: 51,
-            outline: "none",
+            outline: 'none',
           }}
         >
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "20px 24px",
-              borderBottom: "1px solid var(--adm-border, #2a2d3a)",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '20px 24px',
+              borderBottom: '1px solid var(--adm-border, #2a2d3a)',
             }}
           >
             <Dialog.Title
               style={{
                 fontSize: 18,
                 fontWeight: 700,
-                color: "var(--adm-text-pri, #f8f9fa)",
+                color: 'var(--adm-text-pri, #f8f9fa)',
                 margin: 0,
               }}
             >
@@ -72,13 +72,13 @@ function ProviderDialog({
                 width: 32,
                 height: 32,
                 borderRadius: 8,
-                border: "none",
-                background: "transparent",
-                color: "var(--adm-text-sec, #9ca3af)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                border: 'none',
+                background: 'transparent',
+                color: 'var(--adm-text-sec, #9ca3af)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               <X size={20} />
@@ -92,12 +92,30 @@ function ProviderDialog({
 }
 
 // ── Shared form helpers ─────────────────────────────────────────────────────────
-function FormLabel({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return <div style={{ fontSize: 14, fontWeight: 600, color: "var(--adm-text-pri)", marginBottom: 6, ...style }}>{children}</div>;
+function FormLabel({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      style={{
+        fontSize: 14,
+        fontWeight: 600,
+        color: 'var(--adm-text-pri)',
+        marginBottom: 6,
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
 }
 
 function FormHint({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontSize: 12, color: "var(--adm-text-sec)", marginTop: 4 }}>{children}</div>;
+  return <div style={{ fontSize: 12, color: 'var(--adm-text-sec)', marginTop: 4 }}>{children}</div>;
 }
 
 function ToggleRow({
@@ -112,16 +130,48 @@ function ToggleRow({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px", background: "var(--adm-surface)", border: "1px solid var(--adm-border)", borderRadius: 12 }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '16px',
+        background: 'var(--adm-surface)',
+        border: '1px solid var(--adm-border)',
+        borderRadius: 12,
+      }}
+    >
       <div>
-        <div style={{ fontSize: 14, fontWeight: 500, color: "var(--adm-text-pri)" }}>{label}</div>
-        {hint && <div style={{ fontSize: 12, color: "var(--adm-text-sec)", marginTop: 2 }}>{hint}</div>}
+        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--adm-text-pri)' }}>{label}</div>
+        {hint && (
+          <div style={{ fontSize: 12, color: 'var(--adm-text-sec)', marginTop: 2 }}>{hint}</div>
+        )}
       </div>
       <button
         onClick={() => onChange(!checked)}
-        style={{ width: 44, height: 24, borderRadius: 99, border: "none", background: checked ? "#e85d2f" : "var(--adm-border)", cursor: "pointer", position: "relative", transition: "background 0.2s" }}
+        style={{
+          width: 44,
+          height: 24,
+          borderRadius: 99,
+          border: 'none',
+          background: checked ? '#e85d2f' : 'var(--adm-border)',
+          cursor: 'pointer',
+          position: 'relative',
+          transition: 'background 0.2s',
+        }}
       >
-        <span style={{ position: "absolute", top: 2, left: checked ? 22 : 2, width: 20, height: 20, borderRadius: "50%", background: "var(--adm-surface)", transition: "left 0.2s" }} />
+        <span
+          style={{
+            position: 'absolute',
+            top: 2,
+            left: checked ? 22 : 2,
+            width: 20,
+            height: 20,
+            borderRadius: '50%',
+            background: 'var(--adm-surface)',
+            transition: 'left 0.2s',
+          }}
+        />
       </button>
     </div>
   );
@@ -131,9 +181,19 @@ function SaveButton({ saved, onClick }: { saved: boolean; onClick: () => void })
   return (
     <button
       onClick={onClick}
-      style={{ alignSelf: "flex-start", padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, color: "#fff", background: saved ? "#22c55e" : "#e85d2f", border: "none", cursor: "pointer" }}
+      style={{
+        alignSelf: 'flex-start',
+        padding: '10px 24px',
+        borderRadius: 8,
+        fontSize: 14,
+        fontWeight: 600,
+        color: '#fff',
+        background: saved ? '#22c55e' : '#e85d2f',
+        border: 'none',
+        cursor: 'pointer',
+      }}
     >
-      {saved ? "✓ Gordeta" : "Gorde"}
+      {saved ? '✓ Gordeta' : 'Gorde'}
     </button>
   );
 }
@@ -141,20 +201,29 @@ function SaveButton({ saved, onClick }: { saved: boolean; onClick: () => void })
 // ── Tab 1: General (Association) ───────────────────────────────────────────────
 function GeneralTab() {
   const [name, setName] = useState(MOCK_ASSOCIATION.name);
-  const [email, setEmail] = useState("kontaktua@elkartea.eus");
-  const [phone, setPhone] = useState("");
-  const [cif, setCif] = useState("");
+  const [email, setEmail] = useState('kontaktua@elkartea.eus');
+  const [phone, setPhone] = useState('');
+  const [cif, setCif] = useState('');
   const [saved, setSaved] = useState(false);
 
   return (
-    <div style={{ maxWidth: 520, display: "flex", flexDirection: "column", gap: 20 }}>
+    <div style={{ maxWidth: 520, display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
         <FormLabel>Elkartearen izena</FormLabel>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--adm-border)", background: "var(--adm-surface)", color: "var(--adm-text-pri)", fontSize: 14, outline: "none" }}
+          style={{
+            width: '100%',
+            padding: '10px 12px',
+            borderRadius: 8,
+            border: '1px solid var(--adm-border)',
+            background: 'var(--adm-surface)',
+            color: 'var(--adm-text-pri)',
+            fontSize: 14,
+            outline: 'none',
+          }}
         />
       </div>
 
@@ -165,7 +234,16 @@ function GeneralTab() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="kontaktua@elkartea.eus"
-          style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--adm-border)", background: "var(--adm-surface)", color: "var(--adm-text-pri)", fontSize: 14, outline: "none" }}
+          style={{
+            width: '100%',
+            padding: '10px 12px',
+            borderRadius: 8,
+            border: '1px solid var(--adm-border)',
+            background: 'var(--adm-surface)',
+            color: 'var(--adm-text-pri)',
+            fontSize: 14,
+            outline: 'none',
+          }}
         />
         <FormHint>Erabilera administratiboetarako</FormHint>
       </div>
@@ -177,7 +255,16 @@ function GeneralTab() {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="600 000 000"
-          style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--adm-border)", background: "var(--adm-surface)", color: "var(--adm-text-pri)", fontSize: 14, outline: "none" }}
+          style={{
+            width: '100%',
+            padding: '10px 12px',
+            borderRadius: 8,
+            border: '1px solid var(--adm-border)',
+            background: 'var(--adm-surface)',
+            color: 'var(--adm-text-pri)',
+            fontSize: 14,
+            outline: 'none',
+          }}
         />
       </div>
 
@@ -188,7 +275,16 @@ function GeneralTab() {
           value={cif}
           onChange={(e) => setCif(e.target.value)}
           placeholder="A00000000"
-          style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--adm-border)", background: "var(--adm-surface)", color: "var(--adm-text-pri)", fontSize: 14, outline: "none" }}
+          style={{
+            width: '100%',
+            padding: '10px 12px',
+            borderRadius: 8,
+            border: '1px solid var(--adm-border)',
+            background: 'var(--adm-surface)',
+            color: 'var(--adm-text-pri)',
+            fontSize: 14,
+            outline: 'none',
+          }}
         />
         <FormHint>Elkartearen identifikazio fiskala</FormHint>
       </div>
@@ -205,7 +301,7 @@ function GeneralTab() {
 }
 
 // ── Tab 2: Payment Providers ─────────────────────────────────────────────────
-type ProviderType = "stripe" | "redsys";
+type ProviderType = 'stripe' | 'redsys';
 
 interface PaymentCredentials {
   // Stripe
@@ -230,15 +326,15 @@ interface PaymentProvider {
 const PROVIDER_CONFIG = {
   stripe: {
     icon: CreditCard,
-    name: "Stripe",
-    hint: "Nazioarteko plataforma",
-    color: "#635bff",
+    name: 'Stripe',
+    hint: 'Nazioarteko plataforma',
+    color: '#635bff',
   },
   redsys: {
     icon: Building2,
-    name: "Redsys",
-    hint: "Banku espainiarrak",
-    color: "#e85d2f",
+    name: 'Redsys',
+    hint: 'Banku espainiarrak',
+    color: '#e85d2f',
   },
 };
 
@@ -259,14 +355,14 @@ function ProviderCard({
   return (
     <div
       style={{
-        display: "flex",
-        alignItems: "center",
+        display: 'flex',
+        alignItems: 'center',
         gap: 16,
         padding: 16,
-        background: "var(--adm-surface)",
-        border: "1px solid var(--adm-border)",
+        background: 'var(--adm-surface)',
+        border: '1px solid var(--adm-border)',
         borderRadius: 12,
-        transition: "all 0.15s",
+        transition: 'all 0.15s',
       }}
     >
       <div
@@ -274,10 +370,10 @@ function ProviderCard({
           width: 48,
           height: 48,
           borderRadius: 12,
-          background: config.color + "15",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          background: config.color + '15',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           flexShrink: 0,
         }}
       >
@@ -289,9 +385,9 @@ function ProviderCard({
           style={{
             fontSize: 14,
             fontWeight: 600,
-            color: "var(--adm-text-pri)",
-            display: "flex",
-            alignItems: "center",
+            color: 'var(--adm-text-pri)',
+            display: 'flex',
+            alignItems: 'center',
             gap: 8,
           }}
         >
@@ -301,9 +397,9 @@ function ProviderCard({
               style={{
                 fontSize: 11,
                 fontWeight: 500,
-                padding: "2px 8px",
-                background: "#f59e0b20",
-                color: "#f59e0b",
+                padding: '2px 8px',
+                background: '#f59e0b20',
+                color: '#f59e0b',
                 borderRadius: 99,
               }}
             >
@@ -311,27 +407,27 @@ function ProviderCard({
             </span>
           )}
         </div>
-        <div style={{ fontSize: 12, color: "var(--adm-text-sec)", marginTop: 2 }}>
-          {provider.enabled ? "Gaituta" : "Desgaituta"} · {config.hint}
+        <div style={{ fontSize: 12, color: 'var(--adm-text-sec)', marginTop: 2 }}>
+          {provider.enabled ? 'Gaituta' : 'Desgaituta'} · {config.hint}
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 6 }}>
+      <div style={{ display: 'flex', gap: 6 }}>
         <button
           onClick={onToggle}
-          title={provider.enabled ? "Desgaitu" : "Gaitu"}
+          title={provider.enabled ? 'Desgaitu' : 'Gaitu'}
           style={{
             width: 36,
             height: 36,
             borderRadius: 8,
-            border: "none",
-            background: provider.enabled ? "#22c55e20" : "var(--adm-surface-hi)",
-            color: provider.enabled ? "#22c55e" : "var(--adm-text-sec)",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "all 0.15s",
+            border: 'none',
+            background: provider.enabled ? '#22c55e20' : 'var(--adm-surface-hi)',
+            color: provider.enabled ? '#22c55e' : 'var(--adm-text-sec)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.15s',
           }}
         >
           <Power size={18} />
@@ -343,14 +439,14 @@ function ProviderCard({
             width: 36,
             height: 36,
             borderRadius: 8,
-            border: "none",
-            background: "var(--adm-surface-hi)",
-            color: "var(--adm-text-sec)",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "all 0.15s",
+            border: 'none',
+            background: 'var(--adm-surface-hi)',
+            color: 'var(--adm-text-sec)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.15s',
           }}
         >
           <Edit2 size={18} />
@@ -362,14 +458,14 @@ function ProviderCard({
             width: 36,
             height: 36,
             borderRadius: 8,
-            border: "none",
-            background: "var(--adm-surface-hi)",
-            color: "#ef4444",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "all 0.15s",
+            border: 'none',
+            background: 'var(--adm-surface-hi)',
+            color: '#ef4444',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.15s',
           }}
         >
           <Trash2 size={18} />
@@ -385,24 +481,28 @@ function ProviderForm({
   onSave,
   onCancel,
 }: {
-  mode: "add" | "edit";
+  mode: 'add' | 'edit';
   initialData?: PaymentProvider;
-  onSave: (provider: Omit<PaymentProvider, "id">) => void;
+  onSave: (provider: Omit<PaymentProvider, 'id'>) => void;
   onCancel: () => void;
 }) {
-  const [providerType, setProviderType] = useState<ProviderType>(initialData?.type || "stripe");
-  const [displayName, setDisplayName] = useState(initialData?.displayName || "");
+  const [providerType, setProviderType] = useState<ProviderType>(initialData?.type || 'stripe');
+  const [displayName, setDisplayName] = useState(initialData?.displayName || '');
   const [testMode, setTestMode] = useState(initialData?.testMode ?? true);
-  const [stripePublic, setStripePublic] = useState(initialData?.credentials?.stripePublic || "");
-  const [stripeSecret, setStripeSecret] = useState(initialData?.credentials?.stripeSecret || "");
-  const [stripeWebhook, setStripeWebhook] = useState(initialData?.credentials?.stripeWebhook || "");
-  const [redsysMerchant, setRedsysMerchant] = useState(initialData?.credentials?.redsysMerchant || "");
-  const [redsysKey, setRedsysKey] = useState(initialData?.credentials?.redsysKey || "");
-  const [redsysTerminal, setRedsysTerminal] = useState(initialData?.credentials?.redsysTerminal || "1");
+  const [stripePublic, setStripePublic] = useState(initialData?.credentials?.stripePublic || '');
+  const [stripeSecret, setStripeSecret] = useState(initialData?.credentials?.stripeSecret || '');
+  const [stripeWebhook, setStripeWebhook] = useState(initialData?.credentials?.stripeWebhook || '');
+  const [redsysMerchant, setRedsysMerchant] = useState(
+    initialData?.credentials?.redsysMerchant || ''
+  );
+  const [redsysKey, setRedsysKey] = useState(initialData?.credentials?.redsysKey || '');
+  const [redsysTerminal, setRedsysTerminal] = useState(
+    initialData?.credentials?.redsysTerminal || '1'
+  );
 
   const handleSave = useCallback(() => {
     const credentials: PaymentCredentials =
-      providerType === "stripe"
+      providerType === 'stripe'
         ? { stripePublic, stripeSecret, stripeWebhook }
         : { redsysMerchant, redsysKey, redsysTerminal };
 
@@ -413,13 +513,25 @@ function ProviderForm({
       testMode,
       credentials,
     });
-  }, [providerType, displayName, testMode, stripePublic, stripeSecret, stripeWebhook, redsysMerchant, redsysKey, redsysTerminal, initialData, onSave]);
+  }, [
+    providerType,
+    displayName,
+    testMode,
+    stripePublic,
+    stripeSecret,
+    stripeWebhook,
+    redsysMerchant,
+    redsysKey,
+    redsysTerminal,
+    initialData,
+    onSave,
+  ]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Provider type selection (only when adding) */}
-      {mode === "add" && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      {mode === 'add' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           {(Object.entries(PROVIDER_CONFIG) as [ProviderType, typeof PROVIDER_CONFIG.stripe][]).map(
             ([type, config]) => {
               const Icon = config.icon;
@@ -429,17 +541,17 @@ function ProviderForm({
                   key={type}
                   onClick={() => setProviderType(type)}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 12,
                     padding: 16,
                     borderRadius: 12,
-                    border: "2px solid",
-                    borderColor: isSelected ? config.color : "var(--adm-border)",
-                    background: isSelected ? config.color + "10" : "var(--adm-surface)",
-                    textAlign: "left",
-                    cursor: "pointer",
-                    transition: "all 0.15s",
+                    border: '2px solid',
+                    borderColor: isSelected ? config.color : 'var(--adm-border)',
+                    background: isSelected ? config.color + '10' : 'var(--adm-surface)',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
                   }}
                 >
                   <Icon size={24} style={{ color: config.color, flexShrink: 0 }} />
@@ -448,12 +560,12 @@ function ProviderForm({
                       style={{
                         fontSize: 14,
                         fontWeight: 600,
-                        color: isSelected ? config.color : "var(--adm-text-pri)",
+                        color: isSelected ? config.color : 'var(--adm-text-pri)',
                       }}
                     >
                       {config.name}
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--adm-text-sec)", marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: 'var(--adm-text-sec)', marginTop: 2 }}>
                       {config.hint}
                     </div>
                   </div>
@@ -473,14 +585,14 @@ function ProviderForm({
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder={PROVIDER_CONFIG[providerType].name}
           style={{
-            width: "100%",
-            padding: "10px 12px",
+            width: '100%',
+            padding: '10px 12px',
             borderRadius: 8,
-            border: "1px solid var(--adm-border)",
-            background: "var(--adm-surface)",
-            color: "var(--adm-text-pri)",
+            border: '1px solid var(--adm-border)',
+            background: 'var(--adm-surface)',
+            color: 'var(--adm-text-pri)',
             fontSize: 14,
-            outline: "none",
+            outline: 'none',
           }}
         />
       </div>
@@ -494,58 +606,70 @@ function ProviderForm({
       />
 
       {/* Stripe credentials */}
-      {providerType === "stripe" && (
+      {providerType === 'stripe' && (
         <div
           style={{
-            display: "flex",
-            flexDirection: "column",
+            display: 'flex',
+            flexDirection: 'column',
             gap: 16,
-            background: "var(--adm-surface)",
+            background: 'var(--adm-surface)',
             padding: 20,
             borderRadius: 12,
-            border: "1px solid var(--adm-border)",
+            border: '1px solid var(--adm-border)',
           }}
         >
           <div>
             <FormLabel>Publishable key</FormLabel>
             <FormHint>pk_test_… edo pk_live_…</FormHint>
             <div style={{ marginTop: 8 }}>
-              <MaskedInput value={stripePublic} onChange={setStripePublic} placeholder="pk_test_..." />
+              <MaskedInput
+                value={stripePublic}
+                onChange={setStripePublic}
+                placeholder="pk_test_..."
+              />
             </div>
           </div>
           <div>
             <FormLabel>Secret key</FormLabel>
             <FormHint>sk_test_… edo sk_live_… — ez partekatu inoiz</FormHint>
             <div style={{ marginTop: 8 }}>
-              <MaskedInput value={stripeSecret} onChange={setStripeSecret} placeholder="sk_test_..." />
+              <MaskedInput
+                value={stripeSecret}
+                onChange={setStripeSecret}
+                placeholder="sk_test_..."
+              />
             </div>
           </div>
           <div>
             <FormLabel>Webhook secret</FormLabel>
             <FormHint>whsec_… — ordainketa egoera jakinarazpenak</FormHint>
             <div style={{ marginTop: 8 }}>
-              <MaskedInput value={stripeWebhook} onChange={setStripeWebhook} placeholder="whsec_..." />
+              <MaskedInput
+                value={stripeWebhook}
+                onChange={setStripeWebhook}
+                placeholder="whsec_..."
+              />
             </div>
           </div>
           <div
             style={{
-              background: "var(--adm-surface-hi)",
-              border: "1px solid var(--adm-border)",
+              background: 'var(--adm-surface-hi)',
+              border: '1px solid var(--adm-border)',
               borderRadius: 8,
-              padding: "10px 12px",
+              padding: '10px 12px',
               fontSize: 12,
-              color: "var(--adm-text-sec)",
-              display: "flex",
-              alignItems: "center",
+              color: 'var(--adm-text-sec)',
+              display: 'flex',
+              alignItems: 'center',
               gap: 8,
             }}
           >
             <span>Webhook URL:</span>
             <code
               style={{
-                fontFamily: "JetBrains Mono, monospace",
-                background: "var(--adm-surface)",
-                padding: "2px 8px",
+                fontFamily: 'JetBrains Mono, monospace',
+                background: 'var(--adm-surface)',
+                padding: '2px 8px',
                 borderRadius: 4,
                 fontSize: 11,
               }}
@@ -557,16 +681,16 @@ function ProviderForm({
       )}
 
       {/* Redsys credentials */}
-      {providerType === "redsys" && (
+      {providerType === 'redsys' && (
         <div
           style={{
-            display: "flex",
-            flexDirection: "column",
+            display: 'flex',
+            flexDirection: 'column',
             gap: 16,
-            background: "var(--adm-surface)",
+            background: 'var(--adm-surface)',
             padding: 20,
             borderRadius: 12,
-            border: "1px solid var(--adm-border)",
+            border: '1px solid var(--adm-border)',
           }}
         >
           <div>
@@ -580,15 +704,15 @@ function ProviderForm({
                 placeholder="999008881"
                 maxLength={9}
                 style={{
-                  width: "100%",
-                  padding: "10px 12px",
+                  width: '100%',
+                  padding: '10px 12px',
                   borderRadius: 8,
-                  border: "1px solid var(--adm-border)",
-                  background: "var(--adm-surface)",
-                  color: "var(--adm-text-pri)",
+                  border: '1px solid var(--adm-border)',
+                  background: 'var(--adm-surface)',
+                  color: 'var(--adm-text-pri)',
                   fontSize: 14,
-                  fontFamily: "JetBrains Mono, monospace",
-                  outline: "none",
+                  fontFamily: 'JetBrains Mono, monospace',
+                  outline: 'none',
                 }}
               />
             </div>
@@ -597,7 +721,11 @@ function ProviderForm({
             <FormLabel>Gako sekretua (SHA-256)</FormLabel>
             <FormHint>Redsys administraziotik lortu</FormHint>
             <div style={{ marginTop: 8 }}>
-              <MaskedInput value={redsysKey} onChange={setRedsysKey} placeholder="sq7HjrUOBfKmC57m..." />
+              <MaskedInput
+                value={redsysKey}
+                onChange={setRedsysKey}
+                placeholder="sq7HjrUOBfKmC57m..."
+              />
             </div>
           </div>
           <div>
@@ -610,37 +738,37 @@ function ProviderForm({
                 placeholder="1"
                 style={{
                   width: 96,
-                  padding: "10px 12px",
+                  padding: '10px 12px',
                   borderRadius: 8,
-                  border: "1px solid var(--adm-border)",
-                  background: "var(--adm-surface)",
-                  color: "var(--adm-text-pri)",
+                  border: '1px solid var(--adm-border)',
+                  background: 'var(--adm-surface)',
+                  color: 'var(--adm-text-pri)',
                   fontSize: 14,
-                  fontFamily: "JetBrains Mono, monospace",
-                  outline: "none",
+                  fontFamily: 'JetBrains Mono, monospace',
+                  outline: 'none',
                 }}
               />
             </div>
           </div>
           <div
             style={{
-              background: "var(--adm-surface-hi)",
-              border: "1px solid var(--adm-border)",
+              background: 'var(--adm-surface-hi)',
+              border: '1px solid var(--adm-border)',
               borderRadius: 8,
-              padding: "10px 12px",
+              padding: '10px 12px',
               fontSize: 12,
-              color: "var(--adm-text-sec)",
-              display: "flex",
-              alignItems: "center",
+              color: 'var(--adm-text-sec)',
+              display: 'flex',
+              alignItems: 'center',
               gap: 8,
             }}
           >
             <span>URL notifikazioa:</span>
             <code
               style={{
-                fontFamily: "JetBrains Mono, monospace",
-                background: "var(--adm-surface)",
-                padding: "2px 8px",
+                fontFamily: 'JetBrains Mono, monospace',
+                background: 'var(--adm-surface)',
+                padding: '2px 8px',
                 borderRadius: 4,
                 fontSize: 11,
               }}
@@ -652,18 +780,18 @@ function ProviderForm({
       )}
 
       {/* Actions */}
-      <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+      <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
         <button
           onClick={onCancel}
           style={{
-            padding: "10px 20px",
+            padding: '10px 20px',
             borderRadius: 8,
             fontSize: 14,
             fontWeight: 500,
-            color: "var(--adm-text-sec)",
-            background: "var(--adm-surface-hi)",
-            border: "none",
-            cursor: "pointer",
+            color: 'var(--adm-text-sec)',
+            background: 'var(--adm-surface-hi)',
+            border: 'none',
+            cursor: 'pointer',
           }}
         >
           Utzi
@@ -671,21 +799,21 @@ function ProviderForm({
         <button
           onClick={handleSave}
           style={{
-            padding: "10px 24px",
+            padding: '10px 24px',
             borderRadius: 8,
             fontSize: 14,
             fontWeight: 600,
-            color: "#fff",
-            background: "#e85d2f",
-            border: "none",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
+            color: '#fff',
+            background: '#e85d2f',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
             gap: 8,
           }}
         >
           <Check size={18} />
-          {mode === "add" ? "Gehitu hornitzailea" : "Gorde aldaketak"}
+          {mode === 'add' ? 'Gehitu hornitzailea' : 'Gorde aldaketak'}
         </button>
       </div>
     </div>
@@ -695,9 +823,9 @@ function ProviderForm({
 function PaymentProvidersTab() {
   const [providers, setProviders] = useState<PaymentProvider[]>([
     {
-      id: "prov-1",
-      type: "stripe",
-      displayName: "Stripe (test)",
+      id: 'prov-1',
+      type: 'stripe',
+      displayName: 'Stripe (test)',
       enabled: true,
       testMode: true,
       credentials: {},
@@ -708,7 +836,7 @@ function PaymentProvidersTab() {
   const [editingProvider, setEditingProvider] = useState<PaymentProvider | null>(null);
 
   const handleAddProvider = useCallback(
-    (data: Omit<PaymentProvider, "id">) => {
+    (data: Omit<PaymentProvider, 'id'>) => {
       const newProvider: PaymentProvider = {
         ...data,
         id: `prov-${Date.now()}`,
@@ -722,11 +850,9 @@ function PaymentProvidersTab() {
   );
 
   const handleUpdateProvider = useCallback(
-    (data: Omit<PaymentProvider, "id">) => {
+    (data: Omit<PaymentProvider, 'id'>) => {
       if (!editingProvider) return;
-      setProviders(
-        providers.map((p) => (p.id === editingProvider.id ? { ...data, id: p.id } : p))
-      );
+      setProviders(providers.map((p) => (p.id === editingProvider.id ? { ...data, id: p.id } : p)));
       setEditingProvider(null);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -743,30 +869,30 @@ function PaymentProvidersTab() {
   }, []);
 
   return (
-    <div style={{ maxWidth: 680, display: "flex", flexDirection: "column", gap: 24 }}>
+    <div style={{ maxWidth: 680, display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Header with add button */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <FormLabel style={{ marginBottom: 4 }}>Konfiguratutako hornitzaileak</FormLabel>
-          <div style={{ fontSize: 13, color: "var(--adm-text-sec)" }}>
+          <div style={{ fontSize: 13, color: 'var(--adm-text-sec)' }}>
             {providers.length} hornitzaile · {providers.filter((p) => p.enabled).length} gaituta
           </div>
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
           style={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 8,
-            padding: "10px 16px",
-            background: "#e85d2f",
-            color: "#fff",
+            padding: '10px 16px',
+            background: '#e85d2f',
+            color: '#fff',
             fontSize: 14,
             fontWeight: 600,
             borderRadius: 8,
-            border: "none",
-            cursor: "pointer",
-            transition: "all 0.15s",
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.15s',
           }}
         >
           <Plus size={18} />
@@ -775,7 +901,7 @@ function PaymentProvidersTab() {
       </div>
 
       {/* Provider list */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {providers.map((provider) => (
           <ProviderCard
             key={provider.id}
@@ -790,34 +916,41 @@ function PaymentProvidersTab() {
           <div
             style={{
               padding: 48,
-              textAlign: "center",
-              background: "var(--adm-surface)",
-              border: "1px dashed var(--adm-border)",
+              textAlign: 'center',
+              background: 'var(--adm-surface)',
+              border: '1px dashed var(--adm-border)',
               borderRadius: 12,
             }}
           >
             <CreditCard
               size={40}
-              style={{ color: "var(--adm-text-sec)", marginBottom: 12, opacity: 0.5 }}
+              style={{ color: 'var(--adm-text-sec)', marginBottom: 12, opacity: 0.5 }}
             />
-            <div style={{ fontSize: 14, color: "var(--adm-text-pri)", fontWeight: 500, marginBottom: 4 }}>
+            <div
+              style={{
+                fontSize: 14,
+                color: 'var(--adm-text-pri)',
+                fontWeight: 500,
+                marginBottom: 4,
+              }}
+            >
               Ez dago ordainketa hornitzailerik konfiguratuta
             </div>
-            <div style={{ fontSize: 13, color: "var(--adm-text-sec)" }}>
+            <div style={{ fontSize: 13, color: 'var(--adm-text-sec)' }}>
               Gehitu Stripe edo Redsys ordainketak jaso ditzazun
             </div>
             <button
               onClick={() => setIsAddModalOpen(true)}
               style={{
                 marginTop: 16,
-                padding: "8px 16px",
-                background: "var(--adm-surface-hi)",
-                color: "var(--adm-text-pri)",
+                padding: '8px 16px',
+                background: 'var(--adm-surface-hi)',
+                color: 'var(--adm-text-pri)',
                 fontSize: 14,
                 fontWeight: 500,
                 borderRadius: 8,
-                border: "none",
-                cursor: "pointer",
+                border: 'none',
+                cursor: 'pointer',
               }}
             >
               + Gehitu hornitzailea
@@ -830,14 +963,14 @@ function PaymentProvidersTab() {
       {saved && (
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 8,
-            padding: "12px 16px",
-            background: "#22c55e20",
-            border: "1px solid #22c55e40",
+            padding: '12px 16px',
+            background: '#22c55e20',
+            border: '1px solid #22c55e40',
             borderRadius: 8,
-            color: "#22c55e",
+            color: '#22c55e',
             fontSize: 14,
             fontWeight: 500,
           }}
@@ -848,7 +981,11 @@ function PaymentProvidersTab() {
       )}
 
       {/* Add Provider Modal */}
-      <ProviderDialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen} title="Hornitzaile berria">
+      <ProviderDialog
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        title="Hornitzaile berria"
+      >
         <ProviderForm
           mode="add"
           onSave={handleAddProvider}
@@ -880,18 +1017,37 @@ export default function AssociationSettingsPage() {
   const [activeTab, setActiveTab] = useState(0);
 
   return (
-    <div style={{ padding: "32px 32px 60px" }}>
-      <h1 style={{ fontFamily: "var(--font-nunito, sans-serif)", fontSize: 24, fontWeight: 800, color: "var(--adm-text-pri)", marginBottom: 20 }}>
+    <div style={{ padding: '32px 32px 60px' }}>
+      <h1
+        style={{
+          fontFamily: 'var(--font-nunito, sans-serif)',
+          fontSize: 24,
+          fontWeight: 800,
+          color: 'var(--adm-text-pri)',
+          marginBottom: 20,
+        }}
+      >
         Elkartearen ezarpenak
       </h1>
 
       {/* Tabs */}
-      <div style={{ display: "flex", borderBottom: "1px solid var(--adm-border)", marginBottom: 24 }}>
+      <div
+        style={{ display: 'flex', borderBottom: '1px solid var(--adm-border)', marginBottom: 24 }}
+      >
         {TABS.map((tab, i) => (
           <button
             key={tab}
             onClick={() => setActiveTab(i)}
-            style={{ padding: "10px 16px", fontSize: 14, fontWeight: 500, border: "none", borderBottom: "2px solid", borderColor: activeTab === i ? "#e85d2f" : "transparent", background: "transparent", color: activeTab === i ? "#e85d2f" : "var(--adm-text-sec)" }}
+            style={{
+              padding: '10px 16px',
+              fontSize: 14,
+              fontWeight: 500,
+              border: 'none',
+              borderBottom: '2px solid',
+              borderColor: activeTab === i ? '#e85d2f' : 'transparent',
+              background: 'transparent',
+              color: activeTab === i ? '#e85d2f' : 'var(--adm-text-sec)',
+            }}
           >
             {tab}
           </button>

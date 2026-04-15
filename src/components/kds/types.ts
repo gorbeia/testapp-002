@@ -8,7 +8,7 @@ export interface Ticket {
   id: string;
   orderNumber: number;
   customerName: string | null;
-  status: "RECEIVED" | "IN_PREPARATION" | "READY";
+  status: 'RECEIVED' | 'IN_PREPARATION' | 'READY';
   elapsedMin: number;
   isSlowOrder: boolean;
   hasAlert: boolean;

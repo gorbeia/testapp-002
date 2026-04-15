@@ -105,32 +105,35 @@ export async function PATCH(
         ...(displayOrder !== undefined && { displayOrder }),
         ...(ingredients !== undefined && { ingredients }),
         ...(preparationInstructions !== undefined && { preparationInstructions }),
-        ...(variantGroups !== undefined && variantGroups.length > 0 && {
-          variantGroups: {
-            create: variantGroups.map((vg: any, vgIdx: number) => ({
-              name: vg.name,
-              displayOrder: vg.displayOrder ?? vgIdx,
-              options: {
-                create: vg.options?.map((opt: any, optIdx: number) => ({
-                  name: opt.name,
-                  priceDelta: opt.priceDelta ?? 0,
-                  allergens: opt.allergens ?? [],
-                  displayOrder: opt.displayOrder ?? optIdx,
-                })) ?? [],
-              },
-            })),
-          },
-        }),
-        ...(modifiers !== undefined && modifiers.length > 0 && {
-          modifiers: {
-            create: modifiers.map((mod: any, modIdx: number) => ({
-              name: mod.name,
-              price: mod.price ?? 0,
-              allergens: mod.allergens ?? [],
-              displayOrder: mod.displayOrder ?? modIdx,
-            })),
-          },
-        }),
+        ...(variantGroups !== undefined &&
+          variantGroups.length > 0 && {
+            variantGroups: {
+              create: variantGroups.map((vg: any, vgIdx: number) => ({
+                name: vg.name,
+                displayOrder: vg.displayOrder ?? vgIdx,
+                options: {
+                  create:
+                    vg.options?.map((opt: any, optIdx: number) => ({
+                      name: opt.name,
+                      priceDelta: opt.priceDelta ?? 0,
+                      allergens: opt.allergens ?? [],
+                      displayOrder: opt.displayOrder ?? optIdx,
+                    })) ?? [],
+                },
+              })),
+            },
+          }),
+        ...(modifiers !== undefined &&
+          modifiers.length > 0 && {
+            modifiers: {
+              create: modifiers.map((mod: any, modIdx: number) => ({
+                name: mod.name,
+                price: mod.price ?? 0,
+                allergens: mod.allergens ?? [],
+                displayOrder: mod.displayOrder ?? modIdx,
+              })),
+            },
+          }),
       },
       include: {
         variantGroups: {

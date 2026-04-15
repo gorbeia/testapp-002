@@ -100,12 +100,13 @@ export async function POST(request: NextRequest) {
               name: vg.name,
               displayOrder: vg.displayOrder ?? vgIdx,
               options: {
-                create: vg.options?.map((opt: any, optIdx: number) => ({
-                  name: opt.name,
-                  priceDelta: opt.priceDelta ?? 0,
-                  allergens: opt.allergens ?? [],
-                  displayOrder: opt.displayOrder ?? optIdx,
-                })) ?? [],
+                create:
+                  vg.options?.map((opt: any, optIdx: number) => ({
+                    name: opt.name,
+                    priceDelta: opt.priceDelta ?? 0,
+                    allergens: opt.allergens ?? [],
+                    displayOrder: opt.displayOrder ?? optIdx,
+                  })) ?? [],
               },
             })),
           }
