@@ -301,10 +301,6 @@ function OrdersTab() {
     selfService: false,
   });
   const [maxItems, setMaxItems] = React.useState(20);
-  const [printerEnabled, setPrinterEnabled] = React.useState(false);
-  const [printerProtocol, setPrinterProtocol] = React.useState<'ESC_POS' | 'STAR'>('ESC_POS');
-  const [printerIp, setPrinterIp] = React.useState('');
-  const [printerPort, setPrinterPort] = React.useState('9100');
   const [saved, setSaved] = React.useState(false);
 
   const toggleChannel = (k: keyof typeof channels) =>

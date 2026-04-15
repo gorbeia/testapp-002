@@ -17,7 +17,7 @@ const MOCK_ORDER_DETAIL = {
   createdAt: new Date().toLocaleString('eu-ES'),
 };
 
-function ReceiptDownload({ orderId }: { orderId: string }) {
+function ReceiptDownload({ orderId: _orderId }: { orderId: string }) {
   const [downloading, setDownloading] = useState(false);
 
   const handleDownload = () => {

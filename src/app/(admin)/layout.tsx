@@ -31,7 +31,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   // Detect which txosna is active from the URL: /eu/txosnak/[id]/...
   const txosnaMatch = pathname.match(/\/txosnak\/([^/]+)/);
   const activeTxosnaId = txosnaMatch?.[1] ?? null;
-  const activeTxosna = MOCK_ASSOCIATION.txosnak.find((t) => t.id === activeTxosnaId) ?? null;
+  const _activeTxosna = MOCK_ASSOCIATION.txosnak.find((t) => t.id === activeTxosnaId) ?? null;
 
   // Track which txosnak are expanded in sidebar
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {

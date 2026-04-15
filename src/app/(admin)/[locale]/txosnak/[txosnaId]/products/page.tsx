@@ -76,15 +76,9 @@ const ALLERGEN_EMOJI: Record<string, string> = {
   sesamo: '🫚',
 };
 
-const DIETARY_FLAG_LABELS: Record<string, string> = {
-  V: '🌿 Begetariano',
-  VG: '🌱 Begano',
-  GF: '🚫🌾 Gluten gabe',
-  HL: '☪️ Halal',
-};
-
 // ── Debounce Hook ─────────────────────────────────────────────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function useDebouncedCallback<T extends (...args: any[]) => void>(callback: T, delay: number) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -109,7 +103,7 @@ export default function TxosnaProductsPage() {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, _setError] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [savingProducts, setSavingProducts] = useState<Set<string>>(new Set());
   const [usingMockData, setUsingMockData] = useState(false);
@@ -184,7 +178,7 @@ export default function TxosnaProductsPage() {
             setExpandedCategories(new Set([data[0].id]));
           }
         }
-      } catch (err) {
+      } catch {
         // Fall back to mock data on API error - this is expected in prototype mode
         const mockData = getMockCategories();
         setCategories(mockData);
@@ -193,7 +187,7 @@ export default function TxosnaProductsPage() {
           setExpandedCategories(new Set([mockData[0].id]));
         }
         // Don't set error - mock data is the intended fallback
-        console.log('Using mock data (API not available)');
+        console.warn('Using mock data (API not available)');
       } finally {
         setLoading(false);
       }
@@ -256,9 +250,9 @@ export default function TxosnaProductsPage() {
           }))
         );
       }
-    } catch (err) {
+    } catch {
       // In prototype mode, keep the optimistic update (mock data)
-      console.log('API save failed, keeping local state (prototype mode)');
+      console.warn('API save failed, keeping local state (prototype mode)');
       // Don't revert - the UI change stays for prototype testing
     } finally {
       setSavingProducts((prev) => {
@@ -301,9 +295,9 @@ export default function TxosnaProductsPage() {
         });
 
         if (!res.ok) throw new Error('Failed to update price');
-      } catch (err) {
+      } catch {
         // Silently fail in prototype mode - local state already updated
-        console.log('Price save failed silently (prototype mode)');
+        console.warn('Price save failed silently (prototype mode)');
       }
     },
     500
@@ -327,9 +321,9 @@ export default function TxosnaProductsPage() {
         });
 
         if (!res.ok) throw new Error('Failed to update instructions');
-      } catch (err) {
+      } catch {
         // Silently fail in prototype mode - local state already updated
-        console.log('Instructions save failed silently (prototype mode)');
+        console.warn('Instructions save failed silently (prototype mode)');
       }
     },
     500
@@ -371,7 +365,7 @@ export default function TxosnaProductsPage() {
     );
   }
 
-  if (error) {
+  if (_error) {
     return (
       <div
         style={{
@@ -394,7 +388,7 @@ export default function TxosnaProductsPage() {
             alignItems: 'center',
           }}
         >
-          <span>Errorea: {error}</span>
+          <span>Errorea: {_error}</span>
           <button
             onClick={() => window.location.reload()}
             style={{

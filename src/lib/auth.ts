@@ -39,15 +39,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     jwt({ token, user }) {
       if (user) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         token.role = (user as any).role;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         token.associationId = (user as any).associationId;
       }
       return token;
     },
     session({ session, token }) {
       if (session.user) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (session.user as any).id = token.sub;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (session.user as any).role = token.role;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (session.user as any).associationId = token.associationId;
       }
       return session;

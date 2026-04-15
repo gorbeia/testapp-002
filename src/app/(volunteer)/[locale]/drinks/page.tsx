@@ -37,7 +37,7 @@ const INITIAL_QUEUE: DrinksQueueOrder[] = [
 ];
 
 export default function DrinksPage() {
-  const nextOrderNumRef = useRef(50);
+  const _nextOrderNumRef = useRef(50);
   const drinkProducts = MOCK_PRODUCTS.filter((p) => p.categoryId === 'cat-2');
   const [queue, setQueue] = useState<DrinksQueueOrder[]>(INITIAL_QUEUE);
   const [cart, setCart] = useState<Record<string, number>>({});

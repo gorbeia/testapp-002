@@ -17,6 +17,7 @@ export async function GET(
   const session = await auth();
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const associationId = (session.user as any).associationId as string;
   const { productId } = await params;
 
@@ -108,11 +109,13 @@ export async function PATCH(
         ...(variantGroups !== undefined &&
           variantGroups.length > 0 && {
             variantGroups: {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               create: variantGroups.map((vg: any, vgIdx: number) => ({
                 name: vg.name,
                 displayOrder: vg.displayOrder ?? vgIdx,
                 options: {
                   create:
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     vg.options?.map((opt: any, optIdx: number) => ({
                       name: opt.name,
                       priceDelta: opt.priceDelta ?? 0,
@@ -126,6 +129,7 @@ export async function PATCH(
         ...(modifiers !== undefined &&
           modifiers.length > 0 && {
             modifiers: {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               create: modifiers.map((mod: any, modIdx: number) => ({
                 name: mod.name,
                 price: mod.price ?? 0,

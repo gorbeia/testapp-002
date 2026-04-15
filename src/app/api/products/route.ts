@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const associationId = (session.user as any).associationId as string;
   const { searchParams } = request.nextUrl;
   const categoryId = searchParams.get('categoryId');
@@ -36,6 +37,7 @@ export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { role, associationId } = session.user as any;
   if (role !== 'ADMIN') return new Response('Forbidden', { status: 403 });
 
@@ -96,11 +98,13 @@ export async function POST(request: NextRequest) {
       preparationInstructions: preparationInstructions ?? null,
       variantGroups: variantGroups?.length
         ? {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             create: variantGroups.map((vg: any, vgIdx: number) => ({
               name: vg.name,
               displayOrder: vg.displayOrder ?? vgIdx,
               options: {
                 create:
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   vg.options?.map((opt: any, optIdx: number) => ({
                     name: opt.name,
                     priceDelta: opt.priceDelta ?? 0,
@@ -113,6 +117,7 @@ export async function POST(request: NextRequest) {
         : undefined,
       modifiers: modifiers?.length
         ? {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             create: modifiers.map((mod: any, modIdx: number) => ({
               name: mod.name,
               price: mod.price ?? 0,

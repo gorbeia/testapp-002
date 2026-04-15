@@ -908,12 +908,12 @@ export default function MenuPage() {
         setError('Erakusten diren datuak lokala dira (APIrik gabe)');
       })
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const currentCategoryId = activeCategory || categories[0]?.id || '';
   const filtered = categories.find((c) => c.id === currentCategoryId)?.products ?? [];
 
+  // ... (rest of the code remains the same)
   const openCreate = () =>
     setModal({ open: true, editId: null, form: emptyForm(currentCategoryId) });
   const openEdit = (p: Product) => setModal({ open: true, editId: p.id, form: fromProduct(p) });

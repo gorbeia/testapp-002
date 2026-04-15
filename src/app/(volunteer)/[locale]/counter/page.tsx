@@ -89,7 +89,7 @@ export default function CounterPage() {
   const foodProducts = MOCK_PRODUCTS.filter(
     (p) => p.categoryId === 'cat-1' && p.available && !p.soldOut
   );
-  const topProducts = foodProducts.slice(0, 6);
+  const _topProducts = foodProducts.slice(0, 6);
 
   const [confirmReadyId, setConfirmReadyId] = useState<string | null>(null);
 
