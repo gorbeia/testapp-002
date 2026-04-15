@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import type { NextRequest } from 'next/server';
+import type { Prisma } from '@prisma/client';
 
 async function getProductForAssociation(productId: string, associationId: string) {
   return prisma!.product.findFirst({
@@ -79,7 +80,7 @@ export async function PATCH(
   }
 
   // Replace nested data in a transaction
-  const product = await prisma.$transaction(async (tx) => {
+  const product = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // Delete and recreate variant groups + options
     if (variantGroups !== undefined) {
       await tx.variantGroup.deleteMany({ where: { productId } });

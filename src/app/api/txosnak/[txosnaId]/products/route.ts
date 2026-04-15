@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import type { NextRequest } from 'next/server';
+import type { Prisma } from '@prisma/client';
 
 // GET /api/txosnak/[txosnaId]/products
 // Returns the full master catalog annotated with per-txosna TxosnaProduct data
@@ -20,7 +21,21 @@ export async function GET(
   const txosna = await prisma.txosna.findFirst({ where: { id: txosnaId, associationId } });
   if (!txosna) return new Response('Not found', { status: 404 });
 
-  const categories = await prisma.category.findMany({
+  const categories: Array<
+    Prisma.CategoryGetPayload<{
+      include: {
+        products: {
+          include: {
+            variantGroups: {
+              include: { options: true };
+            };
+            modifiers: true;
+            txosnaProducts: true;
+          };
+        };
+      };
+    }>
+  > = await prisma.category.findMany({
     where: { associationId },
     orderBy: { displayOrder: 'asc' },
     include: {
@@ -41,12 +56,12 @@ export async function GET(
   });
 
   // Shape: flatten txosnaProducts (at most one per product for this txosna) into txosnaProduct
-  const shaped = categories.map((cat) => ({
+  const shaped = categories.map((cat: (typeof categories)[number]) => ({
     id: cat.id,
     name: cat.name,
     type: cat.type,
     displayOrder: cat.displayOrder,
-    products: cat.products.map((prod) => {
+    products: cat.products.map((prod: (typeof cat.products)[number]) => {
       const { txosnaProducts, ...rest } = prod;
       return {
         ...rest,
