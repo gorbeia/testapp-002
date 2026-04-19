@@ -12,7 +12,7 @@ Txosna euskal elkarteentzako diseinatutako janari eta edari eskaera kudeatzeko s
 
 ## 1. Zer da Txosna?
 
-Txosna sistema bihurtzen da:
+Txosna sistemak honako abantailak eskaintzen dizkie:
 
 - **Bezeroentzat**: Mugarik gabeko eskaera-sistema telefonoan
 - **Boluntarioentzat**: Lan-karga arintzen duen tresna eraginkorra
@@ -23,7 +23,7 @@ Txosna sistema bihurtzen da:
 | Onura                   | Deskribapena                                                          |
 | ----------------------- | --------------------------------------------------------------------- |
 | **Eraginkortasuna**     | Eskaerak automatikoki banatzen dira sukalde eta mostradoreetara       |
-| **Errore gutxiago**     | Eskaerak idatzita daude, ez ahoz ahora                                |
+| **Errore gutxiago**     | Eskaerak modu digitalean hartzen dira, ez ahoz aho                    |
 | **Ordainketa seguruak** | Esku-dirua eta txartelak onartzen ditu, Stripe edo Redsys integratuta |
 | **Estatistikak**        | Eskaera kopuruak, diru-sarrerak eta produktu arrakastatsuak ikusgai   |
 | **Hizkuntza anitzak**   | Euskara, gaztelania, frantsesa eta ingelesa                           |
@@ -80,7 +80,7 @@ Fitxa honetan produktuaren oinarrizko datuak konfiguratzen dira:
 **Dieta-etiketak**:
 
 - **V** - Begetariano (barazkiak + esnekiak/arrautzak)
-- **VG** - Begetariano (barazkiak soilik)
+- **VG** - Beganoa (barazkiak soilik)
 - **GF** - Glutenik gabe
 - **H** - Halal
 
@@ -217,11 +217,10 @@ Txosna bakoitzean produktuen kudeaketa independentea dago. Orri honetan:
 
 ![Produktuak gaituta](../screenshots/26-txosna-products-enabled.png)
 
-Produktuak gaitu eta konfiguratzeko, aktibatu etengailua eta egin klik konfigurazio ikonoan:
+Produktuak gaitu eta konfiguratzeko, aktibatu etengailua eta egin klik "Editatu" botoian:
 
 - ✅ **Gaituta** - Produktua txosna honetan eskaintzen da
-- ⚙️ **Konfiguratu** - Ireki ezarpenen dialogoa
-- 📦 **Stocka** - Eska daitekeen kopurua
+- ⚙️ **Editatu** - Ireki ezarpenen dialogoa
 
 **Produktuen ezarpenak txosnako:**
 
@@ -482,7 +481,7 @@ Sukaldeko langileek 📦 Stocka botoia erabiliz produktuak agortuta marka ditzak
 
 **Agortze arrazoiak:**
 
-- Ingredienteen faltagia
+- Ingredienteen eskasia
 - Sukaldeko arazoak
 - Eskaera gehiegia (denbora batez)
 
