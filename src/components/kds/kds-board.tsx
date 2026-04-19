@@ -168,9 +168,15 @@ export default function KdsBoard() {
   const [showStock, setShowStock] = useState(false);
   const [orderIdx, setOrderIdx] = useState(0);
   const [products, setProducts] = useState<KdsProduct[]>([
-    { name: 'Burgerra', soldOut: false },
+    {
+      name: 'Burgerra',
+      soldOut: false,
+      complements: [
+        { name: 'Patata frijituak', soldOut: false },
+        { name: 'Entsalada', soldOut: true },
+      ],
+    },
     { name: 'Tortilla', soldOut: false },
-    { name: 'Entsalada', soldOut: true },
     { name: 'Pintxo nahasia', soldOut: false },
     { name: 'Txorizoa ogian', soldOut: false },
     { name: 'Ogia gurinarekin', soldOut: false },
@@ -221,7 +227,9 @@ export default function KdsBoard() {
     READY: byStatus('READY').length,
   };
   const nextTicketId = byStatus('RECEIVED')[0]?.id ?? null;
-  const soldOutCount = products.filter((p) => p.soldOut).length;
+  const soldOutCount = products.reduce((acc, p) => {
+    return acc + (p.soldOut ? 1 : 0) + (p.complements?.filter((c) => c.soldOut).length ?? 0);
+  }, 0);
   const slowCount = byStatus('IN_PREPARATION').filter((t) => t.isSlowOrder).length;
 
   if (closed) {
@@ -726,9 +734,18 @@ export default function KdsBoard() {
       {showStock && (
         <StockPanel
           products={products}
-          onToggle={(i) =>
+          onToggle={(productIdx, compIdx) =>
             setProducts((prev) =>
-              prev.map((p, idx) => (idx === i ? { ...p, soldOut: !p.soldOut } : p))
+              prev.map((p, i) => {
+                if (i !== productIdx) return p;
+                if (compIdx === undefined) return { ...p, soldOut: !p.soldOut };
+                return {
+                  ...p,
+                  complements: p.complements?.map((c, j) =>
+                    j === compIdx ? { ...c, soldOut: !c.soldOut } : c
+                  ),
+                };
+              })
             )
           }
           onClose={() => setShowStock(false)}

@@ -16,7 +16,14 @@ export interface Ticket {
   notes: string | null;
 }
 
+export interface KdsComplement {
+  name: string;
+  soldOut: boolean;
+}
+
 export interface KdsProduct {
   name: string;
   soldOut: boolean;
+  /** Optional sides / variant options that can run out independently */
+  complements?: KdsComplement[];
 }
