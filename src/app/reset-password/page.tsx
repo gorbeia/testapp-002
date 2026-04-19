@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { PrototypeNav } from '@/components/prototype-nav';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState('');
@@ -13,6 +15,10 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="ops-theme min-h-screen flex items-center justify-center px-4">
+      <PrototypeNav />
+      <div style={{ position: 'absolute', top: 12, right: 12 }}>
+        <ThemeToggle variant="ops" />
+      </div>
       <div style={{ width: '100%', maxWidth: 360 }}>
         <div className="text-center mb-8">
           <div

@@ -1,7 +1,7 @@
 'use client';
 import { useTheme } from './theme-provider';
 
-export function ThemeToggle({ variant = 'ops' }: { variant?: 'ops' | 'admin' }) {
+export function ThemeToggle({ variant = 'ops' }: { variant?: 'ops' | 'admin' | 'cust' }) {
   const { theme, toggle } = useTheme();
   const isDark = theme === 'dark';
 
@@ -31,6 +31,9 @@ export function ThemeToggle({ variant = 'ops' }: { variant?: 'ops' | 'admin' }) 
     );
   }
 
+  const borderVar = variant === 'cust' ? 'var(--cust-border)' : 'var(--ops-border)';
+  const colorVar = variant === 'cust' ? 'var(--cust-text-sec)' : 'var(--ops-text-dim)';
+
   return (
     <button
       onClick={toggle}
@@ -38,11 +41,11 @@ export function ThemeToggle({ variant = 'ops' }: { variant?: 'ops' | 'admin' }) 
       style={{
         fontSize: 16,
         background: 'none',
-        border: '1px solid var(--ops-border)',
+        border: `1px solid ${borderVar}`,
         borderRadius: 6,
         padding: '4px 8px',
         cursor: 'pointer',
-        color: 'var(--ops-text-dim)',
+        color: colorVar,
         lineHeight: 1,
       }}
     >

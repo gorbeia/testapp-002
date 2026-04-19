@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const MOCK_PIN = '1234';
 const MODES = [
@@ -45,6 +46,9 @@ export default function PinPage() {
 
   return (
     <div className="ops-theme min-h-screen flex items-center justify-center px-4 py-8">
+      <div style={{ position: 'absolute', top: 12, right: 12 }}>
+        <ThemeToggle variant="ops" />
+      </div>
       <div style={{ width: '100%', maxWidth: 360 }}>
         {/* Header */}
         <div className="text-center mb-6">

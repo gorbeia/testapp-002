@@ -5,6 +5,7 @@ import { TicketCard } from './ticket-card';
 import { InstructionsOverlay } from './instructions-overlay';
 import { StockPanel } from './stock-panel';
 import { OverflowMenu } from './overflow-menu';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 // ── Multi-txosna mock data ────────────────────────────────────────────────────
 const MOCK_TXOSNAK = [
@@ -422,6 +423,7 @@ export default function KdsBoard() {
           )}
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+          <ThemeToggle variant="ops" />
           <button
             onClick={() => setShowStock(true)}
             style={{

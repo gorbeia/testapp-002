@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { useCart } from '@/lib/cart-context';
 import { CustomerHeader } from '@/components/layout/customer-header';
 import { EditItemSheet } from '@/components/checkout/edit-item-sheet';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { MOCK_TXOSNA } from '@/lib/mock-data';
 
 export default function CheckoutPage() {
@@ -31,7 +32,11 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <>
-        <CustomerHeader txosnaName={MOCK_TXOSNA.name} status={MOCK_TXOSNA.status} />
+        <CustomerHeader
+          txosnaName={MOCK_TXOSNA.name}
+          status={MOCK_TXOSNA.status}
+          right={<ThemeToggle variant="cust" />}
+        />
         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🛒</div>
           <p style={{ color: 'var(--cust-text-sec, #6b7280)', marginBottom: 20 }}>
@@ -54,7 +59,11 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <CustomerHeader txosnaName={MOCK_TXOSNA.name} status={MOCK_TXOSNA.status} />
+      <CustomerHeader
+        txosnaName={MOCK_TXOSNA.name}
+        status={MOCK_TXOSNA.status}
+        right={<ThemeToggle variant="cust" />}
+      />
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 60px' }}>
         <h1
           style={{

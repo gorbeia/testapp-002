@@ -2,6 +2,8 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { PrototypeNav } from '@/components/prototype-nav';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { MOCK_TXOSNA } from '@/lib/mock-data';
 
 export default function ProofPage() {
@@ -41,6 +43,9 @@ export default function ProofPage() {
         textAlign: 'center',
       }}
     >
+      <div style={{ position: 'absolute', top: 12, right: 12 }}>
+        <ThemeToggle variant="cust" />
+      </div>
       <div
         style={{
           fontSize: 14,
@@ -112,6 +117,7 @@ export default function ProofPage() {
       >
         ← Egoerara itzuli
       </Link>
+      <PrototypeNav />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useCart } from '@/lib/cart-context';
 import { MOCK_TXOSNA, MOCK_CATEGORIES, MOCK_PRODUCTS, MockProduct } from '@/lib/mock-data';
 import { CustomerHeader } from '@/components/layout/customer-header';
 import { ProductSheet } from '@/components/ordering/product-sheet';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function MenuPage() {
   const params = useParams();
@@ -22,6 +23,7 @@ export default function MenuPage() {
         txosnaName={txosna.name}
         status={txosna.status}
         waitMinutes={txosna.waitMinutes ?? undefined}
+        right={<ThemeToggle variant="cust" />}
       />
 
       {/* Category tabs */}

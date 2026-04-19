@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 // ── i18n ──────────────────────────────────────────────────────────────────────
 const eu = {
@@ -449,6 +450,7 @@ export default function OrderBoard() {
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <ThemeToggle variant="ops" />
           {simMode === 'open' && <WaitPill minutes={waitMin} />}
           <div
             style={{

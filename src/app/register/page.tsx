@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { PrototypeNav } from '@/components/prototype-nav';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -32,6 +34,10 @@ export default function RegisterPage() {
         fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)',
       }}
     >
+      <PrototypeNav />
+      <div style={{ position: 'absolute', top: 12, right: 12 }}>
+        <ThemeToggle variant="ops" />
+      </div>
       <div style={{ width: '100%', maxWidth: 420, margin: '40px auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div

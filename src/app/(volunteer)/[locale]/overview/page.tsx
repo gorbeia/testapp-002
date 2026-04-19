@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { OpsHeader } from '@/components/layout/ops-header';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { MOCK_TXOSNA, MOCK_TICKETS, MOCK_VOLUNTEERS } from '@/lib/mock-data';
 
 interface StatCardProps {
@@ -61,7 +62,12 @@ export default function OverviewPage() {
       className="ops-theme"
       style={{ minHeight: '100vh', fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)' }}
     >
-      <OpsHeader title={MOCK_TXOSNA.name} subtitle="Egoera ikuspegi" statusColor="green" />
+      <OpsHeader
+        title={MOCK_TXOSNA.name}
+        subtitle="Egoera ikuspegi"
+        statusColor="green"
+        right={<ThemeToggle variant="ops" />}
+      />
 
       <div style={{ padding: '16px 14px 40px', display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* Live stats */}

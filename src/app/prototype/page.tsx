@@ -59,9 +59,27 @@ const screens = [
     items: [
       { name: 'Erregistroa', route: '/register', desc: 'Association signup' },
       { name: 'Onboarding Gida', route: `${LOCALE}/onboarding`, desc: '5-step setup checklist' },
-      { name: 'Admin Hasiera', route: `${LOCALE}/dashboard`, desc: 'Dashboard + quick stats' },
+      {
+        name: 'Admin Hasiera (Txosnak)',
+        route: `${LOCALE}/txosnak`,
+        desc: 'Txosna overview & clone',
+      },
+      {
+        name: 'Elkarte Ezarpenak',
+        route: `${LOCALE}/settings`,
+        desc: 'Association name, payment providers, volunteers',
+      },
       { name: 'Menu Kudeaketa', route: `${LOCALE}/menu`, desc: 'Categories + products' },
-      { name: 'Txosna Konfigurazioa', route: `${LOCALE}/txosna`, desc: 'Txosna settings tabs' },
+      {
+        name: 'Txosna Konfigurazioa',
+        route: `${LOCALE}/txosnak/txosna-1/settings`,
+        desc: 'Counter type, channels, payments, QR',
+      },
+      {
+        name: 'Txosna Produktuak',
+        route: `${LOCALE}/txosnak/txosna-1/products`,
+        desc: 'Per-txosna product selection & price overrides',
+      },
       { name: 'Boluntarioak', route: `${LOCALE}/volunteers`, desc: 'Volunteer management' },
       { name: 'Txostena', route: `${LOCALE}/reports`, desc: 'Post-event report' },
     ],

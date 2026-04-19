@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { CustomerHeader } from '@/components/layout/customer-header';
+import { PrototypeNav } from '@/components/prototype-nav';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { MOCK_TXOSNA } from '@/lib/mock-data';
 
 // ── Mock order data for receipt ────────────────────────────────────────────────
@@ -112,6 +114,7 @@ export default function OrderStatusPage() {
         txosnaName={MOCK_TXOSNA.name}
         status={MOCK_TXOSNA.status}
         waitMinutes={MOCK_TXOSNA.waitMinutes ?? undefined}
+        right={<ThemeToggle variant="cust" />}
       />
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 16px 60px' }}>
         {/* Order number */}
@@ -274,6 +277,7 @@ export default function OrderStatusPage() {
           40% { transform: translateY(-6px); }
         }
       `}</style>
+      <PrototypeNav />
     </div>
   );
 }

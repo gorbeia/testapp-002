@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { PrototypeNav } from '@/components/prototype-nav';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,6 +27,10 @@ export default function LoginPage() {
 
   return (
     <div className="ops-theme min-h-screen flex items-center justify-center px-4">
+      <PrototypeNav />
+      <div style={{ position: 'absolute', top: 12, right: 12 }}>
+        <ThemeToggle variant="ops" />
+      </div>
       <div style={{ width: '100%', maxWidth: 380 }}>
         {/* Logo / Association */}
         <div className="text-center mb-8">
