@@ -301,6 +301,8 @@ function OrdersTab() {
     selfService: false,
   });
   const [maxItems, setMaxItems] = React.useState(20);
+  const [pendingPaymentTimeout, setPendingPaymentTimeout] = React.useState(15);
+  const [printingEnabled, setPrintingEnabled] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
 
   const toggleChannel = (k: keyof typeof channels) =>
@@ -395,6 +397,42 @@ function OrdersTab() {
           <span style={{ fontSize: 13, color: 'var(--adm-text-sec)' }}>elementu / eskaera</span>
         </div>
         <FormHint>0 = mugarik gabe</FormHint>
+      </div>
+
+      <div>
+        <FormLabel>Ordainketa zain denbora-muga</FormLabel>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <input
+            type="number"
+            value={pendingPaymentTimeout}
+            onChange={(e) => setPendingPaymentTimeout(Number(e.target.value))}
+            min={1}
+            max={120}
+            style={{
+              width: 80,
+              padding: '10px 12px',
+              borderRadius: 8,
+              border: '1px solid var(--adm-border)',
+              background: 'var(--adm-surface)',
+              color: 'var(--adm-text-pri)',
+              fontSize: 14,
+              outline: 'none',
+            }}
+          />
+          <span style={{ fontSize: 13, color: 'var(--adm-text-sec)' }}>minutu</span>
+        </div>
+        <FormHint>
+          Zenbat minututan bertan behera uzten den ordainketa osatu gabeko eskaera (15 minutu)
+        </FormHint>
+      </div>
+
+      <div>
+        <ToggleRow
+          label="Sukaldeko txartelak inprimatu"
+          hint="Eskaerak sukaldera bidaltzean txartelak automatikoki inprimatu"
+          checked={printingEnabled}
+          onChange={() => setPrintingEnabled((prev) => !prev)}
+        />
       </div>
 
       <SaveButton

@@ -17,12 +17,18 @@ const adminPaths = ['/menu', '/txosna', '/volunteers', '/reports', '/onboarding'
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Public paths — no auth needed
+  // Auth pages — bypass entirely (no locale prefix, no auth check)
+  const isAuthPage =
+    pathname === '/login' || pathname === '/register' || pathname === '/reset-password';
+
+  if (isAuthPage) {
+    return NextResponse.next();
+  }
+
+  // Public paths — no auth needed, but locale prefix is added
   const isPublic =
     pathname.includes('/t/') ||
     pathname.includes('/order/') ||
-    pathname.includes('/login') ||
-    pathname.includes('/register') ||
     pathname.startsWith('/api/payments/webhook');
 
   if (isPublic) return intlMiddleware(request);
@@ -51,6 +57,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Exclude _next, _vercel, static files, and /prototype from middleware
-  matcher: ['/((?!_next|_vercel|prototype|.*\\..*).*)'],
+  // Exclude:
+  // - _next, _vercel, static files
+  // - /prototype (proto navigator)
+  // - Auth pages (login, register, reset-password) — these are root-level, not locale-prefixed
+  matcher: ['/((?!_next|_vercel|prototype|login|register|reset-password|.*\\..*).*)'],
 };
