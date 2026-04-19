@@ -213,9 +213,19 @@ Txosna bakoitzean produktuen kudeaketa independentea dago. Orri honetan:
 - **Stock egoera**: Produktu bakoitzaren eskuragarritasuna kontrolatu (agortuta / eskuragarri)
 - **Prezioak**: Txosna bakoitzeko prezio bereziak ezarri
 
+**Produktuak gaituta:**
+
+![Produktuak gaituta](../screenshots/26-txosna-products-enabled.png)
+
+Produktuak gaitu eta konfiguratzeko, aktibatu etengailua eta egin klik konfigurazio ikonoan:
+
+- ✅ **Gaituta** - Produktua txosna honetan eskaintzen da
+- ⚙️ **Konfiguratu** - Ireki ezarpenen dialogoa
+- 📦 **Stocka** - Eska daitekeen kopurua
+
 **Produktuen ezarpenak txosnako:**
 
-![Produktu ezarpenak txosnako](../screenshots/26-txosna-product-override.png)
+![Produktu ezarpenak txosnako](../screenshots/26-txosna-product-override-dialog.png)
 
 Produktu bat txosna batean gaitzean, hurrengo ezarpenak alda daitezke:
 
@@ -523,7 +533,13 @@ Sukaldeko langileek 📦 Stocka botoia erabiliz produktuak agortuta marka ditzak
 
 #### Mostradorea
 
-![Mostradorea](../screenshots/12-counter-desktop.png)
+**Janari Mostradorea:**
+
+![Janari Mostradorea](../screenshots/12-counter-food.png)
+
+**Edari Mostradorea:**
+
+![Edari Mostradorea](../screenshots/12-counter-drinks.png)
 
 **Eskaerak kudeatzeko:**
 

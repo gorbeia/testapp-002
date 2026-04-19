@@ -799,6 +799,7 @@ function ProductRow({ product, isSaving, onToggle, onEdit }: ProductRowProps) {
         {/* Edit Button (when enabled) */}
         {isEnabled && (
           <button
+            data-testid="product-edit-button"
             onClick={() => onEdit(product)}
             style={{
               padding: '6px 12px',
@@ -817,6 +818,7 @@ function ProductRow({ product, isSaving, onToggle, onEdit }: ProductRowProps) {
 
         {/* Toggle Switch */}
         <button
+          data-testid="product-toggle"
           onClick={() => onToggle(product, !isEnabled)}
           disabled={isSaving}
           style={{
@@ -884,6 +886,7 @@ function EditModal({ product, isOpen, onClose, onSave }: EditModalProps) {
 
   return (
     <div
+      data-testid="product-edit-modal"
       style={{
         position: 'fixed',
         inset: 0,
@@ -897,6 +900,7 @@ function EditModal({ product, isOpen, onClose, onSave }: EditModalProps) {
       onClick={onClose}
     >
       <div
+        data-testid="product-edit-dialog"
         style={{
           background: 'var(--adm-surface)',
           border: '1px solid var(--adm-border)',
