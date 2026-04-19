@@ -67,26 +67,28 @@ interface ProductForm {
   preparationInstructions: string;
 }
 
-const ALLERGEN_LIST = [
-  'gluten',
-  'laktosa',
-  'arrautzak',
-  'fruitu lehorrak',
-  'soja',
-  'krustazeoak',
-  'arrain',
-  'sesamo',
+/** 14 EU-regulated allergens — canonical English key, Basque label, emoji */
+const ALLERGENS: { key: string; label: string; emoji: string }[] = [
+  { key: 'gluten', label: 'Glutena (garia, sekelea...)', emoji: '🌾' },
+  { key: 'crustaceans', label: 'Krustazeoak', emoji: '🦐' },
+  { key: 'eggs', label: 'Arrautzak', emoji: '🥚' },
+  { key: 'fish', label: 'Arraina', emoji: '🐟' },
+  { key: 'peanuts', label: 'Kakahueteak', emoji: '🥜' },
+  { key: 'soybeans', label: 'Soja', emoji: '🫘' },
+  { key: 'milk', label: 'Esnea (laktosa barne)', emoji: '🥛' },
+  { key: 'nuts', label: 'Fruitu oskoldunak', emoji: '🌰' },
+  { key: 'celery', label: 'Apioa', emoji: '🥬' },
+  { key: 'mustard', label: 'Mostaza', emoji: '🌻' },
+  { key: 'sesame', label: 'Sesamo haziak', emoji: '🫚' },
+  { key: 'sulphites', label: 'Sulfito dioxidoa eta sulfitoak', emoji: '🍷' },
+  { key: 'lupin', label: 'Altramuze', emoji: '🌼' },
+  { key: 'molluscs', label: 'Moluskuak', emoji: '🦑' },
 ];
-const ALLERGEN_EMOJI: Record<string, string> = {
-  gluten: '🌾',
-  laktosa: '🥛',
-  arrautzak: '🥚',
-  'fruitu lehorrak': '🥜',
-  soja: '🫘',
-  krustazeoak: '🦐',
-  arrain: '🐟',
-  sesamo: '🫚',
-};
+
+/** Quick emoji lookup for display-only contexts */
+const ALLERGEN_EMOJI: Record<string, string> = Object.fromEntries(
+  ALLERGENS.map(({ key, emoji }) => [key, emoji])
+);
 
 function emptyForm(categoryId: string): ProductForm {
   return {
@@ -492,12 +494,12 @@ function ProductModal({
               <div>
                 <div style={sectionLabel}>Alergenoak</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {ALLERGEN_LIST.map((a) => (
+                  {ALLERGENS.map(({ key, label, emoji }) => (
                     <Chip
-                      key={a}
-                      label={`${ALLERGEN_EMOJI[a]} ${a}`}
-                      active={form.allergens.includes(a)}
-                      onClick={() => toggleAllergen(a)}
+                      key={key}
+                      label={`${emoji} ${label}`}
+                      active={form.allergens.includes(key)}
+                      onClick={() => toggleAllergen(key)}
                     />
                   ))}
                 </div>

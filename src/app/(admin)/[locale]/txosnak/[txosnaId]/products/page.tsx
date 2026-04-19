@@ -67,13 +67,19 @@ interface Category {
 
 const ALLERGEN_EMOJI: Record<string, string> = {
   gluten: '🌾',
-  laktosa: '🥛',
-  arrautzak: '🥚',
-  'fruitu lehorrak': '🥜',
-  soja: '🫘',
-  krustazeoak: '🦐',
-  arrain: '🐟',
-  sesamo: '🫚',
+  crustaceans: '🦐',
+  eggs: '🥚',
+  fish: '🐟',
+  peanuts: '🥜',
+  soybeans: '🫘',
+  milk: '🥛',
+  nuts: '🌰',
+  celery: '🥬',
+  mustard: '🌻',
+  sesame: '🫚',
+  sulphites: '🍷',
+  lupin: '🌼',
+  molluscs: '🦑',
 };
 
 // ── Debounce Hook ─────────────────────────────────────────────────────────────
