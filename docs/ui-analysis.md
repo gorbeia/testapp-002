@@ -446,7 +446,9 @@ A small book icon on each card. One tap opens a full-screen overlay with the Mar
 
 ### Sold out management
 
-A "Sold out" button in the header (or accessible via a swipe on the product) opens a simple product list with toggle switches. Marking a product as sold out requires one tap — no confirmation (it is reversible). The change propagates immediately.
+A "Sold out" button in the header opens a bottom sheet with a product list. Marking a product as sold out requires one tap — no confirmation (it is reversible). The change propagates immediately.
+
+Products that have **complements** (sides or variant options) show an expand arrow. Tapping it reveals each complement as an indented row with its own toggle. When one or more complements are sold out but the product itself is still available, the product row shows an amber "N osagarri agortuta" label and auto-expands when the panel opens. The header badge counts both sold-out products and sold-out complements.
 
 ### Layout on different devices
 

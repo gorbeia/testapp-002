@@ -336,6 +336,14 @@ base price (or override) + sum of variant deltas + sum of modifier prices
 - Pending payment orders with sold out products cannot be accepted — must be cancelled
 - Already-paid orders flagged; resolved in person
 
+### Complement-level sold out
+
+- Products can have **complements** (sides or variant options available at service time, e.g. fries or salad with a burger)
+- Each complement can be marked as sold out independently of the parent product
+- A product row in the stock panel shows an amber indicator ("N osagarri agortuta") when one or more complements are sold out but the product itself is still available
+- The header badge counts both sold-out products and sold-out complements
+- Products with sold-out complements auto-expand in the stock panel for quick visibility
+
 ---
 
 ## 15. Order Notes and Item Splitting
