@@ -541,6 +541,16 @@ Sukaldeko langileek 📦 Stocka botoia erabiliz produktuak agortuta marka ditzak
 
 ![Edari Mostradorea](../screenshots/12-counter-drinks.png)
 
+**Ordainketa-prozesua (ordainketa zain):**
+
+![Ordainketa zain](../screenshots/12-counter-food-pending-payment.png)
+
+Mostradorean ordainketa zain dagoen eskaera bat kobratzeko:
+
+1. **Hautatu eskaera** - "ORDAINKETARIK GABE" zerrendatik
+2. **Sartu kopurua** - Ordaindutako diru-kopurua (trukerako kalkulatzeko)
+3. **Egin klik** - "Ordaindu · Sukaldera bidali" botoian
+
 **Eskaerak kudeatzeko:**
 
 - Telefono-eskariak onartu
