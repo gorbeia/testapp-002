@@ -1,10 +1,10 @@
 'use client';
 import { useState } from 'react';
 import { useCart } from '@/lib/cart-context';
-import type { MockProduct } from '@/lib/mock-data';
+import type { StoredProductView } from '@/lib/store/types';
 
 interface ProductSheetProps {
-  product: MockProduct;
+  product: StoredProductView;
   onClose: () => void;
 }
 
@@ -24,7 +24,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
       productId: product.id,
       productName: product.name,
       quantity: qty,
-      unitPrice: product.price,
+      unitPrice: product.effectivePrice,
       selectedVariant: variant,
       selectedModifiers: mods,
     });
@@ -89,7 +89,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
             marginBottom: 20,
           }}
         >
-          {product.price.toFixed(2)} €
+          {product.effectivePrice.toFixed(2)} €
         </div>
 
         {product.variantGroups.map((vg) => (
@@ -283,7 +283,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
             minHeight: 52,
           }}
         >
-          Saskira gehitu — {(product.price * qty).toFixed(2)} €
+          Saskira gehitu — {(product.effectivePrice * qty).toFixed(2)} €
         </button>
       </div>
     </div>

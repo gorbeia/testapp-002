@@ -2,11 +2,11 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import type { NextRequest } from 'next/server';
 
-// PUT /api/txosnak/[txosnaId]/products/[productId]
+// PUT /api/txosnak/[slug]/products/[productId]
 // Upsert or delete a TxosnaProduct entry
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ txosnaId: string; productId: string }> }
+  { params }: { params: Promise<{ slug: string; productId: string }> }
 ) {
   if (!prisma) return new Response('Service unavailable', { status: 503 });
 
@@ -16,7 +16,8 @@ export async function PUT(
   const { role, associationId } = session.user as any;
   if (role !== 'ADMIN') return new Response('Forbidden', { status: 403 });
 
-  const { txosnaId, productId } = await params;
+  const { slug, productId } = await params;
+  const txosnaId = slug;
 
   // Verify txosna belongs to this association
   const txosna = await prisma.txosna.findFirst({ where: { id: txosnaId, associationId } });

@@ -3,11 +3,11 @@ import { prisma } from '@/lib/prisma';
 import type { NextRequest } from 'next/server';
 import type { Prisma } from '@prisma/client';
 
-// GET /api/txosnak/[txosnaId]/products
+// GET /api/txosnak/[slug]/products
 // Returns the full master catalog annotated with per-txosna TxosnaProduct data
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ txosnaId: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   if (!prisma) return new Response('Service unavailable', { status: 503 });
 
@@ -15,11 +15,13 @@ export async function GET(
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
 
   const associationId = (session.user as any).associationId as string;
-  const { txosnaId } = await params;
+  const { slug } = await params;
 
-  // Verify txosna belongs to this association
-  const txosna = await prisma.txosna.findFirst({ where: { id: txosnaId, associationId } });
+  // Verify txosna belongs to this association (slug is actually the txosna ID for admin routes)
+  const txosna = await prisma.txosna.findFirst({ where: { id: slug, associationId } });
   if (!txosna) return new Response('Not found', { status: 404 });
+
+  const txosnaId = txosna.id;
 
   const categories: Array<
     Prisma.CategoryGetPayload<{
