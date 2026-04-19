@@ -10,13 +10,22 @@
 import {
   catalogRepo,
   orderRepo,
+  resetDemoAssociation,
   resetStore,
   ticketRepo,
   txosnaRepo,
   volunteerRepo,
 } from './memory';
 
-export { catalogRepo, orderRepo, resetStore, ticketRepo, txosnaRepo, volunteerRepo };
+export {
+  catalogRepo,
+  orderRepo,
+  resetDemoAssociation,
+  resetStore,
+  ticketRepo,
+  txosnaRepo,
+  volunteerRepo,
+};
 
 export type {
   CancellationReason,

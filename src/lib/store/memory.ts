@@ -10,6 +10,17 @@ import {
   MOCK_TICKETS,
   MOCK_VOLUNTEERS,
 } from '@/lib/mock-data';
+import {
+  DEMO_ASSOCIATION,
+  DEMO_CATEGORIES,
+  DEMO_ORDERS,
+  DEMO_PIN,
+  DEMO_PRODUCTS,
+  DEMO_TICKETS,
+  DEMO_TXOSNAK,
+  DEMO_TXOSNA_OVERRIDES,
+  DEMO_VOLUNTEERS,
+} from '@/lib/fixtures/demo';
 import type {
   CatalogRepository,
   CreateOrderInput,
@@ -457,6 +468,189 @@ function generateVerificationCode(): string {
   );
 }
 
+// ── Demo association seed / reset ─────────────────────────────────────────────
+
+function seedDemoAssociation() {
+  const t = now();
+
+  associations.set(DEMO_ASSOCIATION.id, {
+    id: DEMO_ASSOCIATION.id,
+    name: DEMO_ASSOCIATION.name,
+    createdAt: t,
+  });
+
+  for (const dt of DEMO_TXOSNAK) {
+    txosnak.set(dt.id, {
+      id: dt.id,
+      slug: dt.slug,
+      name: dt.name,
+      status: dt.status,
+      counterSetup: dt.counterSetup,
+      waitMinutes: dt.waitMinutes,
+      pinHash: DEMO_PIN,
+      enabledChannels: ['COUNTER', 'PHONE_TO_COUNTER', 'SELF_SERVICE'],
+      enabledPaymentMethods: ['CASH'],
+      pendingPaymentTimeout: 15,
+      associationId: DEMO_ASSOCIATION.id,
+      createdAt: t,
+      updatedAt: t,
+    });
+  }
+
+  for (const dc of DEMO_CATEGORIES) {
+    categories.set(dc.id, {
+      id: dc.id,
+      name: dc.name,
+      type: dc.type,
+      displayOrder: dc.displayOrder,
+      associationId: DEMO_ASSOCIATION.id,
+    });
+  }
+
+  for (const [i, dp] of DEMO_PRODUCTS.entries()) {
+    products.set(dp.id, {
+      id: dp.id,
+      categoryId: dp.categoryId,
+      name: dp.name,
+      description: dp.description,
+      defaultPrice: dp.price,
+      imageUrl: dp.imageUrl,
+      allergens: dp.allergens,
+      dietaryFlags: dp.dietaryFlags,
+      ageRestricted: dp.ageRestricted,
+      requiresPreparation: dp.requiresPreparation,
+      available: dp.available,
+      splittable: dp.splitAllowed,
+      splitMaxWays: dp.splitMaxWays,
+      removableIngredients: dp.removableIngredients,
+      preparationInstructions: dp.preparationInstructions,
+      displayOrder: i,
+      variantGroups: dp.variantGroups.map((vg, vgi) => ({
+        id: vg.id,
+        name: vg.name,
+        displayOrder: vgi,
+        options: vg.options.map((o, oi) => ({
+          id: o.id,
+          name: o.name,
+          priceDelta: o.priceDelta,
+          allergens: [],
+          displayOrder: oi,
+        })),
+      })),
+      modifiers: dp.modifiers.map((mod, modi) => ({
+        id: mod.id,
+        name: mod.name,
+        price: mod.price,
+        allergens: [],
+        displayOrder: modi,
+      })),
+    });
+  }
+
+  for (const override of DEMO_TXOSNA_OVERRIDES) {
+    const key = `${override.txosnaId}:${override.productId}`;
+    txosnaProducts.set(key, {
+      txosnaId: override.txosnaId,
+      productId: override.productId,
+      priceOverride: override.priceOverride,
+      available: override.available,
+      soldOut: override.soldOut,
+      preparationInstructions: override.preparationInstructions,
+    });
+  }
+
+  let maxDemoOrderNumber = 0;
+  for (const mo of DEMO_ORDERS) {
+    orders.set(mo.id, {
+      id: mo.id,
+      orderNumber: mo.orderNumber,
+      txosnaId: 'demo-txosna-1',
+      status: mo.status,
+      cancellationReason: mo.status === 'CANCELLED' ? 'SOLD_OUT' : null,
+      channel: mo.channel,
+      paymentMethod: 'CASH',
+      customerName: mo.customerName,
+      notes: mo.notes,
+      total: mo.total,
+      verificationCode: mo.verificationCode,
+      registeredById: null,
+      paymentSessionId: null,
+      confirmedAt: mo.status === 'CONFIRMED' ? new Date(mo.createdAt) : null,
+      expiresAt: mo.expiresAt ? new Date(mo.expiresAt) : null,
+      createdAt: new Date(mo.createdAt),
+      updatedAt: new Date(mo.createdAt),
+    });
+    if (mo.orderNumber > maxDemoOrderNumber) maxDemoOrderNumber = mo.orderNumber;
+  }
+  orderCounters.set('demo-txosna-1', maxDemoOrderNumber);
+
+  for (const mt of DEMO_TICKETS) {
+    tickets.set(mt.id, {
+      id: mt.id,
+      orderId: mt.orderId,
+      txosnaId: 'demo-txosna-1',
+      counterType: mt.counterType,
+      status: mt.status,
+      requiresPreparation: mt.lines.some((l) => {
+        const p = products.get(l.productId);
+        return p?.requiresPreparation ?? false;
+      }),
+      flagged: mt.flagged,
+      orderChangedAlert: mt.hasAlert,
+      notes: mt.notes,
+      lines: mt.lines.map((l) => ({
+        id: l.id,
+        productId: l.productId,
+        productName: l.productName,
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+        selectedVariant: l.selectedVariant,
+        selectedModifiers: l.selectedModifiers,
+        splitInstructions: l.splitInstructions,
+      })),
+      createdAt: new Date(DEMO_ORDERS.find((o) => o.id === mt.orderId)?.createdAt ?? t),
+      readyAt: mt.status === 'READY' ? t : null,
+      completedAt: mt.status === 'COMPLETED' ? t : null,
+      updatedAt: t,
+    });
+  }
+
+  for (const mv of DEMO_VOLUNTEERS) {
+    volunteers.set(mv.id, {
+      id: mv.id,
+      associationId: DEMO_ASSOCIATION.id,
+      name: mv.name,
+      email: mv.email,
+      passwordHash: 'plain:demo0000',
+      role: mv.role,
+      active: mv.active,
+      createdAt: t,
+      updatedAt: t,
+    });
+  }
+}
+
+/**
+ * Wipe all demo-prefixed entities and re-seed from the demo fixture.
+ * Called by POST /api/demo/reset and by resetStore() (full test reset).
+ */
+export function resetDemoAssociation() {
+  const isDemo = (id: string) => id.startsWith('demo-');
+  const isDemoKey = (key: string) => key.startsWith('demo-');
+
+  for (const id of [...associations.keys()].filter(isDemo)) associations.delete(id);
+  for (const id of [...txosnak.keys()].filter(isDemo)) txosnak.delete(id);
+  for (const id of [...categories.keys()].filter(isDemo)) categories.delete(id);
+  for (const id of [...products.keys()].filter(isDemo)) products.delete(id);
+  for (const key of [...txosnaProducts.keys()].filter(isDemoKey)) txosnaProducts.delete(key);
+  for (const id of [...orders.keys()].filter(isDemo)) orders.delete(id);
+  for (const id of [...tickets.keys()].filter(isDemo)) tickets.delete(id);
+  for (const id of [...volunteers.keys()].filter(isDemo)) volunteers.delete(id);
+  for (const id of [...orderCounters.keys()].filter(isDemo)) orderCounters.delete(id);
+
+  seedDemoAssociation();
+}
+
 // ── Reset (for tests) ─────────────────────────────────────────────────────────
 
 export function resetStore() {
@@ -470,7 +664,9 @@ export function resetStore() {
   volunteers.clear();
   orderCounters.clear();
   seed();
+  seedDemoAssociation();
 }
 
 // Seed on module load so the store is ready in dev without explicit setup.
 seed();
+seedDemoAssociation();
