@@ -14,6 +14,15 @@ interface DrinksQueueOrder {
   placedAt: number;
 }
 
+type ConfirmState =
+  | { type: 'queue'; order: DrinksQueueOrder }
+  | {
+      type: 'cart';
+      items: { name: string; qty: number; price: number }[];
+      total: number;
+      customerName: string;
+    };
+
 const INITIAL_QUEUE: DrinksQueueOrder[] = [
   {
     id: 'd1',
@@ -43,6 +52,8 @@ export default function DrinksPage() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [customerName, setCustomerName] = useState('');
   const [showNewOrder, setShowNewOrder] = useState(false);
+  const [confirmDelivery, setConfirmDelivery] = useState<ConfirmState | null>(null);
+  const [queuePreview, setQueuePreview] = useState<DrinksQueueOrder | null>(null);
 
   const addToCart = (name: string) => setCart((c) => ({ ...c, [name]: (c[name] ?? 0) + 1 }));
   const removeFromCart = (name: string) =>
@@ -70,12 +81,491 @@ export default function DrinksPage() {
     setQueue((prev) => prev.filter((o) => o.id !== id));
   };
 
+  const requestServeCart = () => {
+    const items = Object.entries(cart).map(([name, qty]) => {
+      const p = drinkProducts.find((p) => p.name === name);
+      return { name, qty, price: p?.price ?? 0 };
+    });
+    setConfirmDelivery({ type: 'cart', items, total: cartTotal, customerName });
+  };
+
+  const requestServeFromQueue = (order: DrinksQueueOrder) => {
+    setConfirmDelivery({ type: 'queue', order });
+  };
+
+  const addCartToQueue = () => {
+    const items = Object.entries(cart).map(([name, qty]) => {
+      const p = drinkProducts.find((p) => p.name === name);
+      return { name, qty, price: p?.price ?? 0 };
+    });
+    const num = _nextOrderNumRef.current++;
+    setQueuePreview({
+      id: `walk-${num}`,
+      number: num,
+      customerName: customerName || null,
+      items,
+      total: cartTotal,
+      placedAt: Date.now(),
+    });
+  };
+
+  const confirmAddToQueue = () => {
+    if (!queuePreview) return;
+    setQueue((prev) => [...prev, queuePreview]);
+    setQueuePreview(null);
+    setCart({});
+    setCustomerName('');
+    setShowNewOrder(false);
+  };
+
+  const confirmAndDeliver = () => {
+    if (!confirmDelivery) return;
+    if (confirmDelivery.type === 'queue') {
+      serveFromQueue(confirmDelivery.order.id);
+    } else {
+      serve();
+    }
+    setConfirmDelivery(null);
+  };
+
   const formatElapsed = (placedAt: number) => {
     const mins = Math.floor((Date.now() - placedAt) / 60000);
     if (mins < 1) return 'Oraintxe';
     if (mins === 1) return 'Duela 1 min';
     return `Duela ${mins} min`;
   };
+
+  // ── Queue preview screen ──────────────────────────────────────────────────
+  if (queuePreview) {
+    return (
+      <div
+        className="ops-theme"
+        style={{ minHeight: '100vh', fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)' }}
+      >
+        <OpsHeader
+          title="Ilaran gehitu"
+          left={
+            <button
+              onClick={() => setQueuePreview(null)}
+              style={{
+                fontSize: 13,
+                color: 'var(--ops-text-sec)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px 2px',
+              }}
+            >
+              ← Atzera
+            </button>
+          }
+        />
+
+        <div
+          style={{ padding: '24px 14px 160px', display: 'flex', flexDirection: 'column', gap: 24 }}
+        >
+          {/* Order number — big and prominent */}
+          <div
+            style={{
+              background: 'var(--ops-surface)',
+              border: '2px solid var(--ops-orange)',
+              borderRadius: 16,
+              padding: '24px 18px',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: 'var(--ops-text-sec)',
+                marginBottom: 8,
+              }}
+            >
+              Zenbakia
+            </div>
+            <div
+              style={{
+                fontFamily: 'var(--font-mono, monospace)',
+                fontSize: 72,
+                fontWeight: 900,
+                color: 'var(--ops-orange)',
+                lineHeight: 1,
+              }}
+            >
+              #{queuePreview.number}
+            </div>
+            {queuePreview.customerName && (
+              <div
+                style={{
+                  marginTop: 10,
+                  fontSize: 18,
+                  fontWeight: 600,
+                  color: 'var(--ops-text-sec)',
+                }}
+              >
+                {queuePreview.customerName}
+              </div>
+            )}
+          </div>
+
+          {/* Items */}
+          <div>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'var(--ops-text-sec)',
+                marginBottom: 10,
+              }}
+            >
+              EDARIAK
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {queuePreview.items.map((item, i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: 'var(--ops-surface)',
+                    border: '1px solid var(--ops-border)',
+                    borderRadius: 10,
+                    padding: '14px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono, monospace)',
+                      fontSize: 20,
+                      fontWeight: 800,
+                      color: 'var(--ops-orange)',
+                      minWidth: 36,
+                    }}
+                  >
+                    {item.qty}×
+                  </span>
+                  <span
+                    style={{ flex: 1, fontSize: 16, fontWeight: 600, color: 'var(--ops-text-pri)' }}
+                  >
+                    {item.name}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono, monospace)',
+                      fontSize: 14,
+                      color: 'var(--ops-text-sec)',
+                    }}
+                  >
+                    {(item.qty * item.price).toFixed(2)} €
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Total */}
+          <div
+            style={{
+              background: 'var(--ops-surface)',
+              border: '1px solid var(--ops-border)',
+              borderRadius: 12,
+              padding: '16px 18px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ops-text-sec)' }}>
+              Guztira
+            </span>
+            <span
+              style={{
+                fontFamily: 'var(--font-mono, monospace)',
+                fontSize: 28,
+                fontWeight: 800,
+                color: 'var(--ops-text-pri)',
+              }}
+            >
+              {queuePreview.total.toFixed(2)} €
+            </span>
+          </div>
+        </div>
+
+        {/* Sticky bottom */}
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: '12px 14px 28px',
+            background: 'var(--ops-bg)',
+            borderTop: '1px solid var(--ops-border)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          <button
+            onClick={confirmAddToQueue}
+            style={{
+              width: '100%',
+              background: 'var(--ops-orange)',
+              border: 'none',
+              borderRadius: 12,
+              padding: '18px',
+              color: '#fff',
+              fontSize: 17,
+              fontWeight: 800,
+              cursor: 'pointer',
+            }}
+          >
+            Ilaran gehitu — #{queuePreview.number}
+          </button>
+          <button
+            onClick={() => setQueuePreview(null)}
+            style={{
+              width: '100%',
+              background: 'none',
+              border: '1px solid var(--ops-border)',
+              borderRadius: 12,
+              padding: '14px',
+              color: 'var(--ops-text-sec)',
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Atzera
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Confirmation / validation screen ─────────────────────────────────────
+  if (confirmDelivery) {
+    const items =
+      confirmDelivery.type === 'queue' ? confirmDelivery.order.items : confirmDelivery.items;
+    const total =
+      confirmDelivery.type === 'queue' ? confirmDelivery.order.total : confirmDelivery.total;
+    const name =
+      confirmDelivery.type === 'queue'
+        ? confirmDelivery.order.customerName
+        : confirmDelivery.customerName || null;
+    const orderNumber = confirmDelivery.type === 'queue' ? confirmDelivery.order.number : null;
+
+    return (
+      <div
+        className="ops-theme"
+        style={{ minHeight: '100vh', fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)' }}
+      >
+        <OpsHeader
+          title="Entrega baieztatu"
+          left={
+            <button
+              onClick={() => setConfirmDelivery(null)}
+              style={{
+                fontSize: 13,
+                color: 'var(--ops-text-sec)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px 2px',
+              }}
+            >
+              ← Atzera
+            </button>
+          }
+        />
+
+        <div
+          style={{ padding: '24px 14px 140px', display: 'flex', flexDirection: 'column', gap: 24 }}
+        >
+          {/* Order identity */}
+          <div
+            style={{
+              background: 'var(--ops-surface)',
+              border: '1px solid var(--ops-border)',
+              borderRadius: 14,
+              padding: '16px 18px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            {orderNumber !== null ? (
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono, monospace)',
+                  fontSize: 32,
+                  fontWeight: 800,
+                  color: 'var(--ops-text-pri)',
+                }}
+              >
+                #{orderNumber}
+              </span>
+            ) : (
+              <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--ops-text-pri)' }}>
+                Leihatila eskaria
+              </span>
+            )}
+            {name && (
+              <span
+                style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  color: 'var(--ops-text-sec)',
+                }}
+              >
+                {name}
+              </span>
+            )}
+          </div>
+
+          {/* Items list */}
+          <div>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'var(--ops-text-sec)',
+                marginBottom: 10,
+              }}
+            >
+              EDARIAK
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {items.map((item, i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: 'var(--ops-surface)',
+                    border: '1px solid var(--ops-border)',
+                    borderRadius: 10,
+                    padding: '14px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono, monospace)',
+                      fontSize: 20,
+                      fontWeight: 800,
+                      color: 'var(--ops-orange)',
+                      minWidth: 36,
+                    }}
+                  >
+                    {item.qty}×
+                  </span>
+                  <span
+                    style={{ flex: 1, fontSize: 16, fontWeight: 600, color: 'var(--ops-text-pri)' }}
+                  >
+                    {item.name}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono, monospace)',
+                      fontSize: 14,
+                      color: 'var(--ops-text-sec)',
+                    }}
+                  >
+                    {(item.qty * item.price).toFixed(2)} €
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Total */}
+          <div
+            style={{
+              background: 'var(--ops-surface)',
+              border: '1px solid var(--ops-border)',
+              borderRadius: 12,
+              padding: '16px 18px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ops-text-sec)' }}>
+              Guztira
+            </span>
+            <span
+              style={{
+                fontFamily: 'var(--font-mono, monospace)',
+                fontSize: 28,
+                fontWeight: 800,
+                color: 'var(--ops-text-pri)',
+              }}
+            >
+              {total.toFixed(2)} €
+            </span>
+          </div>
+        </div>
+
+        {/* Sticky confirm button */}
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: '12px 14px 28px',
+            background: 'var(--ops-bg)',
+            borderTop: '1px solid var(--ops-border)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+          }}
+        >
+          <button
+            onClick={confirmAndDeliver}
+            style={{
+              width: '100%',
+              background: 'var(--ops-green)',
+              border: 'none',
+              borderRadius: 12,
+              padding: '18px',
+              color: '#0a0a0a',
+              fontSize: 17,
+              fontWeight: 800,
+              cursor: 'pointer',
+            }}
+          >
+            ✓ Bai, entregatu — {total.toFixed(2)} €
+          </button>
+          <button
+            onClick={() => setConfirmDelivery(null)}
+            style={{
+              width: '100%',
+              background: 'none',
+              border: '1px solid var(--ops-border)',
+              borderRadius: 12,
+              padding: '14px',
+              color: 'var(--ops-text-sec)',
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Ezeztatu
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ── Full-page new order view ──────────────────────────────────────────────
   if (showNewOrder) {
@@ -311,10 +801,13 @@ export default function DrinksPage() {
             padding: '12px 14px 28px',
             background: 'var(--ops-bg)',
             borderTop: '1px solid var(--ops-border)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
           }}
         >
           {cartCount > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
               <span style={{ fontSize: 15, color: 'var(--ops-text-sec)' }}>Guztira</span>
               <span
                 style={{
@@ -329,7 +822,7 @@ export default function DrinksPage() {
             </div>
           )}
           <button
-            onClick={serve}
+            onClick={cartCount > 0 ? requestServeCart : undefined}
             disabled={cartCount === 0}
             style={{
               width: '100%',
@@ -343,7 +836,44 @@ export default function DrinksPage() {
               cursor: cartCount === 0 ? 'not-allowed' : 'pointer',
             }}
           >
-            {cartCount === 0 ? 'Gehitu edariak' : `✓ Entregatu — ${cartTotal.toFixed(2)} €`}
+            {cartCount === 0 ? 'Gehitu edariak' : `✓ Entregatu orain — ${cartTotal.toFixed(2)} €`}
+          </button>
+          <button
+            onClick={cartCount > 0 ? addCartToQueue : undefined}
+            disabled={cartCount === 0}
+            style={{
+              width: '100%',
+              background: 'none',
+              border: `1px solid ${cartCount === 0 ? 'var(--ops-border)' : 'var(--ops-orange)'}`,
+              borderRadius: 12,
+              padding: '14px',
+              color: cartCount === 0 ? 'var(--ops-text-dim)' : 'var(--ops-orange)',
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: cartCount === 0 ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Ilaran gehitu
+          </button>
+          <button
+            onClick={() => {
+              setShowNewOrder(false);
+              setCart({});
+              setCustomerName('');
+            }}
+            style={{
+              width: '100%',
+              background: 'none',
+              border: '1px solid var(--ops-border)',
+              borderRadius: 12,
+              padding: '14px',
+              color: 'var(--ops-text-sec)',
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Utzi
           </button>
         </div>
       </div>
@@ -373,9 +903,7 @@ export default function DrinksPage() {
         }
       />
 
-      <div
-        style={{ padding: '14px 14px 100px', display: 'flex', flexDirection: 'column', gap: 20 }}
-      >
+      <div style={{ padding: '14px 14px 90px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {/* Pending queue from phone orders */}
         {queue.length > 0 && (
           <div>
@@ -476,7 +1004,7 @@ export default function DrinksPage() {
                       {o.total.toFixed(2)} €
                     </span>
                     <button
-                      onClick={() => serveFromQueue(o.id)}
+                      onClick={() => requestServeFromQueue(o)}
                       style={{
                         background: 'var(--ops-green)',
                         border: 'none',
@@ -496,8 +1024,20 @@ export default function DrinksPage() {
             </div>
           </div>
         )}
+      </div>
 
-        {/* New walk-up order CTA */}
+      {/* Fixed bottom CTA */}
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          padding: '12px 14px 28px',
+          background: 'var(--ops-bg)',
+          borderTop: '1px solid var(--ops-border)',
+        }}
+      >
         <button
           onClick={() => setShowNewOrder(true)}
           style={{
@@ -514,137 +1054,6 @@ export default function DrinksPage() {
         >
           + Eskaera berria
         </button>
-
-        {/* Quick-serve grid for single drinks */}
-        <div>
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: 'var(--ops-text-sec)',
-              marginBottom: 10,
-            }}
-          >
-            EDARI BAKARRA
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-            {drinkProducts.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => addToCart(p.name)}
-                style={{
-                  background: 'var(--ops-surface)',
-                  border: `2px solid ${cart[p.name] ? 'var(--ops-orange)' : 'var(--ops-border)'}`,
-                  borderRadius: 10,
-                  padding: '12px 6px',
-                  cursor: 'pointer',
-                  position: 'relative',
-                }}
-              >
-                <div style={{ fontSize: 24, marginBottom: 4 }}>🍺</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ops-text-pri)' }}>
-                  {p.name}
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--ops-text-dim)', marginTop: 2 }}>
-                  {p.price.toFixed(2)} €
-                </div>
-                {cart[p.name] > 0 && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 6,
-                      right: 6,
-                      background: 'var(--ops-orange)',
-                      color: '#fff',
-                      borderRadius: 99,
-                      fontSize: 11,
-                      fontWeight: 800,
-                      width: 20,
-                      height: 20,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {cart[p.name]}
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {cartCount > 0 && (
-            <div
-              style={{
-                marginTop: 12,
-                background: 'var(--ops-surface)',
-                border: '1px solid var(--ops-border)',
-                borderRadius: 12,
-                padding: '12px 14px',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: 10,
-                }}
-              >
-                <span style={{ fontSize: 13, color: 'var(--ops-text-sec)' }}>
-                  {Object.entries(cart)
-                    .map(([name, qty]) => `${qty}× ${name}`)
-                    .join(', ')}
-                </span>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-mono, monospace)',
-                    fontSize: 15,
-                    fontWeight: 800,
-                    color: 'var(--ops-orange)',
-                  }}
-                >
-                  {cartTotal.toFixed(2)} €
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  onClick={() => setCart({})}
-                  style={{
-                    flex: 1,
-                    background: 'none',
-                    border: '1px solid var(--ops-border)',
-                    borderRadius: 8,
-                    padding: '10px',
-                    color: 'var(--ops-text-sec)',
-                    fontSize: 13,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Utzi
-                </button>
-                <button
-                  onClick={serve}
-                  style={{
-                    flex: 2,
-                    background: 'var(--ops-green)',
-                    border: 'none',
-                    borderRadius: 8,
-                    padding: '10px',
-                    color: '#0a0a0a',
-                    fontSize: 14,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  ✓ Entregatu — {cartTotal.toFixed(2)} €
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
