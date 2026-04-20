@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
+import { volunteerRepo } from '@/lib/store';
 import bcrypt from 'bcryptjs';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -16,14 +17,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const volunteer = await prisma.volunteer.findUnique({
-          where: { email: credentials.email as string },
-          include: { association: true },
-        });
-
+        const volunteer = await volunteerRepo.findByEmail(credentials.email as string);
         if (!volunteer || !volunteer.active) return null;
 
-        const valid = await bcrypt.compare(credentials.password as string, volunteer.passwordHash);
+        let valid: boolean;
+        if (volunteer.passwordHash.startsWith('$2')) {
+          // Bcrypt hash
+          valid = await bcrypt.compare(credentials.password as string, volunteer.passwordHash);
+        } else {
+          // Plain string (dev/test)
+          valid = credentials.password === volunteer.passwordHash;
+        }
         if (!valid) return null;
 
         return {
