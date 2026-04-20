@@ -37,8 +37,6 @@ Txosna sistemak honako abantailak eskaintzen dizkie:
 
 #### Menua Telefonoan
 
-![Menua mugikorrean](../screenshots/06-customer-menu-mobile.png)
-
 **Ezaugarriak:**
 
 - Diseinu garbia eta erraza
@@ -63,6 +61,8 @@ Bezeroak bere telefonoan sartzen du txosnaren URLa edo eskaneatzen du QR kodea. 
 - **Txosna egoera**: Irekita / Itxita / Pausatuta
 
 ##### 2. Produktua aukeratu
+
+![Produktua aukeratu](../screenshots/13-product-selection-mobile.png)
 
 Produktu batean sakatu eta hautatzeko pantaila irekitzen da:
 

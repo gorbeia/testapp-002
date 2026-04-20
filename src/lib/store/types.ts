@@ -39,6 +39,7 @@ export interface StoredTxosna {
   enabledChannels: OrderingChannel[];
   enabledPaymentMethods: PaymentMethod[];
   pendingPaymentTimeout: number; // minutes until PENDING_PAYMENT expires
+  printingEnabled: boolean;
   associationId: string;
   createdAt: Date;
   updatedAt: Date;
