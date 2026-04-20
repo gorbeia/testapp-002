@@ -33,7 +33,299 @@ Txosna sistemak honako abantailak eskaintzen dizkie:
 
 ## 2. Pantaila Nagusiak
 
-### 2.1 Kudeaketa Panela (Admin)
+### 2.1 Bezeroaren Esperientzia
+
+#### Menua Telefonoan
+
+![Menua mugikorrean](../screenshots/06-customer-menu-mobile.png)
+
+**Ezaugarriak:**
+
+- Diseinu garbia eta erraza
+- Produktuak kategorika antolatuak
+- Prezio garbiak
+- Itxaron-denbora ikusgai
+- Gauezko modua
+
+#### Eskaera Egiteko Prozesua
+
+Bezeroak eskaera bat egiteko jarraitu beharreko pausoak:
+
+##### 1. Menua arakatu
+
+![Menua mugikorrean](../screenshots/06-customer-menu-mobile.png)
+
+Bezeroak bere telefonoan sartzen du txosnaren URLa edo eskaneatzen du QR kodea. Pantailan ikusten du:
+
+- **Kategoriak**: Janaria eta Edariak bereizita
+- **Produktuen zerrenda**: Izena, prezioa, alergenoak, dieta-etiketak
+- **Itxaron-denbora**: Zenbat minututan prest egongo den
+- **Txosna egoera**: Irekita / Itxita / Pausatuta
+
+##### 2. Produktua aukeratu
+
+Produktu batean sakatu eta hautatzeko pantaila irekitzen da:
+
+**Aldaerak aukeratu:**
+
+- Tamaina (adib: Normal / Handia)
+- Albokoak (adib: Patatak / Entsalada)
+
+**Gehigarriak gehitu:**
+
+- Gazta (+1€)
+- Barazkiak (+0.50€)
+- Baratxuria (+0.30€)
+
+**Osagaiak kendu:**
+
+- Letxuga
+- Tipula
+- Tomatea
+
+**Kantitatea**: Zenbat unitate nahi diren
+
+##### 3. Saskia ikusi
+
+![Saskia ikusi](placeholder-cart.png)
+
+Saskian bildutako produktuak ikusteko, saskia ikonoa sakatu beheko barran:
+
+- Produktuen zerrenda argazkiekin
+- Aldaerak eta gehigarriak bakoitzeko
+- Kantitatea aldatu edo ezabatu
+- Guztizko zenbatekoa kalkulatuta
+- "Jarraitu" botoia ordainketara joateko
+
+##### 4. Eskaera baieztatu
+
+![Eskaera baieztapena](../screenshots/07-checkout-mobile.png)
+
+**4 pauso erraz:**
+
+1. **Menua arakatu** - Janari eta edarien zerrenda
+2. **Aukeratu** - Produktuari klik egin eta gehitu
+3. **Saskia ikusi** - Edizioak eta gehigarriak
+4. **Ordaindu** - Online edo mostradorean
+
+**Ordainketa aukerak:**
+
+- **Online (Stripe/Redsys)**: Txartelarekin ordaindu telefonoan
+- **Mostradorean**: Esku-diruz edo txartelaz bertan ordaindu
+
+- Saskia ikonoa behean
+- Eskaera kopuruagatik dohainik
+- Ordainketa segurua Stripe/Redsys
+
+#### Eskaera Egoera
+
+![Eskaera egoera](../screenshots/08-order-status-mobile.png)
+
+Bezeroak bere eskaeraren egoera ikusten du:
+
+- ✅ Jasota (sukaldean)
+- ⏳ Prestatzen
+- 🔔 Prest (bildu)
+
+**Push jakinarazpenak** eskuragarri prest denean.
+
+#### Frogagirria (Pickup Proof)
+
+![Frogagirria](../screenshots/09-pickup-proof-mobile.png)
+
+- Kontraste handiko pantaila
+- Eskaera zenbakia handia
+- QR kodea azkar frogatzeko
+- Pantaila aktibo mantentzen da (WakeLock)
+
+> **Oharra**: Bezeroak bere telefonoan frogagirria erakusten du, eta boluntarioak eskaera zenbakia edo QR kodea eskaneatzen du ordenatzeko.
+
+#### Ordenatze Taula (Order Board)
+
+![Ordenatze taula TVan](../screenshots/10-order-board-tv.png)
+
+**Pantaila handietan erakusteko**:
+
+- **Ezkerrean**: Prest dagoen eskaerak (berdea)
+- **Eskuinean**: Prestatzen ari direnak (horia)
+- Itxaron-denbora kalkulatua
+- Automatikoki eguneratzen denbora errealean
+
+---
+
+### 2.2 Boluntarioen Pantailak
+
+#### Sukaldea (KDS - Kitchen Display System)
+
+![KDS sukaldea](../screenshots/11-kds-desktop.png)
+
+Sukaldeko langileentzako pantaila nagusia. Bertan ikusten dira denbora errealean sartzen diren eskaera guztiak eta haien egoera.
+
+##### Goiburua (Header)
+
+**Ezkerrean:**
+
+- **Gertaera hautatzailea**: "Aste Nagusia 2026 ▾" - Txosnak aukeratzeko menua
+- **Eremua eta mota**: "Janaria · Sukaldea · ⚠ 1 motel" - Zein txosna eta zein sukalde motatan ari den lanean
+
+**Eskuinean - Kudeaketa botoiak:**
+| Ikonoa | Izena | Funtzioa |
+|--------|-------|----------|
+| 🌙 | Modu iluna | Pantaila argitasuna doitzeko (gauak/egunak) |
+| 📦 Stocka | Stock kudeaketa | Produktuak agortuta markatzeko dialogoa irekitzen du |
+| ⋯ Aukerak | Aukerak | Sukaldea pausatu/ireki/itxi eta bestelako ezarpenak |
+
+##### Hiru Zutabe Sistema
+
+Eskaerak hiru zutabean antolatuta daude, Kanban estiloko taula batean:
+
+| Zutabea        | Kolorea   | Azalpena                                        | Ekintza                                      |
+| -------------- | --------- | ----------------------------------------------- | -------------------------------------------- |
+| **Jasota**     | 🟡 Horia  | Eskaera berriak, oraindik ez da prestatzen hasi | "→ Hasi" botoia sakatu prestatzen hasteko    |
+| **Prestatzen** | 🔵 Urdina | Sukaldean lanean ari diren eskaerak             | "→ Prest" botoia sakatu prest dagoenean      |
+| **Prest**      | 🟢 Berdea | Bukatutako eskaerak, bildu daitezke             | "→ Amaituta" botoia sakatu entregatu ondoren |
+
+##### Eskaera Txartelak (Ticketak)
+
+**Goiko informazioa:**
+
+- **⬆ Hurrengoa**: Hurrengo eskaera prestatzeko adierazlea
+- **#38**: Eskaera zenbakia (bezeroak ikusten duena)
+- **Miren**: Bezeroaren izena
+- **Jasota/Prestatzen/Prest**: Eskaeraren uneko egoera
+- **⏱ 14min**: Zenbat denbora daraman prestatzen
+
+**Produktuen zerrenda:**
+
+- **2× Txorizoa ogian**: Kantitatea × Produktu izena
+- **— patata frijituak**: Aldaera aukeratua (adibidez: albokoak)
+- **✕ Tipula**: Kentzeko osagaia (bezeroak kendu duena)
+- **📝 Burgerra ondo eginda**: Prestaketa argibideak
+
+**Beheko botoiak:**
+
+- **📖**: Argibideen ikonoa - Klik egitean produktuaren prestaketa argibideak ikusten dira
+- **→ Hasi / → Prest / → Amaituta**: Eskaera hurrengo egoerara pasatzeko
+
+**Jakinarazpen bereziak:**
+
+- **🔔 Eskaera aldatua**: Bezeroak eskaera aldatu du eta sukaldeak berriro ikusi behar du
+
+##### Stock Kudeaketa
+
+Sukaldeko langileek 📦 Stocka botoia erabiliz produktuak agortuta marka ditzakete. Hau erabilgarria da:
+
+- Ingredienteen stocka amaitzen ari denean
+- Sukaldeak ezin duen produktu bat egiteko
+- Menua aldi baterako murrizteko
+
+##### Sukaldearen Egoera Aldaketa
+
+**Aukerak** (⋯) botoian sakatu eta:
+
+- **Pausatu sukaldea**: Eskaera berriak jaso ez (adib: atsedenaldia)
+- **Itxi sukaldea**: Sukaldea itxi (adib: txosna itxita)
+- **Ireki sukaldea**: Sukaldea berriro martxan jarri
+
+---
+
+##### Stock Kudeaketa Dialogoa
+
+![Stock kudeaketa](../screenshots/19-kds-stock-dialog.png)
+
+📦 Stocka botoia sakatzean, dialogo bat irekitzen da produktuak agortuta markatzeko:
+
+**Produktuen zerrenda:**
+
+- Produktu bakoitzaren izena eta egoera
+- **Agortuta** / **Eskuragarri** toggle botoiak
+- Bilaketa barra produktuak aurkitzeko
+- Kategoriaka antolatuta (Janaria / Edariak)
+
+**Agortze arrazoiak:**
+
+- Ingredienteen eskasia
+- Sukaldeko arazoak
+- Eskaera gehiegia (denbora batez)
+
+##### Prestaketa Argibideen Dialogoa
+
+![Prestaketa argibideak](../screenshots/20-kds-instructions-dialog.png)
+
+📖 ikonoa sakatzean, produktuaren prestaketa argibideak ikusteko dialogoa irekitzen da:
+
+**Fitxak:**
+| Fitxa | Edukia |
+|-------|--------|
+| **Argibideak** | Sukaldeko langileentzako jarraibide detallatuak |
+| **Alergenoak** | Produktuaren alergenoen zerrenda |
+| **Bestelakoak** | Dieta-etiketak, osagaien zerrenda |
+
+**Markdown onarpena:**
+
+- Testu lodia, etzana
+- Zerrendak
+- Koloreko testua
+
+##### Sukaldea Pausatu/Itxi Dialogoak
+
+![Sukaldea pausatu](../screenshots/21-kds-pause-dialog.png)
+
+**Aukerak** (⋯) menuan sukaldearen egoera aldatzeko aukerak:
+
+**1. Pausatu sukaldea:**
+
+- Eskaera berriak automatikoki baztertzen ditu
+- "Itzuli laster" mezua erakusten du bezeroei
+- Sukaldean atsedenaldiak hartzeko erabilia
+- Eskaera aktiboak prestatzen jarraitzen dira
+
+**2. Itxi sukaldea:**
+
+- Txosna guztiz itxita dagoela adierazten du
+- "Itxita" mezua erakusten du bezeroei
+- Eskaera berriak onartzen ez ditu
+- Barne kudeaketa soilik
+
+**3. Ireki sukaldea:**
+
+- Sukaldea normaltasunera itzultzen du
+- Eskaera berriak berriro onartzen ditu
+- Denbora errealean eguneratzen da
+
+#### Mostradorea
+
+**Janari Mostradorea:**
+
+![Janari Mostradorea](../screenshots/12-counter-food.png)
+
+**Edari Mostradorea:**
+
+![Edari Mostradorea](../screenshots/12-counter-drinks.png)
+
+**Ordainketa-prozesua (ordainketa zain):**
+
+![Ordainketa zain](../screenshots/12-counter-food-pending-payment.png)
+
+Mostradorean ordainketa zain dagoen eskaera bat kobratzeko:
+
+1. **Hautatu eskaera** - "ORDAINKETARIK GABE" zerrendatik
+2. **Sartu kopurua** - Ordaindutako diru-kopurua (trukerako kalkulatzeko)
+3. **Egin klik** - "Ordaindu · Sukaldera bidali" botoian
+
+**Eskaerak kudeatzeko:**
+
+- Telefono-eskariak onartu
+- Eskaerak editatu
+- Prest dagoen eskaerak markatu
+- Itxaron-denbora kalkulatua
+- Zenbatzeko makina integratua
+
+Boluntarioek mostradore edo sukalde bat hautatzen dute saioa hasteko.
+
+---
+
+### 2.3 Kudeaketa Panela (Admin)
 
 ![Txosnak zerrenda](../screenshots/01-txosnak-list.png)
 
@@ -270,299 +562,45 @@ Elkarte mailan ordainketa metodo globalak konfiguratu daitezke. Orri honetan:
 
 ---
 
-### 2.2 Bezeroaren Esperientzia
+### 2.4 Txosna Ezarpen Espezifikoak
 
-#### Menua Telefonoan
+Txosna bakoitzak bere konfigurazio independentea du. Administrazio panelean txosna bakoitzaren ezarpenak kudeatu daitezke:
 
-![Menua mugikorrean](../screenshots/06-customer-menu-mobile.png)
+#### Txosnako Produktuen Kudeaketa
 
-**Ezaugarriak:**
+![Txosnako produktuak](../screenshots/26-txosna-products.png)
 
-- Diseinu garbia eta erraza
-- Produktuak kategorika antolatuak
-- Prezio garbiak
-- Itxaron-denbora ikusgai
-- Gauezko modua
+Txosna bakoitzean produktuen kudeaketa independentea dago. Orri honetan:
 
-#### Eskaera Egiteko Prozesua
+- **Produktuen zerrenda**: Txosnako produktu guztiak ikusi eta bilatu
+- **Gaitu/Desgaitu**: Aukeratu zein produktu eskainiko diren txosna honetan
+- **Stock egoera**: Produktu bakoitzaren eskuragarritasuna kontrolatu (agortuta / eskuragarri)
+- **Prezioak**: Txosna bakoitzeko prezio bereziak ezarri
 
-Bezeroak eskaera bat egiteko jarraitu beharreko pausoak:
+**Produktuak gaituta:**
 
-##### 1. Menua arakatu
+![Produktuak gaituta](../screenshots/26-txosna-products-enabled.png)
 
-![Menua mugikorrean](../screenshots/06-customer-menu-mobile.png)
+Produktuak gaitu eta konfiguratzeko, aktibatu etengailua eta egin klik "Editatu" botoian:
 
-Bezeroak bere telefonoan sartzen du txosnaren URLa edo eskaneatzen du QR kodea. Pantailan ikusten du:
+- ✅ **Gaituta** - Produktua txosna honetan eskaintzen da
+- ⚙️ **Editatu** - Ireki ezarpenen dialogoa
 
-- **Kategoriak**: Janaria eta Edariak bereizita
-- **Produktuen zerrenda**: Izena, prezioa, alergenoak, dieta-etiketak
-- **Itxaron-denbora**: Zenbat minututan prest egongo den
-- **Txosna egoera**: Irekita / Itxita / Pausatuta
+**Produktuen ezarpenak txosnako:**
 
-##### 2. Produktua aukeratu
+![Produktu ezarpenak txosnako](../screenshots/26-txosna-product-override-dialog.png)
 
-Produktu batean sakatu eta hautatzeko pantaila irekitzen da:
+Produktu bat txosna batean gaitzean, hurrengo ezarpenak alda daitezke:
 
-**Aldaerak aukeratu:**
-
-- Tamaina (adib: Normal / Handia)
-- Albokoak (adib: Patatak / Entsalada)
-
-**Gehigarriak gehitu:**
-
-- Gazta (+1€)
-- Barazkiak (+0.50€)
-- Baratxuria (+0.30€)
-
-**Osagaiak kendu:**
-
-- Letxuga
-- Tipula
-- Tomatea
-
-**Kantitatea**: Zenbat unitate nahi diren
-
-##### 3. Saskia ikusi
-
-![Saskia ikusi](placeholder-cart.png)
-
-Saskian bildutako produktuak ikusteko, saskia ikonoa sakatu beheko barran:
-
-- Produktuen zerrenda argazkiekin
-- Aldaerak eta gehigarriak bakoitzeko
-- Kantitatea aldatu edo ezabatu
-- Guztizko zenbatekoa kalkulatuta
-- "Jarraitu" botoia ordainketara joateko
-
-##### 4. Eskaera baieztatu
-
-![Eskaera baieztapena](../screenshots/07-checkout-mobile.png)
-
-**4 pauso erraz:**
-
-1. **Menua arakatu** - Janari eta edarien zerrenda
-2. **Aukeratu** - Produktuari klik egin eta gehitu
-3. **Saskia ikusi** - Edizioak eta gehigarriak
-4. **Ordaindu** - Online edo mostradorean
-
-**Ordainketa aukerak:**
-
-- **Online (Stripe/Redsys)**: Txartelarekin ordaindu telefonoan
-- **Mostradorean**: Esku-diruz edo txartelaz bertan ordaindu
-
-- Saskia ikonoa behean
-- Eskaera kopuruagatik dohainik
-- Ordainketa segurua Stripe/Redsys
-
-#### Eskaera Egoera
-
-![Eskaera egoera](../screenshots/08-order-status-mobile.png)
-
-Bezeroak bere eskaeraren egoera ikusten du:
-
-- ✅ Jasota (sukaldean)
-- ⏳ Prestatzen
-- 🔔 Prest (bildu)
-
-**Push jakinarazpenak** eskuragarri prest denean.
-
-#### Frogagirria (Pickup Proof)
-
-![Frogagirria](../screenshots/09-pickup-proof-mobile.png)
-
-- Kontraste handiko pantaila
-- Eskaera zenbakia handia
-- QR kodea azkar frogatzeko
-- Pantaila aktibo mantentzen da (WakeLock)
-
-> **Oharra**: Bezeroak bere telefonoan frogagirria erakusten du, eta boluntarioak eskaera zenbakia edo QR kodea eskaneatzen du ordenatzeko.
-
-#### Ordenatze Taula (Order Board)
-
-![Ordenatze taula TVan](../screenshots/10-order-board-tv.png)
-
-**Pantaila handietan erakusteko**:
-
-- **Ezkerrean**: Prest dagoen eskaerak (berdea)
-- **Eskuinean**: Prestatzen ari direnak (horia)
-- Itxaron-denbora kalkulatua
-- Automatikoki eguneratzen denbora errealean
+| Ezarpena                  | Azalpena                                                            |
+| ------------------------- | ------------------------------------------------------------------- |
+| **Gaituta**               | Produktua txosna honetan eskaintzen den ala ez                      |
+| **Prezioa aldatu**        | Produktuaren prezioa txosna honetarako (hutsik = prezio lehenetsia) |
+| **Prestaketa argibideak** | Sukaldeko argibide espezifikoak produktu honetarako                 |
 
 ---
 
-### 2.3 Boluntarioen Pantailak
-
-#### Sukaldea (KDS - Kitchen Display System)
-
-![KDS sukaldea](../screenshots/11-kds-desktop.png)
-
-Sukaldeko langileentzako pantaila nagusia. Bertan ikusten dira denbora errealean sartzen diren eskaera guztiak eta haien egoera.
-
-##### Goiburua (Header)
-
-**Ezkerrean:**
-
-- **Gertaera hautatzailea**: "Aste Nagusia 2026 ▾" - Txosnak aukeratzeko menua
-- **Eremua eta mota**: "Janaria · Sukaldea · ⚠ 1 motel" - Zein txosna eta zein sukalde motatan ari den lanean
-
-**Eskuinean - Kudeaketa botoiak:**
-| Ikonoa | Izena | Funtzioa |
-|--------|-------|----------|
-| 🌙 | Modu iluna | Pantaila argitasuna doitzeko (gauak/egunak) |
-| 📦 Stocka | Stock kudeaketa | Produktuak agortuta markatzeko dialogoa irekitzen du |
-| ⋯ Aukerak | Aukerak | Sukaldea pausatu/ireki/itxi eta bestelako ezarpenak |
-
-##### Hiru Zutabe Sistema
-
-Eskaerak hiru zutabean antolatuta daude, Kanban estiloko taula batean:
-
-| Zutabea        | Kolorea   | Azalpena                                        | Ekintza                                      |
-| -------------- | --------- | ----------------------------------------------- | -------------------------------------------- |
-| **Jasota**     | 🟡 Horia  | Eskaera berriak, oraindik ez da prestatzen hasi | "→ Hasi" botoia sakatu prestatzen hasteko    |
-| **Prestatzen** | 🔵 Urdina | Sukaldean lanean ari diren eskaerak             | "→ Prest" botoia sakatu prest dagoenean      |
-| **Prest**      | 🟢 Berdea | Bukatutako eskaerak, bildu daitezke             | "→ Amaituta" botoia sakatu entregatu ondoren |
-
-##### Eskaera Txartelak (Ticketak)
-
-**Goiko informazioa:**
-
-- **⬆ Hurrengoa**: Hurrengo eskaera prestatzeko adierazlea
-- **#38**: Eskaera zenbakia (bezeroak ikusten duena)
-- **Miren**: Bezeroaren izena
-- **Jasota/Prestatzen/Prest**: Eskaeraren uneko egoera
-- **⏱ 14min**: Zenbat denbora daraman prestatzen
-
-**Produktuen zerrenda:**
-
-- **2× Txorizoa ogian**: Kantitatea × Produktu izena
-- **— patata frijituak**: Aldaera aukeratua (adibidez: albokoak)
-- **✕ Tipula**: Kentzeko osagaia (bezeroak kendu duena)
-- **📝 Burgerra ondo eginda**: Prestaketa argibideak
-
-**Beheko botoiak:**
-
-- **📖**: Argibideen ikonoa - Klik egitean produktuaren prestaketa argibideak ikusten dira
-- **→ Hasi / → Prest / → Amaituta**: Eskaera hurrengo egoerara pasatzeko
-
-**Jakinarazpen bereziak:**
-
-- **🔔 Eskaera aldatua**: Bezeroak eskaera aldatu du eta sukaldeak berriro ikusi behar du
-
-##### Stock Kudeaketa
-
-Sukaldeko langileek 📦 Stocka botoia erabiliz produktuak agortuta marka ditzakete. Hau erabilgarria da:
-
-- Ingredienteen stocka amaitzen ari denean
-- Sukaldeak ezin duen produktu bat egiteko
-- Menua aldi baterako murrizteko
-
-##### Sukaldearen Egoera Aldaketa
-
-**Aukerak** (⋯) botoian sakatu eta:
-
-- **Pausatu sukaldea**: Eskaera berriak jaso ez (adib: atsedenaldia)
-- **Itxi sukaldea**: Sukaldea itxi (adib: txosna itxita)
-- **Ireki sukaldea**: Sukaldea berriro martxan jarri
-
----
-
-##### Stock Kudeaketa Dialogoa
-
-![Stock kudeaketa](../screenshots/19-kds-stock-dialog.png)
-
-📦 Stocka botoia sakatzean, dialogo bat irekitzen da produktuak agortuta markatzeko:
-
-**Produktuen zerrenda:**
-
-- Produktu bakoitzaren izena eta egoera
-- **Agortuta** / **Eskuragarri** toggle botoiak
-- Bilaketa barra produktuak aurkitzeko
-- Kategoriaka antolatuta (Janaria / Edariak)
-
-**Agortze arrazoiak:**
-
-- Ingredienteen eskasia
-- Sukaldeko arazoak
-- Eskaera gehiegia (denbora batez)
-
-##### Prestaketa Argibideen Dialogoa
-
-![Prestaketa argibideak](../screenshots/20-kds-instructions-dialog.png)
-
-📖 ikonoa sakatzean, produktuaren prestaketa argibideak ikusteko dialogoa irekitzen da:
-
-**Fitxak:**
-| Fitxa | Edukia |
-|-------|--------|
-| **Argibideak** | Sukaldeko langileentzako jarraibide detallatuak |
-| **Alergenoak** | Produktuaren alergenoen zerrenda |
-| **Bestelakoak** | Dieta-etiketak, osagaien zerrenda |
-
-**Markdown onarpena:**
-
-- Testu lodia, etzana
-- Zerrendak
-- Koloreko testua
-
-##### Sukaldea Pausatu/Itxi Dialogoak
-
-![Sukaldea pausatu](../screenshots/21-kds-pause-dialog.png)
-
-**Aukerak** (⋯) menuan sukaldearen egoera aldatzeko aukerak:
-
-**1. Pausatu sukaldea:**
-
-- Eskaera berriak automatikoki baztertzen ditu
-- "Itzuli laster" mezua erakusten du bezeroei
-- Sukaldean atsedenaldiak hartzeko erabilia
-- Eskaera aktiboak prestatzen jarraitzen dira
-
-**2. Itxi sukaldea:**
-
-- Txosna guztiz itxita dagoela adierazten du
-- "Itxita" mezua erakusten du bezeroei
-- Eskaera berriak onartzen ez ditu
-- Barne kudeaketa soilik
-
-**3. Ireki sukaldea:**
-
-- Sukaldea normaltasunera itzultzen du
-- Eskaera berriak berriro onartzen ditu
-- Denbora errealean eguneratzen da
-
-#### Mostradorea
-
-**Janari Mostradorea:**
-
-![Janari Mostradorea](../screenshots/12-counter-food.png)
-
-**Edari Mostradorea:**
-
-![Edari Mostradorea](../screenshots/12-counter-drinks.png)
-
-**Ordainketa-prozesua (ordainketa zain):**
-
-![Ordainketa zain](../screenshots/12-counter-food-pending-payment.png)
-
-Mostradorean ordainketa zain dagoen eskaera bat kobratzeko:
-
-1. **Hautatu eskaera** - "ORDAINKETARIK GABE" zerrendatik
-2. **Sartu kopurua** - Ordaindutako diru-kopurua (trukerako kalkulatzeko)
-3. **Egin klik** - "Ordaindu · Sukaldera bidali" botoian
-
-**Eskaerak kudeatzeko:**
-
-- Telefono-eskariak onartu
-- Eskaerak editatu
-- Prest dagoen eskaerak markatu
-- Itxaron-denbora kalkulatua
-- Zenbatzeko makina integratua
-
-Boluntarioek mostradore edo sukalde bat hautatzen dute saioa hasteko.
-
----
-
-### 2.4 Sistema Oinarrizkoak
+### 2.5 Sistema Oinarrizkoak
 
 #### Saioa Hasi
 
