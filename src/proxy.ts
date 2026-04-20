@@ -61,5 +61,6 @@ export const config = {
   // - _next, _vercel, static files
   // - /prototype (proto navigator)
   // - Auth pages (login, register, reset-password) — these are root-level, not locale-prefixed
-  matcher: ['/((?!_next|_vercel|prototype|login|register|reset-password|.*\\..*).*)'],
+  // - /api/ routes — handled directly without locale prefix
+  matcher: ['/((?!_next|_vercel|prototype|login|register|reset-password|api|.*\\..*).*)'],
 };

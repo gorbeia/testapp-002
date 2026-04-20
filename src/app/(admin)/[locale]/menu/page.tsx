@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '@/lib/mock-data';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -65,6 +64,13 @@ interface ProductForm {
   modifiers: Modifier[];
   removableIngredients: RemovableIngredient[];
   preparationInstructions: string;
+}
+
+interface CategoryModalState {
+  open: boolean;
+  editId: string | null;
+  name: string;
+  type: 'FOOD' | 'DRINK';
 }
 
 /** 14 EU-regulated allergens — canonical English key, Basque label, emoji */
@@ -193,6 +199,128 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
     >
       {label}
     </button>
+  );
+}
+
+// ── Category Modal ─────────────────────────────────────────────────────────────
+
+function CategoryModal({
+  state,
+  onSave,
+  onClose,
+}: {
+  state: CategoryModalState;
+  onSave: (name: string, type: 'FOOD' | 'DRINK') => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(state.name);
+  const [type, setType] = useState<'FOOD' | 'DRINK'>(state.type);
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.5)',
+        zIndex: 50,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: 'var(--adm-surface)',
+          borderRadius: 16,
+          width: '100%',
+          maxWidth: 400,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ padding: '20px 24px 16px' }}>
+          <h2
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: 'var(--adm-text-pri)',
+              margin: '0 0 20px',
+            }}
+          >
+            {state.editId ? 'Kategoria editatu' : 'Kategoria berria'}
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <div style={sectionLabel}>Izena *</div>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Adib.: Janaria"
+                style={inputStyle}
+                autoFocus
+              />
+            </div>
+            <div>
+              <div style={sectionLabel}>Mota</div>
+              <select
+                value={type}
+                onChange={(e) => setType(e.target.value as 'FOOD' | 'DRINK')}
+                style={{ ...inputStyle, background: 'var(--adm-surface)' }}
+              >
+                <option value="FOOD">🍔 Janaria</option>
+                <option value="DRINK">🍺 Edaria</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div
+          style={{
+            padding: '14px 24px',
+            borderTop: '1px solid var(--adm-border)',
+            display: 'flex',
+            gap: 10,
+            justifyContent: 'flex-end',
+          }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: 'var(--adm-surface-hi)',
+              border: 'none',
+              borderRadius: 8,
+              padding: '10px 18px',
+              fontSize: 14,
+              cursor: 'pointer',
+              color: 'var(--adm-text-pri)',
+            }}
+          >
+            Utzi
+          </button>
+          <button
+            type="button"
+            onClick={() => name.trim() && onSave(name.trim(), type)}
+            disabled={!name.trim()}
+            style={{
+              background: name.trim() ? '#e85d2f' : 'var(--adm-surface-hi)',
+              border: 'none',
+              borderRadius: 8,
+              padding: '10px 24px',
+              fontSize: 14,
+              fontWeight: 600,
+              color: name.trim() ? '#fff' : 'var(--adm-text-sec)',
+              cursor: name.trim() ? 'pointer' : 'not-allowed',
+            }}
+          >
+            {state.editId ? 'Gorde' : 'Sortu'}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -825,6 +953,44 @@ function ProductModal({
   );
 }
 
+// ── Small icon button ─────────────────────────────────────────────────────────
+
+function IconBtn({
+  onClick,
+  title,
+  children,
+  danger,
+  disabled,
+}: {
+  onClick: () => void;
+  title: string;
+  children: React.ReactNode;
+  danger?: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        padding: '4px 7px',
+        border: '1px solid var(--adm-border)',
+        borderRadius: 6,
+        background: 'transparent',
+        color: danger ? '#ef4444' : 'var(--adm-text-sec)',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        fontSize: 12,
+        lineHeight: 1,
+        opacity: disabled ? 0.35 : 1,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MenuPage() {
@@ -838,76 +1004,20 @@ export default function MenuPage() {
     form: ProductForm;
   } | null>(null);
   const [saving, setSaving] = useState(false);
-
-  // Transform mock products to match API format
-  const getMockCategories = (): Category[] => {
-    return MOCK_CATEGORIES.map((cat) => ({
-      id: cat.id,
-      name: cat.name,
-      type: cat.type,
-      displayOrder: cat.displayOrder,
-      products: MOCK_PRODUCTS.filter((p) => p.categoryId === cat.id).map((p) => ({
-        id: p.id,
-        categoryId: p.categoryId,
-        name: p.name,
-        defaultPrice: String(p.price),
-        description: p.description,
-        customerImageUrl: p.imageUrl,
-        allergens: p.allergens,
-        dietaryFlags: p.dietaryFlags,
-        ageRestricted: p.ageRestricted,
-        splittable: p.splitAllowed,
-        requiresPreparation: p.requiresPreparation,
-        displayOrder: 0,
-        ingredients: p.removableIngredients.join(', ') || null,
-        preparationInstructions: p.preparationInstructions,
-        variantGroups: p.variantGroups.map((vg) => ({
-          id: vg.id,
-          name: vg.name,
-          options: vg.options.map((o) => ({
-            id: o.id,
-            name: o.name,
-            priceDelta: o.priceDelta,
-          })),
-        })),
-        modifiers: p.modifiers.map((m) => ({
-          id: m.id,
-          name: m.name,
-          price: m.price,
-        })),
-      })),
-    }));
-  };
-
-  // Get base URL for API calls (works in client-side only)
-  const getApiUrl = (path: string) => {
-    if (typeof window === 'undefined') return path;
-    return window.location.origin + path;
-  };
+  const [categoryModal, setCategoryModal] = useState<CategoryModalState | null>(null);
 
   useEffect(() => {
-    fetch(getApiUrl('/api/categories'))
+    fetch('/api/categories')
       .then((r) => {
         if (!r.ok) throw new Error('API error');
         return r.json();
       })
       .then((data: Category[]) => {
-        if (data.length === 0) {
-          // Fall back to mock data if API returns empty
-          const mockData = getMockCategories();
-          setCategories(mockData);
-          if (mockData.length > 0 && !activeCategory) setActiveCategory(mockData[0].id);
-        } else {
-          setCategories(data);
-          if (data.length > 0 && !activeCategory) setActiveCategory(data[0].id);
-        }
+        setCategories(data);
+        if (data.length > 0) setActiveCategory(data[0].id);
       })
       .catch(() => {
-        // Fall back to mock data on API error
-        const mockData = getMockCategories();
-        setCategories(mockData);
-        if (mockData.length > 0 && !activeCategory) setActiveCategory(mockData[0].id);
-        setError('Erakusten diren datuak lokala dira (APIrik gabe)');
+        setError('Ezin dira kategoriak kargatu');
       })
       .finally(() => setLoading(false));
   }, []);
@@ -915,7 +1025,6 @@ export default function MenuPage() {
   const currentCategoryId = activeCategory || categories[0]?.id || '';
   const filtered = categories.find((c) => c.id === currentCategoryId)?.products ?? [];
 
-  // ... (rest of the code remains the same)
   const openCreate = () =>
     setModal({ open: true, editId: null, form: emptyForm(currentCategoryId) });
   const openEdit = (p: Product) => setModal({ open: true, editId: p.id, form: fromProduct(p) });
@@ -926,7 +1035,7 @@ export default function MenuPage() {
     try {
       const payload = formToPayload(data);
       if (modal.editId) {
-        const res = await fetch(getApiUrl(`/api/products/${modal.editId}`), {
+        const res = await fetch(`/api/products/${modal.editId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -940,7 +1049,7 @@ export default function MenuPage() {
           }))
         );
       } else {
-        const res = await fetch(getApiUrl('/api/products'), {
+        const res = await fetch('/api/products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -960,6 +1069,141 @@ export default function MenuPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm('Produktua ezabatu nahi duzu?')) return;
+    try {
+      const res = await fetch(`/api/products/${productId}`, { method: 'DELETE' });
+      if (res.status === 409) {
+        setError('Produktua ezabatu ezin da: eskaeretan dago');
+        return;
+      }
+      if (!res.ok) throw new Error('Delete failed');
+      setCategories((prev) =>
+        prev.map((cat) => ({ ...cat, products: cat.products.filter((p) => p.id !== productId) }))
+      );
+    } catch {
+      setError('Ezin izan da produktua ezabatu');
+    }
+  };
+
+  const openCategoryCreate = () =>
+    setCategoryModal({ open: true, editId: null, name: '', type: 'FOOD' });
+  const openCategoryEdit = (cat: Category) =>
+    setCategoryModal({
+      open: true,
+      editId: cat.id,
+      name: cat.name,
+      type: cat.type as 'FOOD' | 'DRINK',
+    });
+
+  const handleCategorySave = async (name: string, type: 'FOOD' | 'DRINK') => {
+    if (!categoryModal) return;
+    try {
+      if (categoryModal.editId) {
+        const res = await fetch(`/api/categories/${categoryModal.editId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, type }),
+        });
+        if (!res.ok) throw new Error('Save failed');
+        const updated: Category = await res.json();
+        setCategories((prev) =>
+          prev.map((c) =>
+            c.id === categoryModal.editId ? { ...c, name: updated.name, type: updated.type } : c
+          )
+        );
+      } else {
+        const res = await fetch('/api/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, type }),
+        });
+        if (!res.ok) throw new Error('Save failed');
+        const created: Category = await res.json();
+        setCategories((prev) => [...prev, { ...created, products: [] }]);
+        setActiveCategory(created.id);
+      }
+      setCategoryModal(null);
+    } catch {
+      setError('Ezin izan da kategoria gorde');
+    }
+  };
+
+  const handleCategoryDelete = async (catId: string) => {
+    const cat = categories.find((c) => c.id === catId);
+    if (!cat) return;
+    if (!confirm(`"${cat.name}" kategoria ezabatu nahi duzu?`)) return;
+    try {
+      const res = await fetch(`/api/categories/${catId}`, { method: 'DELETE' });
+      if (res.status === 409) {
+        setError('Kategoriak produktuak ditu — ezabatu lehenik produktuak');
+        return;
+      }
+      if (!res.ok) throw new Error('Delete failed');
+      const remaining = categories.filter((c) => c.id !== catId);
+      setCategories(remaining);
+      if (activeCategory === catId) setActiveCategory(remaining[0]?.id ?? '');
+    } catch {
+      setError('Ezin izan da kategoria ezabatu');
+    }
+  };
+
+  const reorderCategories = async (newOrder: Category[]) => {
+    setCategories(newOrder);
+    try {
+      await fetch('/api/categories/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: newOrder.map((c) => c.id) }),
+      });
+    } catch {
+      setError('Ezin izan da ordena gorde');
+    }
+  };
+
+  const moveCategoryLeft = (idx: number) => {
+    if (idx === 0) return;
+    const next = [...categories];
+    [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+    reorderCategories(next);
+  };
+
+  const moveCategoryRight = (idx: number) => {
+    if (idx === categories.length - 1) return;
+    const next = [...categories];
+    [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+    reorderCategories(next);
+  };
+
+  const reorderProducts = async (catId: string, newProducts: Product[]) => {
+    setCategories((prev) =>
+      prev.map((c) => (c.id === catId ? { ...c, products: newProducts } : c))
+    );
+    try {
+      await fetch('/api/products/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: newProducts.map((p) => p.id) }),
+      });
+    } catch {
+      setError('Ezin izan da ordena gorde');
+    }
+  };
+
+  const moveProductUp = (idx: number) => {
+    if (idx === 0) return;
+    const next = [...filtered];
+    [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+    reorderProducts(currentCategoryId, next);
+  };
+
+  const moveProductDown = (idx: number) => {
+    if (idx === filtered.length - 1) return;
+    const next = [...filtered];
+    [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+    reorderProducts(currentCategoryId, next);
   };
 
   if (loading) {
@@ -1025,6 +1269,8 @@ export default function MenuPage() {
           justifyContent: 'space-between',
           alignItems: 'flex-start',
           marginBottom: 24,
+          gap: 10,
+          flexWrap: 'wrap',
         }}
       >
         <h1
@@ -1038,23 +1284,40 @@ export default function MenuPage() {
         >
           Menu kudeaketa
         </h1>
-        <button
-          onClick={openCreate}
-          disabled={categories.length === 0}
-          style={{
-            background: '#e85d2f',
-            border: 'none',
-            borderRadius: 8,
-            padding: '8px 16px',
-            color: '#fff',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: categories.length === 0 ? 'not-allowed' : 'pointer',
-            opacity: categories.length === 0 ? 0.5 : 1,
-          }}
-        >
-          + Produktu berria
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={openCategoryCreate}
+            style={{
+              background: 'var(--adm-surface-hi)',
+              border: '1px solid var(--adm-border)',
+              borderRadius: 8,
+              padding: '8px 14px',
+              color: 'var(--adm-text-pri)',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            + Kategoria berria
+          </button>
+          <button
+            onClick={openCreate}
+            disabled={categories.length === 0}
+            style={{
+              background: '#e85d2f',
+              border: 'none',
+              borderRadius: 8,
+              padding: '8px 16px',
+              color: '#fff',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: categories.length === 0 ? 'not-allowed' : 'pointer',
+              opacity: categories.length === 0 ? 0.5 : 1,
+            }}
+          >
+            + Produktu berria
+          </button>
+        </div>
       </div>
 
       {categories.length === 0 ? (
@@ -1073,28 +1336,60 @@ export default function MenuPage() {
       ) : (
         <>
           {/* Category tabs */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: 99,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: 'none',
-                  background: currentCategoryId === cat.id ? '#e85d2f' : 'var(--adm-surface-hi)',
-                  color: currentCategoryId === cat.id ? '#ffffff' : 'var(--adm-text-sec)',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {cat.name}
-                <span style={{ marginLeft: 6, fontSize: 12, opacity: 0.8 }}>
-                  ({cat.products.length})
-                </span>
-              </button>
+          <div
+            style={{
+              display: 'flex',
+              gap: 6,
+              marginBottom: 20,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+            }}
+          >
+            {categories.map((cat, idx) => (
+              <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <button
+                  onClick={() => setActiveCategory(cat.id)}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: 99,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: 'none',
+                    background: currentCategoryId === cat.id ? '#e85d2f' : 'var(--adm-surface-hi)',
+                    color: currentCategoryId === cat.id ? '#ffffff' : 'var(--adm-text-sec)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {cat.name}
+                  <span style={{ marginLeft: 6, fontSize: 12, opacity: 0.8 }}>
+                    ({cat.products.length})
+                  </span>
+                </button>
+                {/* Category controls */}
+                <div style={{ display: 'flex', gap: 2 }}>
+                  <IconBtn
+                    onClick={() => moveCategoryLeft(idx)}
+                    title="Ezkerrera mugitu"
+                    disabled={idx === 0}
+                  >
+                    ←
+                  </IconBtn>
+                  <IconBtn
+                    onClick={() => moveCategoryRight(idx)}
+                    title="Eskuinera mugitu"
+                    disabled={idx === categories.length - 1}
+                  >
+                    →
+                  </IconBtn>
+                  <IconBtn onClick={() => openCategoryEdit(cat)} title="Editatu">
+                    ✏️
+                  </IconBtn>
+                  <IconBtn onClick={() => handleCategoryDelete(cat.id)} title="Ezabatu" danger>
+                    🗑️
+                  </IconBtn>
+                </div>
+              </div>
             ))}
           </div>
 
@@ -1113,7 +1408,7 @@ export default function MenuPage() {
                 Produkturik ez kategoria honetan — gehitu bat
               </div>
             )}
-            {filtered.map((p) => (
+            {filtered.map((p, idx) => (
               <div
                 key={p.id}
                 style={{
@@ -1219,21 +1514,27 @@ export default function MenuPage() {
                     )}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-                  <button
-                    onClick={() => openEdit(p)}
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: 8,
-                      fontSize: 12,
-                      cursor: 'pointer',
-                      border: '1px solid var(--adm-border)',
-                      background: 'var(--adm-surface)',
-                      color: 'var(--adm-text-sec)',
-                    }}
+                <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
+                  <IconBtn
+                    onClick={() => moveProductUp(idx)}
+                    title="Gora mugitu"
+                    disabled={idx === 0}
                   >
+                    ↑
+                  </IconBtn>
+                  <IconBtn
+                    onClick={() => moveProductDown(idx)}
+                    title="Behera mugitu"
+                    disabled={idx === filtered.length - 1}
+                  >
+                    ↓
+                  </IconBtn>
+                  <IconBtn onClick={() => openEdit(p)} title="Editatu">
                     ✏️
-                  </button>
+                  </IconBtn>
+                  <IconBtn onClick={() => handleDeleteProduct(p.id)} title="Ezabatu" danger>
+                    🗑️
+                  </IconBtn>
                 </div>
               </div>
             ))}
@@ -1248,6 +1549,14 @@ export default function MenuPage() {
           categories={categories}
           onSave={handleSave}
           onClose={() => setModal(null)}
+        />
+      )}
+
+      {categoryModal?.open && (
+        <CategoryModal
+          state={categoryModal}
+          onSave={handleCategorySave}
+          onClose={() => setCategoryModal(null)}
         />
       )}
     </div>
