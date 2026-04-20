@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '@/lib/mock-data';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -112,88 +111,22 @@ export default function TxosnaProductsPage() {
   const [_error, _setError] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [savingProducts, setSavingProducts] = useState<Set<string>>(new Set());
-  const [usingMockData, setUsingMockData] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-
-  // Transform mock data to match API format (products with txosnaProduct = null)
-  const getMockCategories = (): Category[] => {
-    return MOCK_CATEGORIES.map((cat) => ({
-      id: cat.id,
-      name: cat.name,
-      type: cat.type,
-      displayOrder: cat.displayOrder,
-      products: MOCK_PRODUCTS.filter((p) => p.categoryId === cat.id).map((p) => ({
-        id: p.id,
-        categoryId: p.categoryId,
-        name: p.name,
-        defaultPrice: String(p.price),
-        description: p.description,
-        customerImageUrl: p.imageUrl,
-        allergens: p.allergens,
-        dietaryFlags: p.dietaryFlags,
-        ageRestricted: p.ageRestricted,
-        splittable: p.splitAllowed,
-        requiresPreparation: p.requiresPreparation,
-        displayOrder: 0,
-        ingredients: p.removableIngredients.join(', ') || null,
-        preparationInstructions: p.preparationInstructions,
-        variantGroups: p.variantGroups.map((vg) => ({
-          id: vg.id,
-          name: vg.name,
-          options: vg.options.map((o) => ({
-            id: o.id,
-            name: o.name,
-            priceDelta: o.priceDelta,
-          })),
-        })),
-        modifiers: p.modifiers.map((m) => ({
-          id: m.id,
-          name: m.name,
-          price: m.price,
-        })),
-        txosnaProduct: null, // Not enabled for any txosna by default
-      })),
-    }));
-  };
-
-  // Get base URL for API calls (works in client-side only)
-  const getApiUrl = (path: string) => {
-    if (typeof window === 'undefined') return path;
-    return window.location.origin + path;
-  };
 
   // Fetch data on mount
   useEffect(() => {
     async function fetchData() {
       try {
-        const apiUrl = getApiUrl(`/api/txosnak/${txosnaId}/products`);
-        const res = await fetch(apiUrl);
+        const res = await fetch(`/api/txosnak/${txosnaId}/products`);
         if (!res.ok) throw new Error('Failed to fetch products');
         const data = await res.json();
-        if (data.length === 0) {
-          // Fall back to mock data if API returns empty
-          const mockData = getMockCategories();
-          setCategories(mockData);
-          setUsingMockData(true);
-          if (mockData.length > 0) {
-            setExpandedCategories(new Set([mockData[0].id]));
-          }
-        } else {
-          setCategories(data);
-          if (data.length > 0) {
-            setExpandedCategories(new Set([data[0].id]));
-          }
+        setCategories(data);
+        if (data.length > 0) {
+          setExpandedCategories(new Set([data[0].id]));
         }
       } catch {
-        // Fall back to mock data on API error - this is expected in prototype mode
-        const mockData = getMockCategories();
-        setCategories(mockData);
-        setUsingMockData(true);
-        if (mockData.length > 0) {
-          setExpandedCategories(new Set([mockData[0].id]));
-        }
-        // Don't set error - mock data is the intended fallback
-        console.warn('Using mock data (API not available)');
+        // On error, show empty state (no mock fallback)
+        console.warn('Failed to load products');
       } finally {
         setLoading(false);
       }
@@ -232,7 +165,7 @@ export default function TxosnaProductsPage() {
     );
 
     try {
-      const res = await fetch(getApiUrl(`/api/txosnak/${txosnaId}/products/${product.id}`), {
+      const res = await fetch(`/api/txosnak/${txosnaId}/products/${product.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -257,9 +190,21 @@ export default function TxosnaProductsPage() {
         );
       }
     } catch {
-      // In prototype mode, keep the optimistic update (mock data)
-      console.warn('API save failed, keeping local state (prototype mode)');
-      // Don't revert - the UI change stays for prototype testing
+      // Revert optimistic update on error
+      console.warn('API save failed');
+      setCategories((prev) =>
+        prev.map((cat) => ({
+          ...cat,
+          products: cat.products.map((p) =>
+            p.id === product.id
+              ? {
+                  ...p,
+                  txosnaProduct: enabled ? null : product.txosnaProduct,
+                }
+              : p
+          ),
+        }))
+      );
     } finally {
       setSavingProducts((prev) => {
         const next = new Set(prev);
@@ -286,11 +231,8 @@ export default function TxosnaProductsPage() {
   // Update price override (debounced)
   const debouncedUpdatePrice = useDebouncedCallback(
     async (product: Product, priceOverride: string | null) => {
-      // Optimistic update
-      updateProductTxosnaProduct(product.id, { priceOverride: priceOverride as string | null });
-
       try {
-        const res = await fetch(getApiUrl(`/api/txosnak/${txosnaId}/products/${product.id}`), {
+        const res = await fetch(`/api/txosnak/${txosnaId}/products/${product.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -302,8 +244,7 @@ export default function TxosnaProductsPage() {
 
         if (!res.ok) throw new Error('Failed to update price');
       } catch {
-        // Silently fail in prototype mode - local state already updated
-        console.warn('Price save failed silently (prototype mode)');
+        console.warn('Price save failed');
       }
     },
     500
@@ -312,11 +253,8 @@ export default function TxosnaProductsPage() {
   // Update preparation instructions (debounced)
   const debouncedUpdateInstructions = useDebouncedCallback(
     async (product: Product, preparationInstructions: string | null) => {
-      // Optimistic update
-      updateProductTxosnaProduct(product.id, { preparationInstructions });
-
       try {
-        const res = await fetch(getApiUrl(`/api/txosnak/${txosnaId}/products/${product.id}`), {
+        const res = await fetch(`/api/txosnak/${txosnaId}/products/${product.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -328,8 +266,7 @@ export default function TxosnaProductsPage() {
 
         if (!res.ok) throw new Error('Failed to update instructions');
       } catch {
-        // Silently fail in prototype mode - local state already updated
-        console.warn('Instructions save failed silently (prototype mode)');
+        console.warn('Instructions save failed');
       }
     },
     500
@@ -483,38 +420,6 @@ export default function TxosnaProductsPage() {
         color: 'var(--adm-text-pri)',
       }}
     >
-      {/* Mock Data Banner */}
-      {usingMockData && (
-        <div
-          style={{
-            background: 'rgba(245,158,11,0.15)',
-            color: '#f59e0b',
-            padding: '10px 14px',
-            borderRadius: 8,
-            marginBottom: 16,
-            fontSize: 14,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <span>ℹ️ Erakusten diren datuak lokala dira (APIrik gabe)</span>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              color: 'inherit',
-              fontSize: 12,
-              textDecoration: 'underline',
-            }}
-          >
-            Berriz saiatu
-          </button>
-        </div>
-      )}
-
       {/* Header */}
       <div
         style={{

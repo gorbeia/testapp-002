@@ -1,9 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { MOCK_ASSOCIATION } from '@/lib/mock-data';
 
 const TXOSNA_NAV = [
   { segment: '', label: 'Hasiera', icon: '📊' },
@@ -28,10 +27,37 @@ const STATUS_DOT: Record<string, string> = {
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
+  // State for real txosnak data
+  const [associationName, setAssociationName] = useState('');
+  const [txosnak, setTxosnak] = useState<
+    { id: string; name: string; slug: string; status: string }[]
+  >([]);
+
+  // Fetch real txosnak data on mount
+  useEffect(() => {
+    fetch('/api/admin/txosnak')
+      .then((r) => {
+        if (!r.ok) throw new Error('API error');
+        return r.json();
+      })
+      .then(
+        (data: {
+          association: { name: string };
+          txosnak: { id: string; name: string; slug: string; status: string }[];
+        }) => {
+          setAssociationName(data.association.name);
+          setTxosnak(data.txosnak);
+        }
+      )
+      .catch(() => {
+        // Sidebar degrades gracefully — no txosnak shown on error
+        console.warn('Failed to load txosnak');
+      });
+  }, []);
+
   // Detect which txosna is active from the URL: /eu/txosnak/[id]/...
   const txosnaMatch = pathname.match(/\/txosnak\/([^/]+)/);
   const activeTxosnaId = txosnaMatch?.[1] ?? null;
-  const _activeTxosna = MOCK_ASSOCIATION.txosnak.find((t) => t.id === activeTxosnaId) ?? null;
 
   // Track which txosnak are expanded in sidebar
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
@@ -80,7 +106,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             Txosna Admin
           </div>
           <div style={{ fontSize: 11, color: 'var(--adm-sidebar-label)', marginTop: 2 }}>
-            {MOCK_ASSOCIATION.name}
+            {associationName}
           </div>
         </div>
 
@@ -157,7 +183,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
 
           {/* Txosnak list */}
-          {MOCK_ASSOCIATION.txosnak.map((tx) => {
+          {txosnak.map((tx) => {
             const txBase = `/eu/txosnak/${tx.id}`;
             const isTxActive = activeTxosnaId === tx.id;
             const isOpen = expanded[tx.id] || isTxActive;
