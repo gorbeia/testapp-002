@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { OpsHeader } from '@/components/layout/ops-header';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -11,6 +11,7 @@ import {
   type MockOrderLine,
   type MockProduct,
 } from '@/lib/mock-data';
+import type { StoredOrder } from '@/lib/store/types';
 import { calcUnitPrice } from '@/lib/hooks/use-product-config';
 import {
   ProductConfigSheet,
@@ -34,46 +35,29 @@ export default function CounterPage() {
       total: number;
       placedAt: number;
     }[]
-  >([
-    {
-      id: 'phone-1',
-      orderNumber: 45,
-      customerName: 'Miren',
-      lines: [
-        {
-          id: 'l1',
-          productId: 'prod-1',
-          productName: 'Burgerra',
-          quantity: 2,
-          unitPrice: 8.5,
-          selectedVariant: 'Patata frijituak',
-          selectedModifiers: [],
-          splitInstructions: null,
-        },
-      ],
-      total: 17.0,
-      placedAt: Date.now() - 5 * 60 * 1000,
-    },
-    {
-      id: 'phone-2',
-      orderNumber: 44,
-      customerName: 'Ane',
-      lines: [
-        {
-          id: 'l2',
-          productId: 'prod-2',
-          productName: 'Txorizoa ogian',
-          quantity: 1,
-          unitPrice: 4.0,
-          selectedVariant: null,
-          selectedModifiers: [],
-          splitInstructions: null,
-        },
-      ],
-      total: 4.0,
-      placedAt: Date.now() - 12 * 60 * 1000,
-    },
-  ]);
+  >([]);
+
+  // Fetch pending orders from API on mount
+  useEffect(() => {
+    const txosnaSlug = MOCK_TXOSNA.slug; // In a real app, this would come from the session or URL
+    fetch(`/api/txosnak/${txosnaSlug}/orders?status=PENDING_PAYMENT`)
+      .then((r) => r.json())
+      .then((orders: StoredOrder[]) => {
+        const converted = orders.map((o) => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          customerName: o.customerName,
+          lines: o.pendingLines?.[0]?.lines ?? [], // Simplified: just take first ticket's lines
+          total: o.total,
+          placedAt: new Date(o.createdAt).getTime(),
+        }));
+        setPendingOrders(converted);
+      })
+      .catch(() => {
+        // Fall back to empty list on error
+        setPendingOrders([]);
+      });
+  }, []);
 
   const [showNewOrder, setShowNewOrder] = useState(false);
   const [showOrderDetail, setShowOrderDetail] = useState<string | null>(null);
@@ -120,27 +104,44 @@ export default function CounterPage() {
     );
   };
 
-  const confirmPayment = (orderId: string) => {
-    const order = pendingOrders.find((o) => o.id === orderId);
-    if (!order) return;
-    const newTicket: MockTicket = {
-      id: 'ticket-' + Date.now(),
-      orderId: order.id,
-      orderNumber: order.orderNumber,
-      customerName: order.customerName,
-      counterType: 'FOOD',
-      status: 'RECEIVED',
-      lines: order.lines,
-      notes: null,
-      elapsedMin: 0,
-      isSlowOrder: false,
-      hasAlert: false,
-      flagged: false,
-    };
-    setTickets((prev) => [...prev, newTicket]);
-    setPendingOrders((prev) => prev.filter((o) => o.id !== orderId));
-    setShowOrderDetail(null);
-    setAmountPaid('');
+  const confirmPayment = async (orderId: string) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}/confirm`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        console.error('Failed to confirm order');
+        return;
+      }
+
+      // On success, remove from pending and optionally add to tickets
+      // (in a real implementation, you'd fetch updated tickets from SSE or API)
+      const order = pendingOrders.find((o) => o.id === orderId);
+      if (order) {
+        const newTicket: MockTicket = {
+          id: 'ticket-' + Date.now(),
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          customerName: order.customerName,
+          counterType: 'FOOD',
+          status: 'RECEIVED',
+          lines: order.lines,
+          notes: null,
+          elapsedMin: 0,
+          isSlowOrder: false,
+          hasAlert: false,
+          flagged: false,
+        };
+        setTickets((prev) => [...prev, newTicket]);
+      }
+
+      setPendingOrders((prev) => prev.filter((o) => o.id !== orderId));
+      setShowOrderDetail(null);
+      setAmountPaid('');
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+    }
   };
 
   const createOrder = () => {

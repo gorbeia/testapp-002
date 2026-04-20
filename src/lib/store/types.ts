@@ -163,6 +163,8 @@ export interface StoredOrder {
   paymentSessionId: string | null;
   confirmedAt: Date | null;
   expiresAt: Date | null;
+  /** Ticket structure for PENDING_PAYMENT orders; cleared on confirm. */
+  pendingLines: CreateTicketInput[] | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -210,6 +212,8 @@ export interface CreateOrderInput {
   total: number;
   expiresAt: Date | null;
   tickets: CreateTicketInput[];
+  /** For PENDING_PAYMENT orders: store pending ticket structure for later confirmation. */
+  pendingLines?: CreateTicketInput[] | null;
 }
 
 export interface CreateVolunteerInput {
@@ -250,6 +254,7 @@ export interface OrderRepository {
 }
 
 export interface TicketRepository {
+  create(orderId: string, txosnaId: string, data: CreateTicketInput): Promise<StoredTicket>;
   findById(id: string): Promise<StoredTicket | null>;
   listByTxosna(txosnaId: string, filter?: TicketFilter): Promise<StoredTicket[]>;
   listByOrder(orderId: string): Promise<StoredTicket[]>;

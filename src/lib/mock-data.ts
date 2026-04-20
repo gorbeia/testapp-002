@@ -128,7 +128,9 @@ export interface CartItem {
   quantity: number;
   unitPrice: number;
   selectedVariant: string | null;
+  selectedVariantOptionId: string | null;
   selectedModifiers: string[];
+  selectedModifierIds: string[];
 }
 
 // ── Data ───────────────────────────────────────────────────────────────────

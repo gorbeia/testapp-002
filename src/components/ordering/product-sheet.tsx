@@ -14,10 +14,16 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
   const [variant, setVariant] = useState<string | null>(
     product.variantGroups[0]?.options[0]?.name ?? null
   );
+  const [variantId, setVariantId] = useState<string | null>(
+    product.variantGroups[0]?.options[0]?.id ?? null
+  );
   const [mods, setMods] = useState<string[]>([]);
+  const [modIds, setModIds] = useState<string[]>([]);
 
-  const toggleMod = (name: string) =>
+  const toggleMod = (name: string, id: string) => {
     setMods((prev) => (prev.includes(name) ? prev.filter((m) => m !== name) : [...prev, name]));
+    setModIds((prev) => (prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]));
+  };
 
   const handleAdd = () => {
     addItem({
@@ -26,7 +32,9 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
       quantity: qty,
       unitPrice: product.effectivePrice,
       selectedVariant: variant,
+      selectedVariantOptionId: variantId,
       selectedModifiers: mods,
+      selectedModifierIds: modIds,
     });
     onClose();
   };
@@ -110,7 +118,10 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
               {vg.options.map((opt) => (
                 <button
                   key={opt.id}
-                  onClick={() => setVariant(opt.name)}
+                  onClick={() => {
+                    setVariant(opt.name);
+                    setVariantId(opt.id);
+                  }}
                   style={{
                     padding: '8px 14px',
                     borderRadius: 99,
@@ -151,7 +162,12 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
               {product.removableIngredients.map((ing) => (
                 <button
                   key={ing}
-                  onClick={() => toggleMod(`KENDU:${ing}`)}
+                  onClick={() => {
+                    const name = `KENDU:${ing}`;
+                    setMods((prev) =>
+                      prev.includes(name) ? prev.filter((m) => m !== name) : [...prev, name]
+                    );
+                  }}
                   style={{
                     padding: '8px 14px',
                     borderRadius: 99,
@@ -211,7 +227,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
                     <input
                       type="checkbox"
                       checked={mods.includes(mod.name)}
-                      onChange={() => toggleMod(mod.name)}
+                      onChange={() => toggleMod(mod.name, mod.id)}
                       style={{ width: 18, height: 18, accentColor: 'var(--cust-primary, #e85d2f)' }}
                     />
                     <span style={{ flex: 1, fontSize: 14, color: 'var(--cust-text-pri, #111)' }}>

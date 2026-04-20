@@ -20,17 +20,58 @@ export function CheckoutClient({ txosna }: CheckoutClientProps) {
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
-  const canSubmit = name.trim().length > 0;
+  const canSubmit = name.trim().length > 0 && !submitting;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || submitting) return;
+
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 800));
-    clear();
-    router.push('/eu/order/order-1');
+    setError(null);
+
+    try {
+      const slug = Array.isArray(params.slug) ? params.slug[0] : (params.slug ?? '');
+      const locale = Array.isArray(params.locale) ? params.locale[0] : (params.locale ?? '');
+
+      const response = await fetch(`/api/txosnak/${slug}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channel: 'SELF_SERVICE',
+          customerName: name.trim(),
+          notes: notes.trim() || null,
+          paymentMethod: 'CASH',
+          lines: items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            selectedVariantOptionId: item.selectedVariantOptionId ?? null,
+            selectedModifierIds: item.selectedModifierIds ?? [],
+            splitInstructions: null,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error ?? `Order creation failed (${response.status})`);
+      }
+
+      const order = await response.json();
+
+      // Store orderId and slug for order status page
+      localStorage.setItem('txosna_order_id', order.id);
+      localStorage.setItem('txosna_slug', slug);
+
+      clear();
+      router.push(`/${locale}/order/${order.id}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Errorea gertatu da';
+      setError(message);
+      setSubmitting(false);
+    }
   }
 
   if (items.length === 0) {
@@ -260,6 +301,22 @@ export function CheckoutClient({ txosna }: CheckoutClientProps) {
             <span>
               Itxaron denbora gutxi gorabehera <strong>{txosna.waitMinutes} minutu</strong>
             </span>
+          </div>
+        )}
+
+        {error && (
+          <div
+            style={{
+              background: 'rgba(239,68,68,0.1)',
+              border: '1px solid #ef4444',
+              borderRadius: 10,
+              padding: '12px 14px',
+              marginBottom: 14,
+              fontSize: 13,
+              color: '#ef4444',
+            }}
+          >
+            {error}
           </div>
         )}
 

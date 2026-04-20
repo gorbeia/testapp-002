@@ -5,19 +5,7 @@ import { useParams } from 'next/navigation';
 import { CustomerHeader } from '@/components/layout/customer-header';
 import { PrototypeNav } from '@/components/prototype-nav';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { MOCK_TXOSNA } from '@/lib/mock-data';
-
-// ── Mock order data for receipt ────────────────────────────────────────────────
-const MOCK_ORDER_DETAIL = {
-  number: 42,
-  customerName: 'Josu',
-  lines: [
-    { name: 'Burgerra', variant: 'Patata frijituak', qty: 1, unitPrice: 8.5 },
-    { name: 'Txorizoa ogian', variant: null, qty: 2, unitPrice: 4.0 },
-  ],
-  total: 16.5,
-  createdAt: new Date().toLocaleString('eu-ES'),
-};
+import type { StoredOrder } from '@/lib/store/types';
 
 function ReceiptDownload({ orderId: _orderId }: { orderId: string }) {
   const [downloading, setDownloading] = useState(false);
@@ -26,21 +14,14 @@ function ReceiptDownload({ orderId: _orderId }: { orderId: string }) {
     setDownloading(true);
 
     // Build a plain-text receipt and trigger download via blob
-    const o = MOCK_ORDER_DETAIL;
     const lines = [
       '================================',
-      `  ${MOCK_TXOSNA.name}`,
+      `  Txosna Eskaera Agiri`,
       '================================',
-      `Eskaera:    #${o.number}`,
-      `Izena:      ${o.customerName}`,
-      `Data:       ${o.createdAt}`,
+      `Eskaera zenbakia: #${_orderId}`,
+      `Data: ${new Date().toLocaleString('eu-ES')}`,
       '--------------------------------',
-      ...o.lines.map(
-        (l) =>
-          `${l.qty}x ${l.name}${l.variant ? ` (${l.variant})` : ''}  ${(l.qty * l.unitPrice).toFixed(2)}€`
-      ),
-      '--------------------------------',
-      `GUZTIRA:    ${o.total.toFixed(2)}€`,
+      `GUZTIRA: 0.00€`,
       '================================',
       'Eskerrik asko!',
     ].join('\n');
@@ -49,7 +30,7 @@ function ReceiptDownload({ orderId: _orderId }: { orderId: string }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `txosna-eskaera-${o.number}.txt`;
+    a.download = `txosna-eskaera-${_orderId}.txt`;
     a.click();
     URL.revokeObjectURL(url);
     setTimeout(() => setDownloading(false), 1500);
@@ -81,9 +62,13 @@ function ReceiptDownload({ orderId: _orderId }: { orderId: string }) {
   );
 }
 
-type StatusStep = 'CONFIRMED' | 'IN_PREPARATION' | 'READY';
+type StatusStep = 'PENDING_PAYMENT' | 'CONFIRMED' | 'IN_PREPARATION' | 'READY' | 'CANCELLED';
 
-const STEPS: { key: StatusStep; label: string; icon: string }[] = [
+const STEPS: {
+  key: Exclude<StatusStep, 'PENDING_PAYMENT' | 'CANCELLED'>;
+  label: string;
+  icon: string;
+}[] = [
   { key: 'CONFIRMED', label: 'Jasota', icon: '✓' },
   { key: 'IN_PREPARATION', label: 'Prestatzen', icon: '👨‍🍳' },
   { key: 'READY', label: 'Prest!', icon: '🎉' },
@@ -91,31 +76,104 @@ const STEPS: { key: StatusStep; label: string; icon: string }[] = [
 
 export default function OrderStatusPage() {
   const params = useParams();
-  const [status, setStatus] = useState<StatusStep>('CONFIRMED');
-  const [tick, setTick] = useState(0);
+  const [order, setOrder] = useState<StoredOrder | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [txosnaSlug, setTxosnaSlug] = useState('');
 
-  // Simulate status progression for demo
+  const orderId = Array.isArray(params.id) ? params.id[0] : params.id;
+
+  // Fetch order on mount
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
+    async function loadOrder() {
+      try {
+        const slug = localStorage.getItem('txosna_slug');
+        if (slug) setTxosnaSlug(slug);
 
+        const response = await fetch(`/api/orders/${orderId}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError('Eskaera ez da aurkitu');
+          } else {
+            setError('Errorea gertatu da');
+          }
+          return;
+        }
+
+        const data = await response.json();
+        setOrder(data);
+      } catch {
+        setError('Ezin izan da eskaera kargatu');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadOrder();
+  }, [orderId]);
+
+  // Subscribe to SSE updates if we have txosnaSlug
   useEffect(() => {
-    if (tick === 8) setStatus('IN_PREPARATION');
-    if (tick === 18) setStatus('READY');
-  }, [tick]);
+    if (!txosnaSlug || !order) return;
 
-  const currentIdx = STEPS.findIndex((s) => s.key === status);
-  const isReady = status === 'READY';
+    const es = new EventSource(`/api/txosnak/${txosnaSlug}/events`);
+
+    const handleUpdate = () => {
+      // Refetch order when status changes
+      fetch(`/api/orders/${orderId}`)
+        .then((r) => r.json())
+        .then(setOrder)
+        .catch(() => {});
+    };
+
+    es.addEventListener('order:confirmed', handleUpdate);
+    es.addEventListener('order:cancelled', handleUpdate);
+    es.addEventListener('ticket:status_changed', handleUpdate);
+
+    return () => es.close();
+  }, [orderId, txosnaSlug, order]);
+
+  if (loading) {
+    return (
+      <div className="cust-theme" style={{ minHeight: '100vh', background: 'var(--cust-bg)' }}>
+        <CustomerHeader txosnaName="Txosna" status="OPEN" right={<ThemeToggle variant="cust" />} />
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '60px 16px', textAlign: 'center' }}>
+          <div style={{ fontSize: 14, color: 'var(--cust-text-sec, #6b7280)' }}>Kargatzen...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <div className="cust-theme" style={{ minHeight: '100vh', background: 'var(--cust-bg)' }}>
+        <CustomerHeader txosnaName="Txosna" status="OPEN" right={<ThemeToggle variant="cust" />} />
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '60px 16px', textAlign: 'center' }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: '#ef4444', marginBottom: 16 }}>
+            ⚠️ {error || 'Eskaera ez da aurkitu'}
+          </div>
+          <Link
+            href={txosnaSlug ? `/${txosnaSlug}` : '/'}
+            style={{
+              color: 'var(--cust-primary, #e85d2f)',
+              textDecoration: 'none',
+              fontWeight: 600,
+            }}
+          >
+            Itzuli menura →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const isPending = order.status === 'PENDING_PAYMENT';
+  const isCancelled = order.status === 'CANCELLED';
+  const isReady = order.status === 'CONFIRMED'; // Simplified for now
 
   return (
     <div className="cust-theme" style={{ minHeight: '100vh', background: 'var(--cust-bg)' }}>
-      <CustomerHeader
-        txosnaName={MOCK_TXOSNA.name}
-        status={MOCK_TXOSNA.status}
-        waitMinutes={MOCK_TXOSNA.waitMinutes ?? undefined}
-        right={<ThemeToggle variant="cust" />}
-      />
+      <CustomerHeader txosnaName="Txosna" status="OPEN" right={<ThemeToggle variant="cust" />} />
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 16px 60px' }}>
         {/* Order number */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
@@ -127,12 +185,43 @@ export default function OrderStatusPage() {
               fontFamily: 'var(--font-mono, monospace)',
               fontSize: 56,
               fontWeight: 800,
-              color: isReady ? 'var(--cust-accent, #2d5a3d)' : 'var(--cust-primary, #e85d2f)',
+              color: isCancelled
+                ? '#ef4444'
+                : isReady
+                  ? 'var(--cust-accent, #2d5a3d)'
+                  : 'var(--cust-primary, #e85d2f)',
               lineHeight: 1,
             }}
           >
-            #42
+            #{order.orderNumber}
           </div>
+
+          {isPending && (
+            <div
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                color: 'var(--cust-primary, #e85d2f)',
+                marginTop: 8,
+              }}
+            >
+              Zain... 📞
+            </div>
+          )}
+
+          {isCancelled && (
+            <div
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                color: '#ef4444',
+                marginTop: 8,
+              }}
+            >
+              Eskaera ezeztatua ❌
+            </div>
+          )}
+
           {isReady && (
             <div
               style={{
@@ -147,96 +236,123 @@ export default function OrderStatusPage() {
           )}
         </div>
 
-        {/* Progress steps */}
-        <div
-          style={{
-            background: 'var(--cust-surface, #fff)',
-            borderRadius: 16,
-            border: '1px solid var(--cust-border, #e5e7eb)',
-            padding: '20px 20px 24px',
-            marginBottom: 20,
-          }}
-        >
-          {STEPS.map((step, i) => {
-            const done = i < currentIdx;
-            const active = i === currentIdx;
-            return (
-              <div
-                key={step.key}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 14,
-                  marginBottom: i < STEPS.length - 1 ? 20 : 0,
-                }}
-              >
+        {/* Status info */}
+        {isPending && (
+          <div
+            style={{
+              background: 'var(--cust-surface, #fff)',
+              borderRadius: 14,
+              border: '1px solid var(--cust-border, #e5e7eb)',
+              padding: '16px',
+              marginBottom: 20,
+              fontSize: 13,
+              color: 'var(--cust-text-sec, #6b7280)',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ marginBottom: 8 }}>
+              Zeure eskaera ordaindu nahi duzala itxaroten ari gara volontarioari.
+            </div>
+            <div style={{ fontSize: 12, fontStyle: 'italic' }}>
+              {order.expiresAt && (
+                <>Gehienez {new Date(order.expiresAt).toLocaleTimeString('eu-ES')}arte </>
+              )}
+              zain egongo da.
+            </div>
+          </div>
+        )}
+
+        {isCancelled && (
+          <div
+            style={{
+              background: 'rgba(239,68,68,0.1)',
+              borderRadius: 14,
+              border: '1px solid #ef4444',
+              padding: '16px',
+              marginBottom: 20,
+              fontSize: 13,
+              color: '#ef4444',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ marginBottom: 8, fontWeight: 600 }}>Eskaera ezeztatua dago</div>
+            <div style={{ fontSize: 12 }}>Arrazoia: {order.cancellationReason || 'Ezeztatua'}</div>
+          </div>
+        )}
+
+        {!isPending && !isCancelled && (
+          <div
+            style={{
+              background: 'var(--cust-surface, #fff)',
+              borderRadius: 16,
+              border: '1px solid var(--cust-border, #e5e7eb)',
+              padding: '20px 20px 24px',
+              marginBottom: 20,
+            }}
+          >
+            {STEPS.map((step, i) => {
+              // Simplified: show as completed if order is CONFIRMED or beyond
+              const done = order.status === 'CONFIRMED' && i < STEPS.length;
+              const active = i === STEPS.length - 1;
+              return (
                 <div
+                  key={step.key}
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: '50%',
-                    background:
-                      done || active
-                        ? isReady && active
-                          ? 'var(--cust-accent, #2d5a3d)'
-                          : 'var(--cust-primary, #e85d2f)'
-                        : 'var(--cust-bg, #faf8f5)',
-                    border: `2px solid ${done || active ? (isReady && active ? 'var(--cust-accent, #2d5a3d)' : 'var(--cust-primary, #e85d2f)') : 'var(--cust-border, #e5e7eb)'}`,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 16,
-                    flexShrink: 0,
-                    transition: 'all 0.4s',
+                    gap: 14,
+                    marginBottom: i < STEPS.length - 1 ? 20 : 0,
                   }}
                 >
-                  <span
-                    style={{ color: done || active ? '#fff' : 'var(--cust-text-dim, #d1d5db)' }}
-                  >
-                    {done ? '✓' : step.icon}
-                  </span>
-                </div>
-                <div>
                   <div
                     style={{
-                      fontSize: 15,
-                      fontWeight: active ? 700 : 500,
-                      color: active
-                        ? 'var(--cust-text-pri, #111)'
-                        : done
-                          ? 'var(--cust-text-sec, #6b7280)'
-                          : 'var(--cust-text-dim, #d1d5db)',
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      background:
+                        done || isReady
+                          ? 'var(--cust-primary, #e85d2f)'
+                          : 'var(--cust-bg, #faf8f5)',
+                      border: `2px solid ${done || isReady ? 'var(--cust-primary, #e85d2f)' : 'var(--cust-border, #e5e7eb)'}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 16,
+                      flexShrink: 0,
                     }}
                   >
-                    {step.label}
+                    <span
+                      style={{
+                        color: done || isReady ? '#fff' : 'var(--cust-text-dim, #d1d5db)',
+                      }}
+                    >
+                      {done ? '✓' : step.icon}
+                    </span>
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 15,
+                        fontWeight: active ? 700 : 500,
+                        color:
+                          done || isReady
+                            ? 'var(--cust-text-pri, #111)'
+                            : 'var(--cust-text-dim, #d1d5db)',
+                      }}
+                    >
+                      {step.label}
+                    </div>
                   </div>
                 </div>
-                {active && !isReady && (
-                  <div style={{ marginLeft: 'auto', display: 'flex', gap: 3 }}>
-                    {[0, 1, 2].map((d) => (
-                      <span
-                        key={d}
-                        style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: '50%',
-                          background: 'var(--cust-primary, #e85d2f)',
-                          animation: `bounce 1.2s ease-in-out ${d * 0.2}s infinite`,
-                          display: 'inline-block',
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
-        {isReady && (
+        {isReady && orderId && (
           <>
             <Link
-              href={`/eu/order/${params.id}/proof`}
+              href={`/${params.locale}/${orderId}/proof`}
               style={{
                 display: 'block',
                 background: 'var(--cust-accent, #2d5a3d)',
@@ -252,31 +368,27 @@ export default function OrderStatusPage() {
             >
               Jasotzeko kodea ikusi →
             </Link>
-            <ReceiptDownload orderId={String(params.id)} />
+            <ReceiptDownload orderId={orderId} />
           </>
         )}
 
-        <div
-          style={{
-            background: 'var(--cust-surface, #fff)',
-            borderRadius: 14,
-            border: '1px solid var(--cust-border, #e5e7eb)',
-            padding: '14px 16px',
-            fontSize: 13,
-            color: 'var(--cust-text-sec, #6b7280)',
-          }}
-        >
-          <strong style={{ color: 'var(--cust-text-pri, #111)' }}>Proto modua:</strong> Egoera
-          automatikoki aldatzen da ({tick}s). Demo bakarrik.
-        </div>
+        {!isReady && !isCancelled && (
+          <div
+            style={{
+              background: 'var(--cust-surface, #fff)',
+              borderRadius: 14,
+              border: '1px solid var(--cust-border, #e5e7eb)',
+              padding: '14px 16px',
+              fontSize: 13,
+              color: 'var(--cust-text-sec, #6b7280)',
+            }}
+          >
+            <strong style={{ color: 'var(--cust-text-pri, #111)' }}>Edukia:</strong> Orri hau
+            automatikoki eguneratzen da. Freskatzen ez bada, berritzen saia zaitez.
+          </div>
+        )}
       </div>
 
-      <style>{`
-        @keyframes bounce {
-          0%, 80%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-6px); }
-        }
-      `}</style>
       <PrototypeNav />
     </div>
   );

@@ -179,6 +179,7 @@ function seed() {
       paymentSessionId: null,
       confirmedAt: mo.status === 'CONFIRMED' ? new Date(mo.createdAt) : null,
       expiresAt: mo.expiresAt ? new Date(mo.expiresAt) : null,
+      pendingLines: null,
       createdAt: new Date(mo.createdAt),
       updatedAt: new Date(mo.createdAt),
     });
@@ -284,29 +285,33 @@ export const orderRepo: OrderRepository = {
       paymentSessionId: null,
       confirmedAt: data.status === 'CONFIRMED' ? t : null,
       expiresAt: data.expiresAt,
+      pendingLines: data.status === 'PENDING_PAYMENT' ? (data.pendingLines ?? data.tickets) : null,
       createdAt: t,
       updatedAt: t,
     };
     orders.set(order.id, order);
 
-    for (const ticketInput of data.tickets) {
-      const ticket: StoredTicket = {
-        id: newId(),
-        orderId: order.id,
-        txosnaId: data.txosnaId,
-        counterType: ticketInput.counterType,
-        status: 'RECEIVED',
-        requiresPreparation: ticketInput.requiresPreparation,
-        flagged: false,
-        orderChangedAlert: false,
-        notes: ticketInput.notes,
-        lines: ticketInput.lines.map((l) => ({ id: newId(), ...l })),
-        createdAt: t,
-        readyAt: null,
-        completedAt: null,
-        updatedAt: t,
-      };
-      tickets.set(ticket.id, ticket);
+    // Create tickets immediately unless order is PENDING_PAYMENT
+    if (data.status !== 'PENDING_PAYMENT') {
+      for (const ticketInput of data.tickets) {
+        const ticket: StoredTicket = {
+          id: newId(),
+          orderId: order.id,
+          txosnaId: data.txosnaId,
+          counterType: ticketInput.counterType,
+          status: 'RECEIVED',
+          requiresPreparation: ticketInput.requiresPreparation,
+          flagged: false,
+          orderChangedAlert: false,
+          notes: ticketInput.notes,
+          lines: ticketInput.lines.map((l) => ({ id: newId(), ...l })),
+          createdAt: t,
+          readyAt: null,
+          completedAt: null,
+          updatedAt: t,
+        };
+        tickets.set(ticket.id, ticket);
+      }
     }
 
     return order;
@@ -349,6 +354,28 @@ export const orderRepo: OrderRepository = {
 // ── TicketRepository ──────────────────────────────────────────────────────────
 
 export const ticketRepo: TicketRepository = {
+  async create(orderId, txosnaId, data) {
+    const t = now();
+    const ticket: StoredTicket = {
+      id: newId(),
+      orderId,
+      txosnaId,
+      counterType: data.counterType,
+      status: 'RECEIVED',
+      requiresPreparation: data.requiresPreparation,
+      flagged: false,
+      orderChangedAlert: false,
+      notes: data.notes,
+      lines: data.lines.map((l) => ({ id: newId(), ...l })),
+      createdAt: t,
+      readyAt: null,
+      completedAt: null,
+      updatedAt: t,
+    };
+    tickets.set(ticket.id, ticket);
+    return ticket;
+  },
+
   async findById(id) {
     return tickets.get(id) ?? null;
   },
@@ -577,6 +604,7 @@ function seedDemoAssociation() {
       paymentSessionId: null,
       confirmedAt: mo.status === 'CONFIRMED' ? new Date(mo.createdAt) : null,
       expiresAt: mo.expiresAt ? new Date(mo.expiresAt) : null,
+      pendingLines: null,
       createdAt: new Date(mo.createdAt),
       updatedAt: new Date(mo.createdAt),
     });

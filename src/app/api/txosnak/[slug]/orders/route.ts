@@ -15,14 +15,6 @@ import type {
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  // Auth — allow bypass in prototype / test mode
-  let registeredById: string | null = null;
-  if (process.env.PROTO_MODE !== 'true') {
-    const session = await auth();
-    if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    registeredById = (session.user as { id?: string }).id ?? null;
-  }
-
   const txosna = await txosnaRepo.findBySlug(slug);
   if (!txosna) return Response.json({ error: 'Not found' }, { status: 404 });
   if (txosna.status !== 'OPEN')
@@ -50,6 +42,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 
   if (!Array.isArray(body.lines) || body.lines.length === 0) {
     return Response.json({ error: 'lines must be a non-empty array' }, { status: 400 });
+  }
+
+  // Auth — self-service orders don't require auth
+  const isSelfService = body.channel === 'SELF_SERVICE' || body.channel === 'PHONE_TO_COUNTER';
+  let registeredById: string | null = null;
+  if (!isSelfService) {
+    if (process.env.PROTO_MODE !== 'true') {
+      const session = await auth();
+      if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      registeredById = (session.user as { id?: string }).id ?? null;
+    }
   }
 
   // Load catalog for this txosna to resolve prices
@@ -137,6 +140,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 
   const total = resolved.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
 
+  // Determine status and expiry for self-service orders
+  const status = isSelfService ? 'PENDING_PAYMENT' : 'CONFIRMED';
+  const expiresAt = isSelfService
+    ? new Date(Date.now() + txosna.pendingPaymentTimeout * 60_000)
+    : null;
+
   const input: CreateOrderInput = {
     txosnaId: txosna.id,
     channel: body.channel as CreateOrderInput['channel'],
@@ -144,19 +153,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     notes: body.notes ?? null,
     paymentMethod: body.paymentMethod as CreateOrderInput['paymentMethod'],
     registeredById,
-    status: 'CONFIRMED',
+    status,
     total,
-    expiresAt: null,
+    expiresAt,
     tickets,
+    pendingLines: isSelfService ? tickets : undefined,
   };
 
   const order = await orderRepo.create(input);
 
-  broadcast(txosna.id, 'order:created', {
+  // Broadcast appropriate event based on channel
+  const eventName = isSelfService ? 'order:pending' : 'order:created';
+  broadcast(txosna.id, eventName, {
     orderId: order.id,
     orderNumber: order.orderNumber,
     customerName: order.customerName,
     total: order.total,
+    status: order.status,
   });
 
   return Response.json(order, { status: 201 });
@@ -164,6 +177,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 
 // ── GET /api/txosnak/[slug]/orders ────────────────────────────────────────────
 // Returns orders for a txosna. Used by counter and KDS screens.
+// Runs a lazy expiry sweep on PENDING_PAYMENT orders at the start.
 
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -175,6 +189,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
 
   const txosna = await txosnaRepo.findBySlug(slug);
   if (!txosna) return Response.json({ error: 'Not found' }, { status: 404 });
+
+  // Lazy expiry sweep for PENDING_PAYMENT orders
+  const { expirePendingOrders } = await import('@/lib/expire-pending-orders');
+  await expirePendingOrders(txosna.id);
 
   const url = new URL(request.url);
   const statusParam = url.searchParams.get('status');
