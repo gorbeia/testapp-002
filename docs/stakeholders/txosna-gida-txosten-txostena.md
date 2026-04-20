@@ -87,7 +87,7 @@ Produktu batean sakatu eta hautatzeko pantaila irekitzen da:
 
 ##### 3. Saskia ikusi
 
-![Saskia ikusi](placeholder-cart.png)
+![Saskia ikusi](../screenshots/14-cart-mobile.png)
 
 Saskian bildutako produktuak ikusteko, saskia ikonoa sakatu beheko barran:
 
