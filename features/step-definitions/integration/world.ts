@@ -1,5 +1,5 @@
 import { setWorldConstructor, World, IWorldOptions } from '@cucumber/cucumber';
-import type { StoredTxosna, StoredOrder } from '@/lib/store/types';
+import type { StoredTxosna, StoredOrder, StoredTicket } from '@/lib/store/types';
 
 interface BroadcastSpyCall {
   txosnaId: string;
@@ -12,6 +12,7 @@ export class IntegrationWorld extends World {
   lastBody: unknown = null;
   currentTxosna: StoredTxosna | null = null;
   currentOrder: StoredOrder | null = null;
+  currentTicket: StoredTicket | null = null;
   savedOrders: StoredOrder[] = [];
   broadcastCalls: BroadcastSpyCall[] = [];
 

@@ -14,6 +14,7 @@ Before({ tags: 'not @e2e-only' }, async function (this: IntegrationWorld) {
   this.lastBody = null;
   this.currentTxosna = null;
   this.currentOrder = null;
+  this.currentTicket = null;
   this.savedOrders = [];
   global.broadcastCalls = [];
 });
