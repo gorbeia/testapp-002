@@ -30,6 +30,7 @@ export async function GET(
         include: { options: { orderBy: { displayOrder: 'asc' } } },
       },
       modifiers: { orderBy: { displayOrder: 'asc' } },
+      vatType: true,
     },
   });
 
@@ -71,7 +72,22 @@ export async function PATCH(
     preparationInstructions,
     variantGroups,
     modifiers,
+    vatTypeId,
   } = body;
+
+  // Get association to check TicketBAI
+  const association = await prisma.association.findUnique({
+    where: { id: associationId },
+  });
+
+  if (association?.ticketBaiEnabled && vatTypeId === null && existing.vatTypeId) {
+    // Checking if user is explicitly clearing VAT type when TicketBAI is on
+    return new Response('vatTypeId cannot be removed when TicketBAI is enabled', { status: 400 });
+  }
+
+  if (association?.ticketBaiEnabled && !vatTypeId && !existing.vatTypeId) {
+    return new Response('vatTypeId is required when TicketBAI is enabled', { status: 400 });
+  }
 
   // If categoryId provided, verify it belongs to the association
   if (categoryId) {
@@ -139,6 +155,7 @@ export async function PATCH(
               })),
             },
           }),
+        ...(vatTypeId !== undefined && { vatTypeId: vatTypeId ?? null }),
       },
       include: {
         variantGroups: {
@@ -146,6 +163,7 @@ export async function PATCH(
           include: { options: { orderBy: { displayOrder: 'asc' } } },
         },
         modifiers: { orderBy: { displayOrder: 'asc' } },
+        vatType: true,
       },
     });
   });

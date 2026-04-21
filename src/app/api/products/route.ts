@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
         include: { options: { orderBy: { displayOrder: 'asc' } } },
       },
       modifiers: { orderBy: { displayOrder: 'asc' } },
+      vatType: true,
     },
   });
 
@@ -58,7 +59,17 @@ export async function POST(request: NextRequest) {
     preparationInstructions,
     variantGroups,
     modifiers,
+    vatTypeId,
   } = body;
+
+  // Get association config to check if TicketBAI is enabled
+  const association = await prisma.association.findUnique({
+    where: { id: associationId },
+  });
+
+  if (association?.ticketBaiEnabled && !vatTypeId) {
+    return new Response('vatTypeId is required when TicketBAI is enabled', { status: 400 });
+  }
 
   if (!name || !categoryId || defaultPrice === undefined) {
     return new Response('name, categoryId, and defaultPrice are required', { status: 400 });
@@ -96,6 +107,7 @@ export async function POST(request: NextRequest) {
       displayOrder: order,
       ingredients: ingredients ?? null,
       preparationInstructions: preparationInstructions ?? null,
+      vatTypeId: vatTypeId ?? null,
       variantGroups: variantGroups?.length
         ? {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -133,6 +145,7 @@ export async function POST(request: NextRequest) {
         include: { options: { orderBy: { displayOrder: 'asc' } } },
       },
       modifiers: { orderBy: { displayOrder: 'asc' } },
+      vatType: true,
     },
   });
 

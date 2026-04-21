@@ -221,21 +221,22 @@ Each txosna is independently configurable:
 
 ### Product fields
 
-| Field                    | Notes                                                        |
-| ------------------------ | ------------------------------------------------------------ |
-| Name                     | Required                                                     |
-| Category                 | Required; determines FOOD or DRINKS routing                  |
-| Default price            | Required                                                     |
-| Description              | Optional                                                     |
-| Customer-facing image    | Optional                                                     |
-| Allergens                | Multi-select from 14 standard EU allergens                   |
-| Dietary flags            | Vegetarian, vegan, gluten-free                               |
-| Age-restricted           | Drink requires ID verification at counter before serving     |
-| Splittable               | For food products ordered in multiple units                  |
-| Requires preparation     | For drink products needing active preparation (e.g. mojito)  |
-| Display order            | Within its category                                          |
-| Ingredients list         | Simple text reference for volunteers; not used for inventory |
-| Preparation instructions | Markdown with embedded images; general method                |
+| Field                    | Notes                                                                |
+| ------------------------ | -------------------------------------------------------------------- |
+| Name                     | Required                                                             |
+| Category                 | Required; determines FOOD or DRINKS routing                          |
+| Default price            | Required                                                             |
+| Description              | Optional                                                             |
+| Customer-facing image    | Optional                                                             |
+| Allergens                | Multi-select from 14 standard EU allergens                           |
+| Dietary flags            | Vegetarian, vegan, gluten-free                                       |
+| Age-restricted           | Drink requires ID verification at counter before serving             |
+| Splittable               | For food products ordered in multiple units                          |
+| Requires preparation     | For drink products needing active preparation (e.g. mojito)          |
+| Display order            | Within its category                                                  |
+| Ingredients list         | Simple text reference for volunteers; not used for inventory         |
+| Preparation instructions | Markdown with embedded images; general method                        |
+| VAT type (IVA)           | Optional unless TicketBAI is enabled; defaults to IVA Reducido (10%) |
 
 ### Variant groups
 
@@ -286,7 +287,51 @@ base price (or override) + sum of variant deltas + sum of modifier prices
 
 ---
 
-## 11. Age Verification
+## 11. Association Configuration — VAT / IVA
+
+### VAT Type Management
+
+- Each association defines its own set of **VAT types** (label + percentage)
+- **Spain defaults** are pre-populated on association creation:
+  - IVA General: 21%
+  - IVA Reducido: 10%
+  - IVA Superreducido: 4%
+  - Exento de IVA: 0%
+- **Admin interface** for adding, editing, deleting VAT types (Settings → IVA tab)
+- Cannot delete a VAT type if products are assigned to it (409 conflict)
+
+### Product VAT Assignment
+
+- Each product carries an optional **VAT type** reference
+- **Defaults** to IVA Reducido (10%) when creating a new product
+- Can be **overridden per product** in the product edit form
+- When **TicketBAI is enabled** on the association:
+  - VAT type becomes **mandatory** on all products
+  - Existing products without VAT types must be assigned one before re-publishing
+
+### TicketBAI Integration
+
+- Association admin can **toggle TicketBAI enabled** in Settings → IVA tab
+- When enabled:
+  - All products must have a VAT type assigned
+  - API rejects product create/update without `vatTypeId`
+  - Product form enforces the requirement
+
+### VAT Types Screen
+
+**Location:** Settings → IVA tab
+
+**Features:**
+
+- List all defined VAT types with label and percentage
+- Add new VAT type (label + percentage input)
+- Edit existing VAT type (label, percentage)
+- Delete VAT type (blocked if in use by products)
+- TicketBAI toggle at top of tab with warning when enabled
+
+---
+
+## 12. Age Verification
 
 - Drink products flagged as age-restricted trigger a **volunteer ID check prompt** at the counter
 - Phone orders include a **customer declaration checkbox**

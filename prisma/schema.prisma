@@ -90,19 +90,36 @@ enum PaymentMethodDetail {
 
 // ── Models ───────────────────────────────────────────────────────────────────
 
+model VatType {
+  id            String   @id @default(cuid())
+  label         String
+  percentage    Decimal  @db.Decimal(5, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  associationId String
+  association   Association @relation(fields: [associationId], references: [id])
+
+  products Product[]
+
+  @@unique([associationId, label])
+}
+
 model Association {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String?
-  cif       String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String    @id @default(cuid())
+  name             String
+  phone            String?
+  cif              String?
+  ticketBaiEnabled Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   volunteers        Volunteer[]
   events            Event[]
   categories        Category[]
   txosnak           Txosna[]
   paymentProviders PaymentProvider[]
+  vatTypes          VatType[]
 }
 
 model Volunteer {
@@ -170,6 +187,9 @@ model Product {
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
+
+  vatTypeId String?
+  vatType   VatType? @relation(fields: [vatTypeId], references: [id])
 
   variantGroups  VariantGroup[]
   modifiers      Modifier[]

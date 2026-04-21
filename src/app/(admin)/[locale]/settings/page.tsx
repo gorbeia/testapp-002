@@ -5,7 +5,7 @@ import { MOCK_ASSOCIATION } from '@/lib/mock-data';
 import { Dialog } from '@base-ui/react/dialog';
 import { X, Plus, CreditCard, Building2, Power, Trash2, Edit2, Check } from 'lucide-react';
 
-const TABS = ['Elkartea', 'Ordainketa'];
+const TABS = ['Elkartea', 'Ordainketa', 'IVA'];
 
 // ── Dialog Component ─────────────────────────────────────────────────────────
 function ProviderDialog({
@@ -1012,6 +1012,340 @@ function PaymentProvidersTab() {
   );
 }
 
+// ── Tab 3: VAT/IVA Configuration ──────────────────────────────────────────────
+
+interface VatType {
+  id: string;
+  label: string;
+  percentage: string;
+}
+
+function VatTypeCard({
+  vatType,
+  onEdit,
+  onDelete,
+}: {
+  vatType: VatType;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '16px',
+        background: 'var(--adm-surface)',
+        border: '1px solid var(--adm-border)',
+        borderRadius: 12,
+      }}
+    >
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--adm-text-pri)' }}>
+          {vatType.label}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--adm-text-sec)', marginTop: 2 }}>
+          {vatType.percentage}%
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button
+          onClick={onEdit}
+          title="Editatu"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            border: 'none',
+            background: 'var(--adm-surface-hi)',
+            color: 'var(--adm-text-sec)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.15s',
+          }}
+        >
+          <Edit2 size={18} />
+        </button>
+        <button
+          onClick={onDelete}
+          title="Ezabatu"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            border: 'none',
+            background: 'var(--adm-surface-hi)',
+            color: 'var(--adm-text-sec)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.15s',
+          }}
+        >
+          <Trash2 size={18} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function VatTab() {
+  const [vatTypes, setVatTypes] = useState<VatType[]>([]);
+  const [ticketBaiEnabled, setTicketBaiEnabled] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingVat, setEditingVat] = useState<VatType | null>(null);
+  const [formLabel, setFormLabel] = useState('');
+  const [formPercentage, setFormPercentage] = useState('');
+  const [error, setError] = useState('');
+
+  // Load VAT types on mount
+  React.useEffect(() => {
+    const loadVatTypes = async () => {
+      try {
+        const resp = await fetch('/api/vat-types');
+        if (!resp.ok) throw new Error('Failed to load VAT types');
+        const data = await resp.json();
+        setVatTypes(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Load association config for TicketBAI
+    const loadAssociation = async () => {
+      try {
+        // Assuming associationId is available from session/context
+        // For now, we'll skip this load
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadVatTypes();
+    loadAssociation();
+  }, []);
+
+  const handleAddVat = () => {
+    setEditingVat(null);
+    setFormLabel('');
+    setFormPercentage('');
+    setError('');
+    setDialogOpen(true);
+  };
+
+  const handleEditVat = (vat: VatType) => {
+    setEditingVat(vat);
+    setFormLabel(vat.label);
+    setFormPercentage(vat.percentage);
+    setError('');
+    setDialogOpen(true);
+  };
+
+  const handleSaveVat = async () => {
+    if (!formLabel || !formPercentage) {
+      setError('Label and percentage are required');
+      return;
+    }
+
+    try {
+      const method = editingVat ? 'PATCH' : 'POST';
+      const endpoint = editingVat ? `/api/vat-types/${editingVat.id}` : '/api/vat-types';
+      const resp = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: formLabel, percentage: formPercentage }),
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(text);
+      }
+
+      const result = await resp.json();
+      if (editingVat) {
+        setVatTypes(vatTypes.map((v) => (v.id === editingVat.id ? result : v)));
+      } else {
+        setVatTypes([...vatTypes, result]);
+      }
+      setDialogOpen(false);
+    } catch (err) {
+      setError(String(err));
+    }
+  };
+
+  const handleDeleteVat = async (vatId: string) => {
+    if (!confirm('Ezabatu nahi duzu?')) return;
+    try {
+      const resp = await fetch(`/api/vat-types/${vatId}`, { method: 'DELETE' });
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(text);
+      }
+      setVatTypes(vatTypes.filter((v) => v.id !== vatId));
+    } catch (err) {
+      alert('Error: ' + String(err));
+    }
+  };
+
+  const handleToggleTicketBai = async (newValue: boolean) => {
+    try {
+      const resp = await fetch('/api/associations/' + (MOCK_ASSOCIATION as any).id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketBaiEnabled: newValue }),
+      });
+      if (!resp.ok) throw new Error('Failed to update');
+      setTicketBaiEnabled(newValue);
+    } catch (err) {
+      alert('Error: ' + String(err));
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 520, display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <ToggleRow
+        label="TicketBAI gaitu"
+        hint="Produktuak IVA mota dute obligatorioa"
+        checked={ticketBaiEnabled}
+        onChange={handleToggleTicketBai}
+      />
+
+      {loading ? (
+        <div style={{ color: 'var(--adm-text-sec)' }}>Kargatzen...</div>
+      ) : (
+        <>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {vatTypes.map((vat) => (
+              <VatTypeCard
+                key={vat.id}
+                vatType={vat}
+                onEdit={() => handleEditVat(vat)}
+                onDelete={() => handleDeleteVat(vat.id)}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={handleAddVat}
+            style={{
+              alignSelf: 'flex-start',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 16px',
+              borderRadius: 8,
+              fontSize: 14,
+              fontWeight: 600,
+              color: '#fff',
+              background: '#e85d2f',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            <Plus size={18} />
+            Gehitu IVA mota
+          </button>
+        </>
+      )}
+
+      <ProviderDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        title={editingVat ? 'IVA mota editatu' : 'IVA mota gehitu'}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <FormLabel>Izena</FormLabel>
+            <input
+              type="text"
+              value={formLabel}
+              onChange={(e) => setFormLabel(e.target.value)}
+              placeholder="e.g. IVA Reducido"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--adm-border)',
+                background: 'var(--adm-surface)',
+                color: 'var(--adm-text-pri)',
+                fontSize: 14,
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          <div>
+            <FormLabel>Ehunekoa</FormLabel>
+            <input
+              type="number"
+              value={formPercentage}
+              onChange={(e) => setFormPercentage(e.target.value)}
+              placeholder="e.g. 10.00"
+              min="0"
+              max="100"
+              step="0.01"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--adm-border)',
+                background: 'var(--adm-surface)',
+                color: 'var(--adm-text-pri)',
+                fontSize: 14,
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          {error && <div style={{ color: '#ef4444', fontSize: 12 }}>{error}</div>}
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={handleSaveVat}
+              style={{
+                flex: 1,
+                padding: '10px 16px',
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#fff',
+                background: '#e85d2f',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              Gorde
+            </button>
+            <button
+              onClick={() => setDialogOpen(false)}
+              style={{
+                flex: 1,
+                padding: '10px 16px',
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                color: 'var(--adm-text-pri)',
+                background: 'var(--adm-surface-hi)',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              Utzi
+            </button>
+          </div>
+        </div>
+      </ProviderDialog>
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function AssociationSettingsPage() {
   const [activeTab, setActiveTab] = useState(0);
@@ -1056,6 +1390,7 @@ export default function AssociationSettingsPage() {
 
       {activeTab === 0 && <GeneralTab />}
       {activeTab === 1 && <PaymentProvidersTab />}
+      {activeTab === 2 && <VatTab />}
     </div>
   );
 }

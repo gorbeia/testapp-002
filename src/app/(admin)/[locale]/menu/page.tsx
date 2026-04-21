@@ -50,6 +50,12 @@ interface Category {
   products: Product[];
 }
 
+interface VatType {
+  id: string;
+  label: string;
+  percentage: string;
+}
+
 interface ProductForm {
   name: string;
   description: string;
@@ -64,6 +70,7 @@ interface ProductForm {
   modifiers: Modifier[];
   removableIngredients: RemovableIngredient[];
   preparationInstructions: string;
+  vatTypeId: string;
 }
 
 interface CategoryModalState {
@@ -96,7 +103,7 @@ const ALLERGEN_EMOJI: Record<string, string> = Object.fromEntries(
   ALLERGENS.map(({ key, emoji }) => [key, emoji])
 );
 
-function emptyForm(categoryId: string): ProductForm {
+function emptyForm(categoryId: string, defaultVatTypeId?: string): ProductForm {
   return {
     name: '',
     description: '',
@@ -111,6 +118,7 @@ function emptyForm(categoryId: string): ProductForm {
     modifiers: [],
     removableIngredients: [],
     preparationInstructions: '',
+    vatTypeId: defaultVatTypeId ?? '',
   };
 }
 
@@ -135,6 +143,7 @@ function fromProduct(p: Product): ProductForm {
       .filter(Boolean)
       .map((name, i) => ({ id: 'ri-' + i, name: name.trim() })),
     preparationInstructions: p.preparationInstructions ?? '',
+    vatTypeId: (p as any).vatTypeId ?? '',
   };
 }
 
@@ -154,6 +163,7 @@ function formToPayload(data: ProductForm) {
     preparationInstructions: data.preparationInstructions || null,
     variantGroups: data.variantGroups,
     modifiers: data.modifiers,
+    vatTypeId: data.vatTypeId || null,
   };
 }
 
@@ -324,6 +334,44 @@ function CategoryModal({
   );
 }
 
+// ── VAT Type Select ───────────────────────────────────────────────────────────
+
+function VatTypeSelect({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+  const [vatTypes, setVatTypes] = useState<VatType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    fetch('/api/vat-types')
+      .then((r) => r.json())
+      .then((data) => {
+        setVatTypes(data);
+        // Auto-select IVA Reducido (10%) on first load if no selection
+        if (!value && data.length > 0) {
+          const reduced = data.find((v: VatType) => parseFloat(v.percentage) === 10);
+          if (reduced) onChange(reduced.id);
+        }
+      })
+      .catch((err) => console.error('Failed to load VAT types:', err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      style={{ ...inputStyle, background: 'var(--adm-surface)' }}
+      disabled={loading}
+    >
+      <option value="">Aukeratu IVA</option>
+      {vatTypes.map((vat) => (
+        <option key={vat.id} value={vat.id}>
+          {vat.label} ({vat.percentage}%)
+        </option>
+      ))}
+    </select>
+  );
+}
+
 // ── Product Modal ─────────────────────────────────────────────────────────────
 
 function ProductModal({
@@ -339,6 +387,10 @@ function ProductModal({
   onSave: (f: ProductForm) => void;
   onClose: () => void;
 }) {
+  // Handle category change to update VAT type default
+  const handleCategoryChange = (newCategoryId: string) => {
+    setForm((f) => ({ ...f, categoryId: newCategoryId }));
+  };
   const [form, setForm] = useState<ProductForm>(initial);
   const [tab, setTab] = useState<'basic' | 'variants' | 'modifiers' | 'prep'>('basic');
 
@@ -562,7 +614,7 @@ function ProductModal({
                   <div style={sectionLabel}>Kategoria</div>
                   <select
                     value={form.categoryId}
-                    onChange={set('categoryId') as React.ChangeEventHandler<HTMLSelectElement>}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
                     style={{ ...inputStyle, background: 'var(--adm-surface)' }}
                   >
                     {categories.map((c) => (
@@ -572,6 +624,14 @@ function ProductModal({
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <div style={sectionLabel}>IVA Mota</div>
+                <VatTypeSelect
+                  value={form.vatTypeId}
+                  onChange={(id) => setForm((f) => ({ ...f, vatTypeId: id }))}
+                />
               </div>
 
               {/* Toggles */}

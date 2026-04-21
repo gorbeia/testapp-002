@@ -8,10 +8,14 @@ _Session 17 — April 2026_
 
 ### Association (Tenant)
 
-| Attribute  | Type     | Notes                           |
-| ---------- | -------- | ------------------------------- |
-| name       | text     | Name of the association         |
-| created_at | datetime | When the association registered |
+| Attribute          | Type      | Notes                                                 |
+| ------------------ | --------- | ----------------------------------------------------- |
+| name               | text      | Name of the association                               |
+| phone              | text?     | Contact phone number                                  |
+| cif                | text?     | Spanish tax ID                                        |
+| ticket_bai_enabled | boolean   | When true, all products must have a VAT type assigned |
+| created_at         | datetime  | When the association registered                       |
+| vat_types          | VatType[] | Tax rate definitions for the association              |
 
 ---
 
@@ -83,6 +87,17 @@ _Session 17 — April 2026_
 | ingredients              | text        | Simple reference list for volunteers; not used for inventory             |
 | preparation_instructions | markdown    | General method; applies to all txosnak; may include embedded images      |
 | association              | Association | Owner                                                                    |
+| vat_type                 | VatType?    | Tax classification; optional unless TicketBAI is enabled                 |
+
+---
+
+### VatType
+
+| Attribute   | Type        | Notes               |
+| ----------- | ----------- | ------------------- |
+| label       | text        | e.g. "IVA Reducido" |
+| percentage  | decimal     | e.g. 10.00          |
+| association | Association | Owner               |
 
 ---
 
