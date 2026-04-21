@@ -33,8 +33,8 @@ Given(
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    _test_insertTxosna(txosna);
-    this.currentTxosna = txosna;
+    _test_insertTxosna(txosna as any);
+    this.currentTxosna = txosna as any;
   }
 );
 
