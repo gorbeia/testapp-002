@@ -14,7 +14,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "test:integration": "TS_NODE_PROJECT=tsconfig.cucumber.json cucumber-js --profile integration",
+    "test:integration": "PROTO_MODE=true TS_NODE_PROJECT=tsconfig.cucumber.json cucumber-js --profile integration",
     "test:e2e": "TS_NODE_PROJECT=tsconfig.cucumber.json cucumber-js --profile e2e",
     "test:all": "vitest run && npm run test:integration",
     "prepare": "husky install"

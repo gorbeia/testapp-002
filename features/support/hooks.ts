@@ -8,4 +8,7 @@ Before({ tags: 'not @e2e-only' }, async function (this: IntegrationWorld) {
   this.lastResponse = null;
   this.lastBody = null;
   this.currentTxosna = null;
+  this.currentOrder = null;
+  this.savedOrders = [];
+  this.broadcastSpy.mockClear();
 });
