@@ -279,7 +279,86 @@ If the application grows significantly: Resend paid plan starts at ~€15/month;
 
 ---
 
-## 11. Open Questions
+## 11. Security & Multitenancy
+
+### Multitenancy Model
+
+Txosna is a **multitenant** application where a single deployment serves multiple associations (elkarteak). Each association is the root tenant boundary; all data is partitioned by `associationId`.
+
+**Tenant isolation enforced at:**
+
+- **Database schema**: Every tenant-aware model (Volunteer, Category, VatType, Txosna, Event, etc.) has an explicit `associationId` field
+- **JWT session**: Every user's session token includes `token.associationId`
+- **Application layer**: Every API endpoint must verify the user's `associationId` matches the data they are accessing
+
+### Authentication & Authorization
+
+- **Login**: NextAuth.js credentials provider (email + password) for volunteers and admins
+- **Session**: JWT stored in httpOnly cookie; includes `user.id`, `user.role` (ADMIN or VOLUNTEER), and `user.associationId`
+- **Roles**:
+  - **ADMIN**: Full access to their association's configuration (menu, volunteers, VAT types, settings)
+  - **VOLUNTEER**: Access to operational screens (counter, kitchen, reports) for their association's txosnak
+- **Public routes** (e.g., customer ordering, pickup proof): No authentication required; scoped by txosna slug
+
+### Tenant Isolation Check Pattern
+
+Every protected API endpoint must verify the user is acting within their own association. The canonical pattern:
+
+```typescript
+const session = await auth();
+if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+const { associationId: sessionAssociationId } = session.user as any;
+
+// For admin routes, verify role
+if (session.user.role !== 'ADMIN') return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+// Load entity and verify associationId
+const entity = await entityRepo.findById(id);
+if (!entity || entity.associationId !== sessionAssociationId)
+  return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+// Proceed with operation
+```
+
+Reference implementation: `src/app/api/txosnak/[slug]/reports/route.ts`
+
+### Public vs Protected Endpoints
+
+| Route                                | Method    | Auth     | Scope                | Note                                                                                                                                                            |
+| ------------------------------------ | --------- | -------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/txosnak/[slug]`            | GET       | None     | Public               | Txosna metadata (name, status, channels)                                                                                                                        |
+| `GET /api/txosnak/[slug]/catalog`    | GET       | None     | Public               | Menu visible to customers                                                                                                                                       |
+| `GET /api/txosnak/[slug]/events`     | GET (SSE) | None     | Public               | Real-time order/ticket events (scoped by txosnaId)                                                                                                              |
+| `POST /api/txosnak/[slug]/orders`    | POST      | Optional | By slug              | Self-service orders (SELF_SERVICE, PHONE_TO_COUNTER channels) don't require auth; counter orders (COUNTER channel) require volunteer auth + associationId check |
+| `GET /api/orders/[orderId]`          | GET       | None     | By verification code | Customers access their order via verification code secret                                                                                                       |
+| `GET /api/txosnak/[slug]/tickets`    | GET       | Required | Volunteer            | Requires volunteer session; verified to belong to caller's association                                                                                          |
+| `PATCH /api/tickets/[id]`            | PATCH     | Required | Volunteer            | Requires volunteer session; ticket verified to belong to caller's association                                                                                   |
+| `POST /api/orders/[orderId]/confirm` | POST      | Required | Volunteer            | Requires volunteer session; order's txosna verified to belong to caller's association                                                                           |
+| `POST /api/orders/[orderId]/cancel`  | POST      | Optional | By caller type       | Customers can cancel PENDING_PAYMENT orders; volunteers can cancel any order but must belong to their association                                               |
+| `GET /api/txosnak/[slug]/reports`    | GET       | Required | ADMIN                | Requires ADMIN role; txosna verified to belong to caller's association                                                                                          |
+| `PATCH /api/vat-types/[vatTypeId]`   | PATCH     | Required | ADMIN                | Requires ADMIN role; VAT type verified to belong to caller's association                                                                                        |
+| `DELETE /api/vat-types/[vatTypeId]`  | DELETE    | Required | ADMIN                | Requires ADMIN role; VAT type verified to belong to caller's association                                                                                        |
+
+### PROTO_MODE
+
+The environment variable `PROTO_MODE=true` bypasses authentication on certain endpoints for development and testing:
+
+- `POST /api/txosnak/[slug]/orders` (counter channel)
+- `POST /api/orders/[orderId]/confirm`
+- `POST /api/orders/[orderId]/cancel`
+
+**CRITICAL**: `PROTO_MODE` must **never** be set in production. It breaks all tenant isolation. If set in production by mistake, any volunteer can confirm/cancel orders on any association's txosna.
+
+To verify PROTO_MODE is not enabled in production:
+
+```bash
+echo $PROTO_MODE  # should be empty or unset
+```
+
+---
+
+## 12. Open Questions
 
 1. Is Cloudflare R2 accessible from the existing VPS, or is local file storage simpler?
 2. Which email provider is already in use for the other application on the VPS? Reusing it would simplify setup.
@@ -287,4 +366,4 @@ If the application grows significantly: Resend paid plan starts at ~€15/month;
 
 ---
 
-_Last updated: session 18_
+_Last updated: session 18_ (Security section added in session 19)

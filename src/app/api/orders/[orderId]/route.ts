@@ -4,19 +4,33 @@ import { orderRepo, ticketRepo } from '@/lib/store';
 // Returns order status for customers. No auth required.
 // Two lookup modes:
 //   1. Direct: /api/orders/ord-abc123 (from localStorage)
-//   2. Shared: /api/orders/ord-abc123?txosnaId=&orderNumber=&verificationCode=
+//   2. Shared: /api/orders/ord-abc123?txosnaId=abc&orderNumber=42&verificationCode=AB-1234
 // If verificationCode is provided, it must match the order's code (403 if wrong).
 
 export async function GET(request: Request, { params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = await params;
+  const url = new URL(request.url);
 
-  const order = await orderRepo.findById(orderId);
+  let order = await orderRepo.findById(orderId);
+
+  // If txosnaId and orderNumber are provided as query params, use them for lookup instead
+  const txosnaId = url.searchParams.get('txosnaId');
+  const orderNumberParam = url.searchParams.get('orderNumber');
+  if (txosnaId && orderNumberParam) {
+    const orderNumber = parseInt(orderNumberParam, 10);
+    order = await orderRepo.findByNumber(txosnaId, orderNumber);
+  }
+
   if (!order) {
     return Response.json({ error: 'Order not found' }, { status: 404 });
   }
 
+  // Verify the order matches the requested orderId if direct lookup was used
+  if (!txosnaId && !orderNumberParam && order.id !== orderId) {
+    return Response.json({ error: 'Order not found' }, { status: 404 });
+  }
+
   // If verification code is provided in query params, validate it
-  const url = new URL(request.url);
   const providedCode = url.searchParams.get('verificationCode');
   if (providedCode && order.verificationCode !== providedCode) {
     return Response.json({ error: 'Invalid verification code' }, { status: 403 });

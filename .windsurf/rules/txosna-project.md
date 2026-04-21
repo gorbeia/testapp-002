@@ -73,6 +73,39 @@ Txosna App manages food/drink ordering at **txosnak** (temporary festival stalls
 - Multi-tenancy: all queries include `associationId` filter at application layer
 - Prices captured at order time — menu changes don't affect existing orders
 
+## Security & Multitenancy Requirements
+
+**Critical rule**: Every API endpoint that modifies data or returns association-specific information MUST verify `session.user.associationId` matches the data's `associationId`. Do not assume the router parameter is sufficient; always verify.
+
+**Pattern for every protected endpoint:**
+
+1. Call `const session = await auth()` and check for `401 Unauthorized`
+2. Extract `session.user.associationId` (sometimes called `sessionAssociationId` for clarity)
+3. Check `session.user.role` if ADMIN-only (e.g., config endpoints)
+4. Load the entity from the database using the route parameter (e.g., by ID or slug)
+5. Verify `entity.associationId === sessionAssociationId` — return `403 Forbidden` if mismatch
+6. Proceed with the operation
+
+**Unsafe pattern** (do not use):
+
+- Loading an entity by ID only, without checking its `associationId`
+- Assuming a route parameter like `[slug]` is scoped to the session (slugs are globally unique but not association-locked)
+- Casting `session.user as any` then trusting the payload without re-verifying in the database
+
+**Public routes** (customers, no auth):
+
+- `GET /api/txosnak/[slug]` — public metadata
+- `GET /api/txosnak/[slug]/catalog` — menu
+- `GET /api/txosnak/[slug]/events` — SSE stream (scoped by txosnaId, not associationId)
+- `GET /api/orders/[orderId]` — customer uses verification code as secret
+- `POST /api/txosnak/[slug]/orders` with `channel=SELF_SERVICE` — self-service (no auth needed)
+
+**Do not add new public endpoints without explicit security review.** Document why no auth is needed.
+
+**PROTO_MODE is for development only.** If it ever becomes enabled in production, tenant isolation is broken. Check production `.env` immediately if suspected.
+
+See `/docs/architecture.md` section 11 for full security & multitenancy documentation.
+
 ## Key Domain Concepts
 
 - **Txosna**: A stall at a festival. Has a unique slug for its public URL.

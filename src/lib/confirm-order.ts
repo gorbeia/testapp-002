@@ -1,15 +1,22 @@
 import { broadcast } from '@/lib/sse';
-import { orderRepo, ticketRepo } from '@/lib/store';
+import { orderRepo, ticketRepo, txosnaRepo } from '@/lib/store';
 
 export async function confirmOrder(
   orderId: string,
-  registeredById: string | null
+  registeredById: string | null,
+  associationId: string | null
 ): Promise<
   | { ok: true; order: Awaited<ReturnType<typeof orderRepo.findById>> }
   | { ok: false; status: number; error: string }
 > {
   const order = await orderRepo.findById(orderId);
   if (!order) return { ok: false, status: 404, error: 'Order not found' };
+
+  if (associationId !== null) {
+    const txosna = await txosnaRepo.findById(order.txosnaId);
+    if (!txosna || txosna.associationId !== associationId)
+      return { ok: false, status: 403, error: 'Forbidden' };
+  }
 
   if (order.status !== 'PENDING_PAYMENT') {
     return { ok: false, status: 409, error: `Cannot confirm order with status ${order.status}` };

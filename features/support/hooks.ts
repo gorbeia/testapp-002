@@ -16,5 +16,6 @@ Before({ tags: 'not @e2e-only' }, async function (this: IntegrationWorld) {
   this.currentOrder = null;
   this.currentTicket = null;
   this.savedOrders = [];
+  this.namedOrders = new Map();
   global.broadcastCalls = [];
 });

@@ -26,7 +26,7 @@ export async function POST(
   }
 
   if (event.status === 'succeeded') {
-    const result = await confirmOrder(order.id, null);
+    const result = await confirmOrder(order.id, null, null);
     if (!result.ok) {
       return Response.json({ error: result.error }, { status: result.status });
     }

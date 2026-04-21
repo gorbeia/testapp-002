@@ -61,6 +61,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     if (process.env.PROTO_MODE !== 'true') {
       const session = await auth();
       if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      const sessionAssociationId =
+        (session.user as { associationId?: string }).associationId ?? null;
+      if (txosna.associationId !== sessionAssociationId)
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
       registeredById = (session.user as { id?: string }).id ?? null;
     }
   }

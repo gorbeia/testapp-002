@@ -1,11 +1,11 @@
 import { auth } from '@/lib/auth';
 import { broadcast } from '@/lib/sse';
-import { orderRepo } from '@/lib/store';
+import { orderRepo, txosnaRepo } from '@/lib/store';
 import type { CancellationReason } from '@/lib/store/types';
 
 // ── POST /api/orders/[orderId]/cancel ───────────────────────────────────────
 // Cancel an order. Customers can only cancel PENDING_PAYMENT orders.
-// Volunteers can cancel any order with a reason.
+// Volunteers can cancel any order with a reason; must be in their own association.
 // Broadcasts order:cancelled SSE event.
 
 export async function POST(request: Request, { params }: { params: Promise<{ orderId: string }> }) {
@@ -22,9 +22,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
 
   // Check auth — volunteers can provide any reason; customers only CUSTOMER
   let isVolunteer = false;
+  let sessionAssociationId: string | null = null;
   if (process.env.PROTO_MODE !== 'true') {
     const session = await auth();
     isVolunteer = !!session?.user;
+    if (isVolunteer)
+      sessionAssociationId = (session?.user as { associationId?: string }).associationId ?? null;
   } else {
     isVolunteer = true; // in PROTO_MODE, allow both
   }
@@ -38,6 +41,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
 
   const order = await orderRepo.findById(orderId);
   if (!order) return Response.json({ error: 'Order not found' }, { status: 404 });
+
+  if (isVolunteer && sessionAssociationId !== null) {
+    const txosna = await txosnaRepo.findById(order.txosnaId);
+    if (!txosna || txosna.associationId !== sessionAssociationId)
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
   // Already cancelled
   if (order.status === 'CANCELLED') {

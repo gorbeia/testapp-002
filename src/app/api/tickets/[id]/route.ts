@@ -1,13 +1,18 @@
-import { ticketRepo } from '@/lib/store';
+import { auth } from '@/lib/auth';
+import { ticketRepo, txosnaRepo } from '@/lib/store';
 import { broadcast } from '@/lib/sse';
 import type { TicketStatus } from '@/lib/store/types';
 
 // ── PATCH /api/tickets/[id] ──────────────────────────────────────────
 // Advances ticket through lifecycle (RECEIVED → IN_PREPARATION → READY → COMPLETED).
-// Requires volunteer session (or PROTO_MODE bypass).
+// Requires volunteer session and ticket belongs to the volunteer's association.
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  const session = await auth();
+  if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const { associationId: sessionAssociationId } = session.user as { associationId: string };
 
   let body: { status: string };
   try {
@@ -23,6 +28,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const ticket = await ticketRepo.findById(id);
   if (!ticket) return Response.json({ error: 'Not found' }, { status: 404 });
+
+  const txosna = await txosnaRepo.findById(ticket.txosnaId);
+  if (!txosna || txosna.associationId !== sessionAssociationId)
+    return Response.json({ error: 'Forbidden' }, { status: 403 });
 
   // Validate forward-only transition
   const ORDER: TicketStatus[] = ['RECEIVED', 'IN_PREPARATION', 'READY', 'COMPLETED'];
