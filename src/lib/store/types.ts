@@ -249,6 +249,7 @@ export interface OrderRepository {
   create(data: CreateOrderInput): Promise<StoredOrder>;
   findById(id: string): Promise<StoredOrder | null>;
   findByNumber(txosnaId: string, orderNumber: number): Promise<StoredOrder | null>;
+  findByPaymentSessionId(sessionId: string): Promise<StoredOrder | null>;
   listByTxosna(txosnaId: string, filter?: OrderFilter): Promise<StoredOrder[]>;
   update(id: string, patch: Partial<Omit<StoredOrder, 'id' | 'createdAt'>>): Promise<StoredOrder>;
   nextOrderNumber(txosnaId: string): Promise<number>;

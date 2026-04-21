@@ -329,6 +329,13 @@ export const orderRepo: OrderRepository = {
     return null;
   },
 
+  async findByPaymentSessionId(sessionId) {
+    for (const o of orders.values()) {
+      if (o.paymentSessionId === sessionId) return o;
+    }
+    return null;
+  },
+
   async listByTxosna(txosnaId, filter) {
     let result = [...orders.values()].filter((o) => o.txosnaId === txosnaId);
     if (filter?.status) result = result.filter((o) => o.status === filter.status);

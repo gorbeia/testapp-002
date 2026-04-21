@@ -6,6 +6,7 @@ import type {
   CreateOrderInput,
   CreateTicketInput,
   CreateOrderLineInput,
+  PaymentMethod,
 } from '@/lib/store/types';
 
 // ── POST /api/txosnak/[slug]/orders ──────────────────────────────────────────
@@ -42,6 +43,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 
   if (!Array.isArray(body.lines) || body.lines.length === 0) {
     return Response.json({ error: 'lines must be a non-empty array' }, { status: 400 });
+  }
+
+  // Validate paymentMethod
+  const paymentMethod = body.paymentMethod as PaymentMethod;
+  if (!txosna.enabledPaymentMethods.includes(paymentMethod)) {
+    return Response.json(
+      { error: `Payment method ${paymentMethod} is not enabled for this txosna` },
+      { status: 422 }
+    );
   }
 
   // Auth — self-service orders don't require auth

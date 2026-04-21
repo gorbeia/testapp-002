@@ -1,4 +1,4 @@
-import type { Order } from '@prisma/client';
+import type { StoredOrder } from '@/lib/store/types';
 
 export interface PaymentSession {
   sessionId: string;
@@ -16,6 +16,6 @@ export interface PaymentEvent {
 
 export interface IPaymentProvider {
   validate(): Promise<{ ok: boolean; error?: string }>;
-  createSession(order: Order, returnUrl: string): Promise<PaymentSession>;
+  createSession(order: StoredOrder, returnUrl: string): Promise<PaymentSession>;
   verifyWebhook(request: Request): Promise<PaymentEvent>;
 }

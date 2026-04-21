@@ -99,7 +99,7 @@ Saskian bildutako produktuak ikusteko, saskia ikonoa sakatu beheko barran:
 
 ##### 4. Eskaera baieztatu
 
-![Eskaera baieztapena](../screenshots/07-checkout-mobile.png)
+![Eskaera baieztapena](../screenshots/08-order-checkout-mobile.png)
 
 **4 pauso erraz:**
 
