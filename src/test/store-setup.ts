@@ -15,3 +15,10 @@ export {
   txosnaRepo,
   volunteerRepo,
 } from '@/lib/store';
+
+export {
+  _test_insertProduct,
+  _test_insertTxosna,
+  _test_setProductAvailable,
+  _test_upsertTxosnaProduct,
+} from '@/lib/store/memory';

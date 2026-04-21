@@ -704,6 +704,25 @@ export function resetStore() {
   seedDemoAssociation();
 }
 
+// ── Test helpers (not part of repository interfaces) ─────────────────────────
+
+export function _test_insertTxosna(t: StoredTxosna): void {
+  txosnak.set(t.id, t);
+}
+
+export function _test_insertProduct(p: StoredProduct): void {
+  products.set(p.id, p);
+}
+
+export function _test_setProductAvailable(productId: string, available: boolean): void {
+  const p = products.get(productId);
+  if (p) products.set(productId, { ...p, available });
+}
+
+export function _test_upsertTxosnaProduct(tp: StoredTxosnaProduct): void {
+  txosnaProducts.set(`${tp.txosnaId}:${tp.productId}`, tp);
+}
+
 // Seed on module load so the store is ready in dev without explicit setup.
 seed();
 seedDemoAssociation();
