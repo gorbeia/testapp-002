@@ -22,6 +22,10 @@ export async function confirmOrder(
     return { ok: false, status: 409, error: `Cannot confirm order with status ${order.status}` };
   }
 
+  if (order.expiresAt && new Date() > order.expiresAt) {
+    return { ok: false, status: 409, error: 'Order has expired' };
+  }
+
   if (!order.pendingLines || order.pendingLines.length === 0) {
     return { ok: false, status: 409, error: 'No pending lines to confirm' };
   }

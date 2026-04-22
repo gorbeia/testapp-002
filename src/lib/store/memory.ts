@@ -723,6 +723,10 @@ export function _test_upsertTxosnaProduct(tp: StoredTxosnaProduct): void {
   txosnaProducts.set(`${tp.txosnaId}:${tp.productId}`, tp);
 }
 
+export function _test_insertOrder(o: StoredOrder): void {
+  orders.set(o.id, o);
+}
+
 // Seed on module load so the store is ready in dev without explicit setup.
 seed();
 seedDemoAssociation();

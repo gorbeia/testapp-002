@@ -17,6 +17,7 @@ export {
 } from '@/lib/store';
 
 export {
+  _test_insertOrder,
   _test_insertProduct,
   _test_insertTxosna,
   _test_setProductAvailable,
