@@ -7,6 +7,7 @@ declare global {
   var broadcastCalls: any[];
   var __TEST_ROLE__: string;
   var __TEST_ASSOCIATION_ID__: string;
+  var fakePaymentProvider: any;
 }
 
 // Reset in-memory store before each integration scenario
@@ -22,4 +23,11 @@ Before({ tags: 'not @e2e-only' }, async function (this: IntegrationWorld) {
   global.broadcastCalls = [];
   global.__TEST_ROLE__ = 'ADMIN';
   global.__TEST_ASSOCIATION_ID__ = 'assoc-1';
+  // Reset fake payment provider state
+  if (global.fakePaymentProvider) {
+    global.fakePaymentProvider.sessions = [];
+    global.fakePaymentProvider.webhookEvents = [];
+    global.fakePaymentProvider.nextEvent = null;
+    global.fakePaymentProvider.throwMessage = null;
+  }
 });
