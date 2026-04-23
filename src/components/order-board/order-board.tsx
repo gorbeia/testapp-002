@@ -23,47 +23,6 @@ interface BoardOrder {
   slowOrder: boolean;
 }
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
-const INITIAL_ORDERS: BoardOrder[] = [
-  { id: 'o1', number: 30, name: 'Gorka', status: 'READY', slowOrder: false },
-  { id: 'o2', number: 34, name: 'Josu', status: 'READY', slowOrder: false },
-  { id: 'o3', number: 38, name: null, status: 'READY', slowOrder: false },
-  { id: 'o4', number: 29, name: 'Ander', status: 'IN_PREPARATION', slowOrder: false },
-  { id: 'o5', number: 32, name: 'Leire', status: 'IN_PREPARATION', slowOrder: false },
-  { id: 'o6', number: 33, name: 'Ibai', status: 'IN_PREPARATION', slowOrder: false },
-  { id: 'o7', number: 35, name: 'Aitor', status: 'IN_PREPARATION', slowOrder: true },
-  { id: 'o8', number: 37, name: null, status: 'IN_PREPARATION', slowOrder: false },
-  { id: 'o9', number: 39, name: 'Amaia', status: 'IN_PREPARATION', slowOrder: false },
-];
-
-const NAME_POOL = [
-  'Gorka',
-  'Izaro',
-  'Xabi',
-  'Ane',
-  'Mikel',
-  'Nerea',
-  'Unai',
-  'Saioa',
-  'Eneko',
-  'Olatz',
-  'Beñat',
-  'Irati',
-];
-let _nameIdx = 0;
-let _numIdx = 45;
-
-function nextOrder(): BoardOrder {
-  const name = Math.random() > 0.25 ? NAME_POOL[_nameIdx++ % NAME_POOL.length] : null;
-  return {
-    id: `o${Date.now()}`,
-    number: _numIdx++,
-    name,
-    status: 'IN_PREPARATION',
-    slowOrder: false,
-  };
-}
-
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 function useWidth() {
   const [w, setW] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
@@ -244,52 +203,85 @@ function StatusOverlay({ type }: { type: 'paused' | 'closed' }) {
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-export default function OrderBoard() {
+export default function OrderBoard({ slug }: { slug?: string }) {
   const width = useWidth();
   const isPortrait = width < 768;
 
-  const [orders, setOrders] = useState<BoardOrder[]>(INITIAL_ORDERS);
+  const [orders, setOrders] = useState<BoardOrder[]>([]);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
   const [simMode, setSimMode] = useState<'open' | 'paused' | 'closed'>('open');
   const [waitMin] = useState(8);
 
-  // Simulation loop
-  useEffect(() => {
-    if (simMode !== 'open') return;
-    const id = setInterval(() => {
-      setOrders((prev) => {
-        const prepOrders = prev.filter((o) => o.status === 'IN_PREPARATION');
-        const coin = Math.random();
+  function fetchOrders(s: string) {
+    fetch(`/api/txosnak/${s}/tickets?status=IN_PREPARATION,READY`)
+      .then((r) => r.json())
+      .then(
+        (d: {
+          tickets?: {
+            id: string;
+            orderNumber: number | null;
+            customerName: string | null;
+            status: string;
+          }[];
+        }) => {
+          const mapped: BoardOrder[] = (d.tickets ?? [])
+            .filter((t) => t.status === 'IN_PREPARATION' || t.status === 'READY')
+            .map((t) => ({
+              id: t.id,
+              number: t.orderNumber ?? 0,
+              name: t.customerName,
+              status: t.status as 'IN_PREPARATION' | 'READY',
+              slowOrder: false,
+            }));
+          setOrders(mapped);
+        }
+      )
+      .catch(() => {});
+  }
 
-        if (coin < 0.4 && prepOrders.length > 0) {
-          const target = prepOrders.reduce((a, b) => (a.number < b.number ? a : b));
-          setNewIds((s) => new Set([...s, target.id]));
-          setTimeout(
-            () =>
-              setNewIds((s) => {
-                const n = new Set(s);
-                n.delete(target.id);
-                return n;
-              }),
-            600
-          );
-          return prev.map((o) => (o.id === target.id ? { ...o, status: 'READY' as const } : o));
-        }
-        if (coin < 0.65) {
-          const readyOrders = prev.filter((o) => o.status === 'READY');
-          if (readyOrders.length > 0) {
-            const oldest = readyOrders.reduce((a, b) => (a.number < b.number ? a : b));
-            return prev.filter((o) => o.id !== oldest.id);
+  useEffect(() => {
+    if (slug) fetchOrders(slug);
+  }, [slug]);
+
+  useEffect(() => {
+    if (!slug) return;
+    const es = new EventSource(`/api/txosnak/${slug}/events`);
+    const handleEvent = (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.ticketId) {
+          if (data.newStatus === 'READY') {
+            setOrders((prev) => {
+              const updated = prev.map((o) =>
+                o.id === data.ticketId ? { ...o, status: 'READY' as const } : o
+              );
+              setNewIds((s) => new Set([...s, data.ticketId]));
+              setTimeout(
+                () =>
+                  setNewIds((s) => {
+                    const n = new Set(s);
+                    n.delete(data.ticketId);
+                    return n;
+                  }),
+                600
+              );
+              return updated;
+            });
+          } else if (data.newStatus === 'COMPLETED') {
+            setOrders((prev) => prev.filter((o) => o.id !== data.ticketId));
           }
+        } else {
+          fetchOrders(slug);
         }
-        if (prepOrders.length < 12) {
-          return [...prev, nextOrder()];
-        }
-        return prev;
-      });
-    }, 3200);
-    return () => clearInterval(id);
-  }, [simMode]);
+      } catch {
+        fetchOrders(slug);
+      }
+    };
+    es.addEventListener('ticket:status_changed', handleEvent);
+    es.addEventListener('order:confirmed', () => fetchOrders(slug));
+    es.addEventListener('order:ready', () => fetchOrders(slug));
+    return () => es.close();
+  }, [slug]);
 
   const readyOrders = orders
     .filter((o) => o.status === 'READY')

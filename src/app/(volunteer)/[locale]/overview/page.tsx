@@ -1,8 +1,9 @@
 'use client';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { OpsHeader } from '@/components/layout/ops-header';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { MOCK_TXOSNA, MOCK_TICKETS, MOCK_VOLUNTEERS } from '@/lib/mock-data';
+import { useSSE } from '@/hooks/useSSE';
 
 interface StatCardProps {
   label: string;
@@ -50,12 +51,74 @@ function StatCard({ label, value, sub, accent = 'var(--ops-orange)' }: StatCardP
 }
 
 export default function OverviewPage() {
-  const tickets = MOCK_TICKETS;
-  const received = tickets.filter((t) => t.status === 'RECEIVED').length;
-  const inPrep = tickets.filter((t) => t.status === 'IN_PREPARATION').length;
-  const ready = tickets.filter((t) => t.status === 'READY').length;
-  const slow = tickets.filter((t) => t.isSlowOrder).length;
-  const activeVols = MOCK_VOLUNTEERS.filter((v) => v.active).length;
+  const [slug, setSlug] = useState<string | null>(null);
+  const [txosnaName, setTxosnaName] = useState('Txosna');
+  const [txosnaStatus, setTxosnaStatus] = useState<'OPEN' | 'PAUSED' | 'CLOSED'>('OPEN');
+  const [counts, setCounts] = useState({ received: 0, inPrep: 0, ready: 0 });
+  const [volunteers, setVolunteers] = useState<{ active: boolean }[]>([]);
+  const [associationId, setAssociationId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedSlug = typeof window !== 'undefined' ? sessionStorage.getItem('txosna_slug') : null;
+    if (!storedSlug) return;
+    setSlug(storedSlug);
+
+    fetch(`/api/txosnak/${storedSlug}`)
+      .then((r) => r.json())
+      .then(
+        (d: { name?: string; status?: 'OPEN' | 'PAUSED' | 'CLOSED'; associationId?: string }) => {
+          if (d.name) setTxosnaName(d.name);
+          if (d.status) setTxosnaStatus(d.status);
+          if (d.associationId) setAssociationId(d.associationId);
+        }
+      )
+      .catch(() => {});
+
+    fetchCounts(storedSlug);
+  }, []);
+
+  useEffect(() => {
+    if (!associationId) return;
+    fetch(`/api/associations/${associationId}/volunteers`)
+      .then((r) => r.json())
+      .then((d: { volunteers?: { active: boolean }[] }) => {
+        setVolunteers(d.volunteers ?? []);
+      })
+      .catch(() => {});
+  }, [associationId]);
+
+  function fetchCounts(s: string) {
+    fetch(`/api/txosnak/${s}/tickets?status=RECEIVED,IN_PREPARATION,READY`)
+      .then((r) => r.json())
+      .then((d: { tickets?: { status: string }[] }) => {
+        const ts = d.tickets ?? [];
+        setCounts({
+          received: ts.filter((t) => t.status === 'RECEIVED').length,
+          inPrep: ts.filter((t) => t.status === 'IN_PREPARATION').length,
+          ready: ts.filter((t) => t.status === 'READY').length,
+        });
+      })
+      .catch(() => {});
+  }
+
+  useSSE(slug, {
+    'ticket:status_changed': () => {
+      if (slug) fetchCounts(slug);
+    },
+    'order:confirmed': () => {
+      if (slug) fetchCounts(slug);
+    },
+  });
+
+  const activeVols = volunteers.filter((v) => v.active).length;
+  const statusLabel =
+    txosnaStatus === 'OPEN' ? 'IREKITA' : txosnaStatus === 'PAUSED' ? 'GELDITUTA' : 'ITXITA';
+  const statusColor =
+    txosnaStatus === 'OPEN'
+      ? 'var(--ops-green)'
+      : txosnaStatus === 'PAUSED'
+        ? 'var(--ops-amber, #f59e0b)'
+        : 'var(--ops-text-dim)';
 
   return (
     <div
@@ -63,7 +126,7 @@ export default function OverviewPage() {
       style={{ minHeight: '100vh', fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)' }}
     >
       <OpsHeader
-        title={MOCK_TXOSNA.name}
+        title={txosnaName}
         subtitle="Egoera ikuspegi"
         statusColor="green"
         right={<ThemeToggle variant="ops" />}
@@ -87,22 +150,27 @@ export default function OverviewPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <StatCard
               label="Itxaroten"
-              value={received}
+              value={counts.received}
               sub="eskaera"
               accent="var(--ops-blue, #3b82f6)"
             />
             <StatCard
               label="Prestatzen"
-              value={inPrep}
+              value={counts.inPrep}
               sub="eskaera"
               accent="var(--ops-amber, #f59e0b)"
             />
-            <StatCard label="Prest" value={ready} sub="jasotzeko" accent="var(--ops-green)" />
             <StatCard
-              label="Motel"
-              value={slow}
-              sub="eskaera"
-              accent={slow > 0 ? 'var(--ops-red)' : 'var(--ops-text-dim)'}
+              label="Prest"
+              value={counts.ready}
+              sub="jasotzeko"
+              accent="var(--ops-green)"
+            />
+            <StatCard
+              label="Aktibo"
+              value={activeVols}
+              sub="boluntario"
+              accent="var(--ops-text-pri)"
             />
           </div>
         </div>
@@ -130,29 +198,10 @@ export default function OverviewPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
+              { label: 'Egoera', value: statusLabel, color: statusColor },
               {
-                label: 'Egoera',
-                value:
-                  MOCK_TXOSNA.status === 'OPEN'
-                    ? 'IREKITA'
-                    : MOCK_TXOSNA.status === 'PAUSED'
-                      ? 'GELDITUTA'
-                      : 'ITXITA',
-                color:
-                  MOCK_TXOSNA.status === 'OPEN'
-                    ? 'var(--ops-green)'
-                    : MOCK_TXOSNA.status === 'PAUSED'
-                      ? 'var(--ops-amber, #f59e0b)'
-                      : 'var(--ops-text-dim)',
-              },
-              {
-                label: 'Itxaron denbora',
-                value: `~${MOCK_TXOSNA.waitMinutes ?? 0} min`,
-                color: 'var(--ops-text-pri)',
-              },
-              {
-                label: 'Boluntarioak aktibo',
-                value: `${activeVols} / ${MOCK_VOLUNTEERS.length}`,
+                label: 'Boluntarioak',
+                value: `${activeVols} / ${volunteers.length}`,
                 color: 'var(--ops-text-pri)',
               },
             ].map((row) => (

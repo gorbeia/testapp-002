@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { MOCK_ASSOCIATION, MOCK_TICKETS, MOCK_ORDERS, MOCK_VOLUNTEERS } from '@/lib/mock-data';
+import { useState, useEffect } from 'react';
 
 const STATUS_LABEL: Record<string, string> = {
   OPEN: 'Irekita',
@@ -62,20 +62,59 @@ function StatCard({
   );
 }
 
+interface TxosnaData {
+  name: string;
+  status: 'OPEN' | 'PAUSED' | 'CLOSED';
+  waitMinutes?: number | null;
+  associationId?: string;
+}
+
+interface ReportData {
+  ordersConfirmed: number;
+  revenue: number;
+  ticketsByStatus: Record<string, number>;
+}
+
 export default function TxosnaDashboard() {
   const { txosnaId } = useParams<{ txosnaId: string }>();
-  const txosna = MOCK_ASSOCIATION.txosnak.find((t) => t.id === txosnaId);
+  const slug = txosnaId;
 
-  if (!txosna)
-    return <div style={{ padding: 40, color: 'var(--adm-text-sec)' }}>Txosna ez da aurkitu.</div>;
+  const [txosna, setTxosna] = useState<TxosnaData | null>(null);
+  const [report, setReport] = useState<ReportData | null>(null);
+  const [activeVols, setActiveVols] = useState(0);
+  const [totalVols, setTotalVols] = useState(0);
 
-  const openTickets = MOCK_TICKETS.filter(
-    (t) => t.status !== 'COMPLETED' && t.status !== 'CANCELLED'
-  ).length;
-  const readyTickets = MOCK_TICKETS.filter((t) => t.status === 'READY').length;
-  const totalRevenue = MOCK_ORDERS.reduce((sum, o) => sum + o.total, 0);
-  const activeVols = MOCK_VOLUNTEERS.filter((v) => v.active).length;
+  useEffect(() => {
+    if (!slug) return;
 
+    fetch(`/api/txosnak/${slug}`)
+      .then((r) => r.json())
+      .then((d: TxosnaData) => {
+        setTxosna(d);
+        if (d.associationId) {
+          fetch(`/api/associations/${d.associationId}/volunteers`)
+            .then((r) => r.json())
+            .then((vd: { volunteers?: { active: boolean }[] }) => {
+              const vols = vd.volunteers ?? [];
+              setActiveVols(vols.filter((v) => v.active).length);
+              setTotalVols(vols.length);
+            })
+            .catch(() => {});
+        }
+      })
+      .catch(() => {});
+
+    fetch(`/api/txosnak/${slug}/reports?period=today`)
+      .then((r) => r.json())
+      .then((d: ReportData) => setReport(d))
+      .catch(() => {});
+  }, [slug]);
+
+  if (!txosna) return <div style={{ padding: 40, color: 'var(--adm-text-sec)' }}>Kargatzen…</div>;
+
+  const openTickets =
+    (report?.ticketsByStatus?.RECEIVED ?? 0) + (report?.ticketsByStatus?.IN_PREPARATION ?? 0);
+  const readyTickets = report?.ticketsByStatus?.READY ?? 0;
   const base = `/eu/txosnak/${txosnaId}`;
 
   return (
@@ -124,18 +163,6 @@ export default function TxosnaDashboard() {
               {STATUS_LABEL[txosna.status]}
               {txosna.waitMinutes ? ` · ~${txosna.waitMinutes} min itxaron` : ''}
             </span>
-            {txosna.location && (
-              <span
-                style={{
-                  fontSize: 12,
-                  color: 'var(--adm-text-sec)',
-                  borderLeft: '1px solid var(--adm-border)',
-                  paddingLeft: 8,
-                }}
-              >
-                {txosna.location}
-              </span>
-            )}
           </div>
         </div>
         <Link
@@ -168,118 +195,65 @@ export default function TxosnaDashboard() {
         <StatCard label="Jasotzeko prest" value={readyTickets} sub="itxaroten" accent="#22c55e" />
         <StatCard
           label="Diru-sarrera gaur"
-          value={`${txosna.revenueToday ?? totalRevenue.toFixed(0)} €`}
-          sub="demo datuak"
+          value={`${(report?.revenue ?? 0).toFixed(2)} €`}
+          sub="baieztatutakoak"
           accent="#3b82f6"
         />
         <StatCard
           label="Boluntarioak"
           value={activeVols}
-          sub={`${MOCK_VOLUNTEERS.length} guztira`}
+          sub={`${totalVols} guztira`}
           accent="#8b5cf6"
         />
       </div>
 
-      {/* Two-column content */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        {/* Recent orders */}
+      {/* Quick actions */}
+      <div
+        style={{
+          background: 'var(--adm-surface)',
+          border: '1px solid var(--adm-border)',
+          borderRadius: 12,
+          padding: '16px 18px',
+        }}
+      >
         <div
           style={{
-            background: 'var(--adm-surface)',
-            border: '1px solid var(--adm-border)',
-            borderRadius: 12,
-            padding: '16px 18px',
+            fontSize: 13,
+            fontWeight: 700,
+            color: 'var(--adm-text-pri)',
+            marginBottom: 12,
           }}
         >
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: 'var(--adm-text-pri)',
-              marginBottom: 12,
-            }}
-          >
-            Azken eskariak
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {MOCK_ORDERS.slice(0, 4).map((order) => (
-              <div
-                key={order.id}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: 13,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono, monospace)',
-                      fontWeight: 700,
-                      color: 'var(--adm-text-pri)',
-                    }}
-                  >
-                    #{order.orderNumber}
-                  </span>
-                  <span style={{ color: 'var(--adm-text-sec)' }}>{order.customerName}</span>
-                </div>
-                <span style={{ fontWeight: 600, color: '#e85d2f' }}>
-                  {order.total.toFixed(2)} €
-                </span>
-              </div>
-            ))}
-          </div>
+          Ekintza azkarrak
         </div>
-
-        {/* Quick actions */}
-        <div
-          style={{
-            background: 'var(--adm-surface)',
-            border: '1px solid var(--adm-border)',
-            borderRadius: 12,
-            padding: '16px 18px',
-          }}
-        >
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: 'var(--adm-text-pri)',
-              marginBottom: 12,
-            }}
-          >
-            Ekintza azkarrak
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[
-              { label: 'Menua editatu', href: `${base}/menu`, icon: '🍽' },
-              { label: 'Boluntarioak kudeatu', href: `${base}/volunteers`, icon: '👥' },
-              { label: 'Txostena ikusi', href: `${base}/reports`, icon: '📈' },
-              { label: 'Konfigurazioa', href: `${base}/settings`, icon: '⚙️' },
-            ].map((a) => (
-              <Link
-                key={a.href}
-                href={a.href}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '9px 12px',
-                  borderRadius: 8,
-                  border: '1px solid var(--adm-border)',
-                  background: 'var(--adm-surface-hi)',
-                  textDecoration: 'none',
-                  fontSize: 13,
-                  color: 'var(--adm-text-pri)',
-                  fontWeight: 500,
-                }}
-              >
-                <span>{a.icon}</span>
-                <span>{a.label}</span>
-              </Link>
-            ))}
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {[
+            { label: 'Menua editatu', href: `${base}/menu`, icon: '🍽' },
+            { label: 'Boluntarioak kudeatu', href: `${base}/volunteers`, icon: '👥' },
+            { label: 'Txostena ikusi', href: `${base}/reports`, icon: '📈' },
+            { label: 'Konfigurazioa', href: `${base}/settings`, icon: '⚙️' },
+          ].map((a) => (
+            <Link
+              key={a.href}
+              href={a.href}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '9px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--adm-border)',
+                background: 'var(--adm-surface-hi)',
+                textDecoration: 'none',
+                fontSize: 13,
+                color: 'var(--adm-text-pri)',
+                fontWeight: 500,
+              }}
+            >
+              <span>{a.icon}</span>
+              <span>{a.label}</span>
+            </Link>
+          ))}
         </div>
       </div>
     </div>

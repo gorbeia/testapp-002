@@ -6,10 +6,30 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSent(true);
+    setError(null);
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/volunteers/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? 'Errorea gertatu da.');
+        return;
+      }
+      setSent(true);
+    } catch {
+      setError('Konexio errorea. Saiatu berriro.');
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -45,19 +65,27 @@ export default function ResetPasswordPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="zure@posta.eus"
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none"
+                  required
+                  disabled={isLoading}
+                  className="w-full rounded-xl px-4 py-3 text-sm outline-none disabled:opacity-50"
                   style={{
                     background: 'var(--ops-surface-hi)',
                     border: '1px solid var(--ops-border)',
                     color: 'var(--ops-text-pri)',
                   }}
                 />
+                {error && (
+                  <div className="text-sm" style={{ color: 'var(--ops-red)' }}>
+                    {error}
+                  </div>
+                )}
                 <button
                   type="submit"
-                  className="w-full rounded-xl py-3.5 font-bold text-sm"
+                  disabled={isLoading}
+                  className="w-full rounded-xl py-3.5 font-bold text-sm disabled:opacity-60"
                   style={{ background: 'var(--ops-orange)', color: '#fff', minHeight: 52 }}
                 >
-                  Esteka bidali
+                  {isLoading ? 'Bidaltzen...' : 'Esteka bidali'}
                 </button>
               </form>
             </>

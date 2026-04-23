@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
@@ -40,10 +41,36 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
-    // Simulate network delay for realistic prototype feel
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    setIsLoading(false);
-    router.push('/eu/pin');
+    try {
+      const result = await signIn('credentials', { redirect: false, email, password });
+      if (result?.error) {
+        setError('Email edo pasahitza okerra da.');
+        return;
+      }
+
+      // Fetch user session to get role, then fetch txosnak for slug
+      const sessionRes = await fetch('/api/auth/session');
+      const session = await sessionRes.json();
+      const role = session?.user?.role;
+
+      if (role === 'ADMIN') {
+        router.push('/eu/txosnak');
+      } else {
+        // VOLUNTEER: get first txosna slug for PIN redirect
+        const txosnakRes = await fetch('/api/admin/txosnak');
+        if (txosnakRes.ok) {
+          const data = await txosnakRes.json();
+          const slug = data.txosnak?.[0]?.slug;
+          router.push(slug ? `/eu/pin?slug=${slug}` : '/eu/pin');
+        } else {
+          router.push('/eu/pin');
+        }
+      }
+    } catch {
+      setError('Konexio errorea. Saiatu berriro.');
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const inputStyle: React.CSSProperties = {

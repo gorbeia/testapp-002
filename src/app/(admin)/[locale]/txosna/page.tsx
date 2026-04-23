@@ -1,6 +1,5 @@
 'use client';
-import React, { useState } from 'react';
-import { MOCK_TXOSNA } from '@/lib/mock-data';
+import React, { useState, useEffect } from 'react';
 
 const TABS = ['Orokorra', 'Ordainketa', 'Eskaerak', 'QR kodea'];
 
@@ -601,12 +600,46 @@ function QrTab() {
 
 export default function TxosnaConfigPage() {
   const [activeTab, setActiveTab] = useState(0);
-  const [status, setStatus] = useState(MOCK_TXOSNA.status);
-  const [waitMin, setWaitMin] = useState(MOCK_TXOSNA.waitMinutes ?? 10);
-  const [pin, setPin] = useState(MOCK_TXOSNA.pin);
+  const [slug, setSlug] = useState<string | null>(null);
+  const [status, setStatus] = useState<'OPEN' | 'PAUSED' | 'CLOSED'>('OPEN');
+  const [waitMin, setWaitMin] = useState(10);
+  const [pin, setPin] = useState('');
+
+  useEffect(() => {
+    fetch('/api/admin/txosnak')
+      .then((r) => r.json())
+      .then(
+        (d: {
+          txosnak?: {
+            slug: string;
+            status: 'OPEN' | 'PAUSED' | 'CLOSED';
+            waitMinutes?: number | null;
+          }[];
+        }) => {
+          const first = d.txosnak?.[0];
+          if (!first) return;
+          setSlug(first.slug);
+          setStatus(first.status);
+          setWaitMin(first.waitMinutes ?? 10);
+          fetch(`/api/txosnak/${first.slug}/settings`)
+            .then((r) => r.json())
+            .then((s: { pin?: string }) => {
+              if (s.pin) setPin(s.pin);
+            })
+            .catch(() => {});
+        }
+      )
+      .catch(() => {});
+  }, []);
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
+    if (!slug) return;
+    fetch(`/api/txosnak/${slug}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, waitMinutes: waitMin }),
+    }).catch(() => {});
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };

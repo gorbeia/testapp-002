@@ -16,6 +16,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
     slug: txosna.slug,
     name: txosna.name,
     status: txosna.status,
+    associationId: txosna.associationId,
     counterSetup: txosna.counterSetup,
     waitMinutes: txosna.waitMinutes,
     enabledChannels: txosna.enabledChannels,

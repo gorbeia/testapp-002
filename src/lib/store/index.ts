@@ -8,8 +8,10 @@
 // STORAGE_BACKEND=prisma  (Phase 10 — not yet implemented)
 
 import {
+  associationRepo,
   catalogRepo,
   orderRepo,
+  paymentProviderRepo,
   resetDemoAssociation,
   resetStore,
   ticketRepo,
@@ -18,8 +20,10 @@ import {
 } from './memory';
 
 export {
+  associationRepo,
   catalogRepo,
   orderRepo,
+  paymentProviderRepo,
   resetDemoAssociation,
   resetStore,
   ticketRepo,
@@ -28,6 +32,7 @@ export {
 };
 
 export type {
+  AssociationRepository,
   CancellationReason,
   CatalogRepository,
   CategoryType,
@@ -35,18 +40,23 @@ export type {
   CounterType,
   CreateOrderInput,
   CreateOrderLineInput,
+  CreatePaymentProviderInput,
   CreateTicketInput,
+  CreateTxosnaInput,
   CreateVolunteerInput,
   OrderFilter,
   OrderRepository,
   OrderingChannel,
   OrderStatus,
   PaymentMethod,
+  PaymentProviderRepository,
+  PaymentProviderType,
   StoredAssociation,
   StoredCategory,
   StoredModifier,
   StoredOrder,
   StoredOrderLine,
+  StoredPaymentProvider,
   StoredProduct,
   StoredProductView,
   StoredTicket,

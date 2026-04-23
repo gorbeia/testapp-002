@@ -6,99 +6,7 @@ import { InstructionsOverlay } from './instructions-overlay';
 import { StockPanel } from './stock-panel';
 import { OverflowMenu } from './overflow-menu';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-
-// ── Multi-txosna mock data ────────────────────────────────────────────────────
-const MOCK_TXOSNAK = [
-  { id: 'tx-1', name: 'Aste Nagusia 2026', role: 'Janaria · Sukaldea' },
-  { id: 'tx-2', name: 'Pintxo Txokoa', role: 'Janaria · Sukaldea' },
-  { id: 'tx-3', name: 'Garagardo Barra', role: 'Edariak · Barra' },
-];
-
-const INITIAL_TICKETS: Ticket[] = [
-  {
-    id: 't1',
-    orderNumber: 41,
-    customerName: 'Josu',
-    status: 'RECEIVED',
-    elapsedMin: 0,
-    isSlowOrder: false,
-    hasAlert: false,
-    lines: [
-      { name: 'Burgerra', qty: 2, detail: 'Kendu: Tipula, Saltsa' },
-      { name: 'Entsalada', qty: 1, detail: 'alkate-saltsa barik' },
-      { name: 'Pintxo nahasia', qty: 3, detail: null },
-    ],
-    notes: 'Burgerra ondo eginda mesedez',
-  },
-  {
-    id: 't2',
-    orderNumber: 38,
-    customerName: 'Miren',
-    status: 'RECEIVED',
-    elapsedMin: 2,
-    isSlowOrder: false,
-    hasAlert: false,
-    lines: [
-      { name: 'Txorizoa ogian', qty: 2, detail: null },
-      { name: 'Tortilla', qty: 1, detail: '2tan banatu' },
-    ],
-    notes: null,
-  },
-  {
-    id: 't3',
-    orderNumber: 36,
-    customerName: 'Ander',
-    status: 'IN_PREPARATION',
-    elapsedMin: 6,
-    isSlowOrder: false,
-    hasAlert: true,
-    lines: [
-      { name: 'Burgerra', qty: 1, detail: 'Kendu: Letxuga, Tomatea' },
-      { name: 'Pintxo nahasia', qty: 2, detail: null },
-    ],
-    notes: null,
-  },
-  {
-    id: 't4',
-    orderNumber: 33,
-    customerName: 'Leire',
-    status: 'IN_PREPARATION',
-    elapsedMin: 14,
-    isSlowOrder: true,
-    hasAlert: false,
-    lines: [
-      { name: 'Burgerra', qty: 1, detail: 'patata frijituak' },
-      { name: 'Tortilla', qty: 2, detail: null },
-      { name: 'Ogia gurinarekin', qty: 2, detail: null },
-    ],
-    notes: 'Burgerra glutenik gabeko ogian',
-  },
-  {
-    id: 't5',
-    orderNumber: 31,
-    customerName: 'Ibai',
-    status: 'READY',
-    elapsedMin: 3,
-    isSlowOrder: false,
-    hasAlert: false,
-    lines: [
-      { name: 'Burgerra', qty: 1, detail: 'patata frijituak' },
-      { name: 'Freskagarria', qty: 2, detail: null },
-    ],
-    notes: null,
-  },
-  {
-    id: 't6',
-    orderNumber: 29,
-    customerName: null,
-    status: 'READY',
-    elapsedMin: 5,
-    isSlowOrder: false,
-    hasAlert: false,
-    lines: [{ name: 'Txorizoa ogian', qty: 3, detail: null }],
-    notes: null,
-  },
-];
+import { useSSE } from '@/hooks/useSSE';
 
 const NEW_ORDER_POOL = [
   {
@@ -151,16 +59,101 @@ const COL_DEFS = [
   { status: 'READY' as const, label: 'Prest', accent: 'var(--ops-green)' },
 ];
 
+// Map enriched StoredTicket to KDS Ticket shape
+function toKdsTicket(t: {
+  id: string;
+  orderNumber: number | null;
+  customerName: string | null;
+  status: string;
+  notes: string | null;
+  flagged: boolean;
+  lines: {
+    productName: string;
+    quantity: number;
+    selectedVariant: string | null;
+    selectedModifiers: string[];
+    splitInstructions: string | null;
+  }[];
+}): Ticket {
+  return {
+    id: t.id,
+    orderNumber: t.orderNumber ?? 0,
+    customerName: t.customerName,
+    status: t.status as Ticket['status'],
+    elapsedMin: 0,
+    isSlowOrder: false,
+    hasAlert: t.flagged,
+    notes: t.notes,
+    lines: t.lines.map((l) => ({
+      name: l.productName,
+      qty: l.quantity,
+      detail:
+        l.selectedVariant ??
+        (l.selectedModifiers.length ? l.selectedModifiers.join(', ') : null) ??
+        l.splitInstructions,
+    })),
+  };
+}
+
 export default function KdsBoard() {
   const width = useWidth();
   const isMobile = width < 640;
   const isTablet = width >= 640 && width < 1024;
 
-  const [activeTxosnaId, setActiveTxosnaId] = useState(MOCK_TXOSNAK[0].id);
-  const [showTxosnaPicker, setShowTxosnaPicker] = useState(false);
-  const activeTxosna = MOCK_TXOSNAK.find((t) => t.id === activeTxosnaId)!;
+  const [slug, setSlug] = useState<string | null>(null);
+  const [txosnaName, setTxosnaName] = useState('Txosna · Sukaldea');
 
-  const [tickets, setTickets] = useState<Ticket[]>(INITIAL_TICKETS);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+
+  // Load slug from sessionStorage and fetch initial tickets
+  useEffect(() => {
+    const storedSlug = typeof window !== 'undefined' ? sessionStorage.getItem('txosna_slug') : null;
+    if (!storedSlug) return;
+    setSlug(storedSlug);
+
+    fetch(`/api/txosnak/${storedSlug}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.name) setTxosnaName(d.name + ' · Sukaldea');
+      })
+      .catch(() => {});
+
+    fetch(
+      `/api/txosnak/${storedSlug}/tickets?counterType=FOOD&status=RECEIVED,IN_PREPARATION,READY`
+    )
+      .then((r) => r.json())
+      .then((data: { tickets: Parameters<typeof toKdsTicket>[0][] }) => {
+        setTickets(data.tickets.map(toKdsTicket));
+      })
+      .catch(() => {});
+  }, []);
+
+  // SSE: receive real-time ticket events
+  useSSE(slug, {
+    'order:confirmed': () => {
+      if (!slug) return;
+      fetch(`/api/txosnak/${slug}/tickets?counterType=FOOD&status=RECEIVED,IN_PREPARATION,READY`)
+        .then((r) => r.json())
+        .then((data: { tickets: Parameters<typeof toKdsTicket>[0][] }) => {
+          setTickets(data.tickets.map(toKdsTicket));
+        })
+        .catch(() => {});
+    },
+    'ticket:status_changed': (data: unknown) => {
+      const { ticketId, newStatus } = data as { ticketId: string; newStatus: string };
+      setTickets((prev) =>
+        prev
+          .map((t) =>
+            t.id === ticketId
+              ? { ...t, status: newStatus as Ticket['status'], elapsedMin: 0, hasAlert: false }
+              : t
+          )
+          .filter(
+            (t) => (t.status as string) !== 'COMPLETED' && (t.status as string) !== 'CANCELLED'
+          )
+      );
+    },
+  });
   const [paused, setPaused] = useState(false);
   const [closed, setClosed] = useState(false);
   const [activeTab, setActiveTab] = useState<'RECEIVED' | 'IN_PREPARATION' | 'READY'>('RECEIVED');
@@ -182,22 +175,35 @@ export default function KdsBoard() {
     { name: 'Ogia gurinarekin', soldOut: false },
   ]);
 
-  const advance = (id: string) =>
+  const advance = async (id: string) => {
+    const ticket = tickets.find((t) => t.id === id);
+    if (!ticket) return;
+    const next = (
+      { RECEIVED: 'IN_PREPARATION', IN_PREPARATION: 'READY', READY: 'COMPLETED' } as Record<
+        string,
+        string
+      >
+    )[ticket.status];
+    if (!next) return;
+
     setTickets((prev) =>
       prev
         .map((t) => {
           if (t.id !== id) return t;
-          const next = (
-            { RECEIVED: 'IN_PREPARATION', IN_PREPARATION: 'READY', READY: 'COMPLETED' } as Record<
-              string,
-              string
-            >
-          )[t.status];
-          if (!next || next === 'COMPLETED') return { ...t, status: 'COMPLETED' as never };
+          if (next === 'COMPLETED') return { ...t, status: 'COMPLETED' as never };
           return { ...t, status: next as Ticket['status'], elapsedMin: 0, hasAlert: false };
         })
         .filter((t) => t.status !== ('COMPLETED' as never))
     );
+
+    fetch(`/api/tickets/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: next }),
+    }).catch(() => {
+      setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status: ticket.status } : t)));
+    });
+  };
 
   const addOrder = () => {
     const tmpl = NEW_ORDER_POOL[orderIdx % NEW_ORDER_POOL.length];
@@ -319,7 +325,6 @@ export default function KdsBoard() {
       >
         <div style={{ minWidth: 0, position: 'relative' }}>
           <button
-            onClick={() => setShowTxosnaPicker((v) => !v)}
             style={{
               background: 'none',
               border: 'none',
@@ -343,7 +348,7 @@ export default function KdsBoard() {
                 textOverflow: 'ellipsis',
               }}
             >
-              {activeTxosna.name}
+              {txosnaName ?? '…'}
             </div>
             <span style={{ color: 'var(--ops-text-dim)', fontSize: 12 }}>▾</span>
           </button>
@@ -367,68 +372,15 @@ export default function KdsBoard() {
                 flexShrink: 0,
               }}
             />
-            <span style={{ whiteSpace: 'nowrap' }}>{paused ? 'GELDITUTA' : activeTxosna.role}</span>
+            <span style={{ whiteSpace: 'nowrap' }}>
+              {paused ? 'GELDITUTA' : 'Janaria · Sukaldea'}
+            </span>
             {!isMobile && slowCount > 0 && (
               <span style={{ color: 'var(--ops-red)', fontWeight: 700, marginLeft: 8 }}>
                 · ⚠ {slowCount} motel
               </span>
             )}
           </div>
-          {showTxosnaPicker && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 'calc(100% + 8px)',
-                left: 0,
-                background: 'var(--ops-surface)',
-                border: '1px solid var(--ops-border-hi)',
-                borderRadius: 12,
-                minWidth: 220,
-                zIndex: 100,
-                overflow: 'hidden',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-              }}
-            >
-              <div
-                style={{
-                  padding: '8px 12px 6px',
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: 'var(--ops-text-dim)',
-                }}
-              >
-                Txosna aldatu
-              </div>
-              {MOCK_TXOSNAK.map((tx) => (
-                <button
-                  key={tx.id}
-                  onClick={() => {
-                    setActiveTxosnaId(tx.id);
-                    setShowTxosnaPicker(false);
-                  }}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 2,
-                    width: '100%',
-                    background: tx.id === activeTxosnaId ? 'var(--ops-surface-hi)' : 'transparent',
-                    border: 'none',
-                    borderTop: '1px solid var(--ops-border)',
-                    padding: '10px 14px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ops-text-pri)' }}>
-                    {tx.name}
-                  </span>
-                  <span style={{ fontSize: 11, color: 'var(--ops-text-dim)' }}>{tx.role}</span>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
           <ThemeToggle variant="ops" />

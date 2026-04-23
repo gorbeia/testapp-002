@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { auth } from '@/lib/auth';
 import { ticketRepo, txosnaRepo } from '@/lib/store';
 import { broadcast } from '@/lib/sse';
@@ -10,9 +11,14 @@ import type { TicketStatus } from '@/lib/store/types';
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const session = await auth();
-  if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  const { associationId: sessionAssociationId } = session.user as { associationId: string };
+  let sessionAssociationId: string;
+  if (process.env.PROTO_MODE === 'true') {
+    sessionAssociationId = (global as any).__TEST_ASSOCIATION_ID__ ?? 'assoc-1';
+  } else {
+    const session = await auth();
+    if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    ({ associationId: sessionAssociationId } = session.user as any);
+  }
 
   let body: { status: string };
   try {

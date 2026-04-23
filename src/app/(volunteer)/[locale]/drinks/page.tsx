@@ -1,9 +1,15 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { OpsHeader } from '@/components/layout/ops-header';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { MOCK_PRODUCTS, MOCK_TXOSNA } from '@/lib/mock-data';
+import { useSSE } from '@/hooks/useSSE';
+
+interface DrinkProduct {
+  id: string;
+  name: string;
+  price: number;
+}
 
 interface DrinksQueueOrder {
   id: string;
@@ -23,32 +29,82 @@ type ConfirmState =
       customerName: string;
     };
 
-const INITIAL_QUEUE: DrinksQueueOrder[] = [
-  {
-    id: 'd1',
-    number: 41,
-    customerName: 'Josu',
-    items: [
-      { name: 'Garagardoa', qty: 2, price: 2.5 },
-      { name: 'Ura', qty: 1, price: 1.0 },
-    ],
-    total: 6.0,
-    placedAt: Date.now() - 4 * 60 * 1000,
-  },
-  {
-    id: 'd2',
-    number: 38,
-    customerName: null,
-    items: [{ name: 'Ardoa', qty: 3, price: 3.0 }],
-    total: 9.0,
-    placedAt: Date.now() - 9 * 60 * 1000,
-  },
-];
-
 export default function DrinksPage() {
   const _nextOrderNumRef = useRef(50);
-  const drinkProducts = MOCK_PRODUCTS.filter((p) => p.categoryId === 'cat-2');
-  const [queue, setQueue] = useState<DrinksQueueOrder[]>(INITIAL_QUEUE);
+  const [slug, setSlug] = useState<string | null>(null);
+  const [txosnaName, setTxosnaName] = useState('Txosna');
+  const [drinkProducts, setDrinkProducts] = useState<DrinkProduct[]>([]);
+  const [queue, setQueue] = useState<DrinksQueueOrder[]>([]);
+
+  useEffect(() => {
+    const storedSlug = typeof window !== 'undefined' ? sessionStorage.getItem('txosna_slug') : null;
+    if (!storedSlug) return;
+    setSlug(storedSlug);
+
+    fetch(`/api/txosnak/${storedSlug}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.name) setTxosnaName(d.name);
+      })
+      .catch(() => {});
+
+    fetch(`/api/txosnak/${storedSlug}/catalog`)
+      .then((r) => r.json())
+      .then(
+        (d: {
+          products?: { id: string; name: string; effectivePrice: number; type: string }[];
+        }) => {
+          const drinks = (d.products ?? [])
+            .filter((p) => p.type === 'DRINK')
+            .map((p) => ({ id: p.id, name: p.name, price: p.effectivePrice }));
+          setDrinkProducts(drinks);
+        }
+      )
+      .catch(() => {});
+
+    fetchQueue(storedSlug);
+  }, []);
+
+  function fetchQueue(s: string) {
+    fetch(`/api/txosnak/${s}/tickets?counterType=DRINKS&status=RECEIVED,IN_PREPARATION`)
+      .then((r) => r.json())
+      .then(
+        (d: {
+          tickets?: {
+            id: string;
+            orderNumber: number | null;
+            customerName: string | null;
+            lines: { productName: string; quantity: number }[];
+            createdAt: string;
+          }[];
+        }) => {
+          const orders: DrinksQueueOrder[] = (d.tickets ?? []).map((t) => ({
+            id: t.id,
+            number: t.orderNumber ?? 0,
+            customerName: t.customerName,
+            items: t.lines.map((l) => ({ name: l.productName, qty: l.quantity, price: 0 })),
+            total: 0,
+            placedAt: new Date(t.createdAt).getTime(),
+          }));
+          setQueue(orders);
+          if (orders.length > 0)
+            _nextOrderNumRef.current = Math.max(...orders.map((o) => o.number)) + 1;
+        }
+      )
+      .catch(() => {});
+  }
+
+  useSSE(slug, {
+    'order:confirmed': () => {
+      if (slug) fetchQueue(slug);
+    },
+    'ticket:status_changed': (data) => {
+      const { ticketId, newStatus } = data as { ticketId: string; newStatus: string };
+      if (newStatus === 'COMPLETED') {
+        setQueue((prev) => prev.filter((o) => o.id !== ticketId));
+      }
+    },
+  });
   const [cart, setCart] = useState<Record<string, number>>({});
   const [customerName, setCustomerName] = useState('');
   const [showNewOrder, setShowNewOrder] = useState(false);
@@ -79,6 +135,13 @@ export default function DrinksPage() {
 
   const serveFromQueue = (id: string) => {
     setQueue((prev) => prev.filter((o) => o.id !== id));
+    fetch(`/api/tickets/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'COMPLETED' }),
+    }).catch(() => {
+      if (slug) fetchQueue(slug);
+    });
   };
 
   const requestServeCart = () => {
@@ -110,8 +173,21 @@ export default function DrinksPage() {
   };
 
   const confirmAddToQueue = () => {
-    if (!queuePreview) return;
-    setQueue((prev) => [...prev, queuePreview]);
+    if (!queuePreview || !slug) return;
+    const lines = queuePreview.items.map((item) => {
+      const p = drinkProducts.find((dp) => dp.name === item.name);
+      return { productId: p?.id ?? item.name, quantity: item.qty };
+    });
+    fetch(`/api/txosnak/${slug}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lines, customerName: queuePreview.customerName, channel: 'COUNTER' }),
+    })
+      .then((r) => r.json())
+      .then(() => {
+        fetchQueue(slug);
+      })
+      .catch(() => {});
     setQueuePreview(null);
     setCart({});
     setCustomerName('');
@@ -887,7 +963,7 @@ export default function DrinksPage() {
       style={{ minHeight: '100vh', fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)' }}
     >
       <OpsHeader
-        title={MOCK_TXOSNA.name}
+        title={txosnaName}
         subtitle="Edariak · Mostradore"
         statusColor="green"
         right={

@@ -3,65 +3,204 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { OpsHeader } from '@/components/layout/ops-header';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import {
-  MOCK_TICKETS,
-  MOCK_TXOSNA,
-  MOCK_PRODUCTS,
-  type MockTicket,
-  type MockOrderLine,
-  type MockProduct,
-} from '@/lib/mock-data';
 import type { StoredOrder } from '@/lib/store/types';
+
+interface LocalProduct {
+  id: string;
+  categoryId: string;
+  name: string;
+  description: string | null;
+  price: number;
+  imageUrl: string | null;
+  allergens: string[];
+  dietaryFlags: ('V' | 'VG' | 'GF' | 'HL')[];
+  ageRestricted: boolean;
+  requiresPreparation: boolean;
+  available: boolean;
+  soldOut: boolean;
+  variantGroups: unknown[];
+  modifiers: unknown[];
+  removableIngredients: string[];
+  splitAllowed: boolean;
+  splitMaxWays: number;
+  preparationInstructions: string | null;
+}
+
+interface LocalOrderLine {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  selectedVariant: string | null;
+  selectedModifiers: string[];
+  splitInstructions: string | null;
+}
+
+interface LocalTicket {
+  id: string;
+  orderId: string;
+  orderNumber: number;
+  customerName: string | null;
+  counterType: string;
+  status: string;
+  lines: LocalOrderLine[];
+  notes: string | null;
+  elapsedMin: number;
+  isSlowOrder: boolean;
+  hasAlert: boolean;
+  flagged: boolean;
+}
 import { calcUnitPrice } from '@/lib/hooks/use-product-config';
+import type { MockProduct } from '@/lib/mock-data';
 import {
   ProductConfigSheet,
   type OrderItemConfig,
 } from '@/components/counter/product-config-sheet';
+import { useSSE } from '@/hooks/useSSE';
 
 export default function CounterPage() {
   const nextOrderNumRef = useRef(50);
   const fromNewOrderRef = useRef(false);
+  const [slug, setSlug] = useState<string | null>(null);
+  const [txosnaName, setTxosnaName] = useState('Txosna');
 
-  const foodTickets = MOCK_TICKETS.filter(
-    (t) => t.counterType === 'FOOD' && t.status !== 'COMPLETED' && t.status !== 'CANCELLED'
-  );
-  const [tickets, setTickets] = useState<MockTicket[]>(foodTickets);
+  const [tickets, setTickets] = useState<LocalTicket[]>([]);
+  const [foodProducts, setFoodProducts] = useState<LocalProduct[]>([]);
   const [pendingOrders, setPendingOrders] = useState<
     {
       id: string;
       orderNumber: number;
       customerName: string | null;
-      lines: MockOrderLine[];
+      lines: LocalOrderLine[];
       total: number;
       placedAt: number;
     }[]
   >([]);
 
-  // Fetch pending orders from API on mount
+  // Read slug from sessionStorage and fetch initial data
   useEffect(() => {
-    const txosnaSlug = MOCK_TXOSNA.slug; // In a real app, this would come from the session or URL
-    fetch(`/api/txosnak/${txosnaSlug}/orders?status=PENDING_PAYMENT`)
+    const storedSlug = typeof window !== 'undefined' ? sessionStorage.getItem('txosna_slug') : null;
+    if (!storedSlug) return;
+    setSlug(storedSlug);
+
+    // Fetch txosna name
+    fetch(`/api/txosnak/${storedSlug}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.name) setTxosnaName(d.name);
+      })
+      .catch(() => {});
+
+    // Fetch FOOD tickets (active statuses)
+    fetch(
+      `/api/txosnak/${storedSlug}/tickets?counterType=FOOD&status=RECEIVED,IN_PREPARATION,READY`
+    )
+      .then((r) => r.json())
+      .then(
+        (data: {
+          tickets: (LocalTicket & { orderNumber: number; customerName: string | null })[];
+        }) => {
+          setTickets(
+            data.tickets.map((t) => ({
+              ...t,
+              elapsedMin: 0,
+              isSlowOrder: false,
+              hasAlert: false,
+            }))
+          );
+        }
+      )
+      .catch(() => {});
+
+    // Fetch pending (PENDING_PAYMENT) orders
+    fetch(`/api/txosnak/${storedSlug}/orders?status=PENDING_PAYMENT`)
       .then((r) => r.json())
       .then((orders: StoredOrder[]) => {
-        const converted = orders.map((o) => ({
-          id: o.id,
-          orderNumber: o.orderNumber,
-          customerName: o.customerName,
-          lines: o.pendingLines?.[0]?.lines ?? [], // Simplified: just take first ticket's lines
-          total: o.total,
-          placedAt: new Date(o.createdAt).getTime(),
-        }));
-        setPendingOrders(converted);
+        setPendingOrders(
+          orders.map((o) => ({
+            id: o.id,
+            orderNumber: o.orderNumber,
+            customerName: o.customerName,
+            lines: (o.pendingLines?.[0]?.lines ?? []) as LocalOrderLine[],
+            total: o.total,
+            placedAt: new Date(o.createdAt).getTime(),
+          }))
+        );
       })
-      .catch(() => {
-        // Fall back to empty list on error
-        setPendingOrders([]);
-      });
+      .catch(() => {});
+
+    // Fetch food catalog
+    fetch(`/api/txosnak/${storedSlug}/catalog`)
+      .then((r) => r.json())
+      .then(
+        (categories: { id: string; name: string; type: string; products: LocalProduct[] }[]) => {
+          const foodCats = categories.filter((c) => c.type === 'FOOD');
+          const products = foodCats.flatMap((c) =>
+            c.products.map((p) => ({
+              ...p,
+              price: (p as unknown as { effectivePrice: number }).effectivePrice ?? 0,
+              categoryId: c.id,
+            }))
+          );
+          setFoodProducts(products);
+        }
+      )
+      .catch(() => {});
   }, []);
+
+  // SSE: refresh tickets/orders on real-time events
+  useSSE(slug, {
+    'order:confirmed': () => {
+      if (!slug) return;
+      fetch(`/api/txosnak/${slug}/tickets?counterType=FOOD&status=RECEIVED,IN_PREPARATION,READY`)
+        .then((r) => r.json())
+        .then(
+          (data: {
+            tickets: (LocalTicket & { orderNumber: number; customerName: string | null })[];
+          }) => {
+            setTickets(
+              data.tickets.map((t) => ({
+                ...t,
+                elapsedMin: 0,
+                isSlowOrder: false,
+                hasAlert: false,
+              }))
+            );
+          }
+        )
+        .catch(() => {});
+      fetch(`/api/txosnak/${slug}/orders?status=PENDING_PAYMENT`)
+        .then((r) => r.json())
+        .then((orders: StoredOrder[]) => {
+          setPendingOrders(
+            orders.map((o) => ({
+              id: o.id,
+              orderNumber: o.orderNumber,
+              customerName: o.customerName,
+              lines: (o.pendingLines?.[0]?.lines ?? []) as LocalOrderLine[],
+              total: o.total,
+              placedAt: new Date(o.createdAt).getTime(),
+            }))
+          );
+        })
+        .catch(() => {});
+    },
+    'ticket:status_changed': (data: unknown) => {
+      const { ticketId, newStatus } = data as { ticketId: string; newStatus: string };
+      setTickets((prev) =>
+        prev
+          .map((t) =>
+            t.id === ticketId ? { ...t, status: newStatus as LocalTicket['status'] } : t
+          )
+          .filter((t) => t.status !== 'COMPLETED' && t.status !== 'CANCELLED')
+      );
+    },
+  });
 
   const [showNewOrder, setShowNewOrder] = useState(false);
   const [showOrderDetail, setShowOrderDetail] = useState<string | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<MockProduct | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<LocalProduct | null>(null);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
 
   const [newOrder, setNewOrder] = useState<{ customerName: string; items: OrderItemConfig[] }>({
@@ -70,11 +209,6 @@ export default function CounterPage() {
   });
   const [amountPaid, setAmountPaid] = useState<string>('');
 
-  const foodProducts = MOCK_PRODUCTS.filter(
-    (p) => p.categoryId === 'cat-1' && p.available && !p.soldOut
-  );
-  const _topProducts = foodProducts.slice(0, 6);
-
   const [confirmReadyId, setConfirmReadyId] = useState<string | null>(null);
 
   const readyTickets = tickets.filter((t) => t.status === 'READY');
@@ -82,26 +216,36 @@ export default function CounterPage() {
     (t) => t.status === 'RECEIVED' || t.status === 'IN_PREPARATION'
   );
 
-  const advance = (id: string) => {
+  const advance = async (id: string) => {
+    const ticket = tickets.find((t) => t.id === id);
+    if (!ticket) return;
+    const next = (
+      { RECEIVED: 'IN_PREPARATION', IN_PREPARATION: 'READY', READY: 'COMPLETED' } as Record<
+        string,
+        string
+      >
+    )[ticket.status];
+    if (!next) return;
+
+    // Optimistic update
     setTickets((prev) =>
       prev
         .map((t) => {
           if (t.id !== id) return t;
-          const next = (
-            { RECEIVED: 'IN_PREPARATION', IN_PREPARATION: 'READY', READY: 'COMPLETED' } as Record<
-              string,
-              string
-            >
-          )[t.status];
-          return {
-            ...t,
-            status: (next ?? t.status) as typeof t.status,
-            elapsedMin: 0,
-            hasAlert: false,
-          };
+          return { ...t, status: next as typeof t.status, elapsedMin: 0, hasAlert: false };
         })
         .filter((t) => t.status !== 'COMPLETED')
     );
+
+    // Persist to API
+    fetch(`/api/tickets/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: next }),
+    }).catch(() => {
+      // Revert optimistic update on failure
+      setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status: ticket.status } : t)));
+    });
   };
 
   const confirmPayment = async (orderId: string) => {
@@ -119,7 +263,7 @@ export default function CounterPage() {
       // (in a real implementation, you'd fetch updated tickets from SSE or API)
       const order = pendingOrders.find((o) => o.id === orderId);
       if (order) {
-        const newTicket: MockTicket = {
+        const newTicket: LocalTicket = {
           id: 'ticket-' + Date.now(),
           orderId: order.id,
           orderNumber: order.orderNumber,
@@ -144,46 +288,66 @@ export default function CounterPage() {
     }
   };
 
-  const createOrder = () => {
-    if (newOrder.items.length === 0) return;
-    const orderNum = nextOrderNumRef.current++;
-    const lines: MockOrderLine[] = newOrder.items.map((item, i) => {
-      const product = MOCK_PRODUCTS.find((p) => p.id === item.productId)!;
-      const unitPrice = calcUnitPrice(product, item.variant, item.modifiers);
+  const createOrder = async () => {
+    if (newOrder.items.length === 0 || !slug) return;
 
+    const lines = newOrder.items.map((item) => {
+      const product = foodProducts.find((p) => p.id === item.productId)!;
+      const unitPrice = calcUnitPrice(
+        product as unknown as MockProduct,
+        item.variant,
+        item.modifiers
+      );
       return {
-        id: 'l-' + Date.now() + '-' + i,
         productId: item.productId,
-        productName: product.name,
         quantity: item.qty,
+        selectedVariantOptionId: null,
+        selectedModifierIds: [],
+        splitInstructions: item.splitWays > 1 ? `${item.splitWays}tan banatu` : null,
+        // Denormalised for in-memory store compatibility
+        productName: product.name,
         unitPrice,
         selectedVariant: item.variant,
         selectedModifiers: item.modifiers,
-        splitInstructions: item.splitWays > 1 ? `${item.splitWays}tan banatu` : null,
       };
     });
 
-    const newTicket: MockTicket = {
-      id: 'ticket-' + Date.now(),
-      orderId: 'order-' + Date.now(),
-      orderNumber: orderNum,
-      customerName: newOrder.customerName || null,
-      counterType: 'FOOD',
-      status: 'RECEIVED',
-      lines,
-      notes: null,
-      elapsedMin: 0,
-      isSlowOrder: false,
-      hasAlert: false,
-      flagged: false,
-    };
-    setTickets((prev) => [...prev, newTicket]);
     setShowNewOrder(false);
+    const savedOrder = { ...newOrder };
     setNewOrder({ customerName: '', items: [] });
+
+    try {
+      const res = await fetch(`/api/txosnak/${slug}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channel: 'COUNTER',
+          customerName: savedOrder.customerName || null,
+          notes: null,
+          paymentMethod: 'CASH',
+          lines,
+        }),
+      });
+      if (res.ok) {
+        // Refetch tickets to show new ticket from API
+        const data = (await fetch(
+          `/api/txosnak/${slug}/tickets?counterType=FOOD&status=RECEIVED,IN_PREPARATION,READY`
+        ).then((r) => r.json())) as {
+          tickets: (LocalTicket & { orderNumber: number; customerName: string | null })[];
+        };
+        setTickets(
+          data.tickets.map((t) => ({ ...t, elapsedMin: 0, isSlowOrder: false, hasAlert: false }))
+        );
+      }
+    } catch {
+      // Silent failure — the order form was already reset
+    }
+
+    nextOrderNumRef.current++;
   };
 
   const openProductConfig = (
-    product: MockProduct,
+    product: LocalProduct,
     existingItem?: OrderItemConfig,
     index?: number,
     fromNewOrder = false
@@ -225,8 +389,11 @@ export default function CounterPage() {
   };
 
   const currentTotal = newOrder.items.reduce((sum, item) => {
-    const product = MOCK_PRODUCTS.find((p) => p.id === item.productId)!;
-    return sum + calcUnitPrice(product, item.variant, item.modifiers) * item.qty;
+    const product = foodProducts.find((p) => p.id === item.productId)!;
+    return (
+      sum +
+      calcUnitPrice(product as unknown as MockProduct, item.variant, item.modifiers) * item.qty
+    );
   }, 0);
 
   const selectedOrder = pendingOrders.find((o) => o.id === showOrderDetail);
@@ -373,8 +540,12 @@ export default function CounterPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {newOrder.items.map((item, index) => {
-                  const product = MOCK_PRODUCTS.find((p) => p.id === item.productId)!;
-                  const unitPrice = calcUnitPrice(product, item.variant, item.modifiers);
+                  const product = foodProducts.find((p) => p.id === item.productId)!;
+                  const unitPrice = calcUnitPrice(
+                    product as unknown as MockProduct,
+                    item.variant,
+                    item.modifiers
+                  );
                   return (
                     <div
                       key={index}
@@ -554,7 +725,7 @@ export default function CounterPage() {
 
         {selectedProduct && (
           <ProductConfigSheet
-            product={selectedProduct}
+            product={selectedProduct as unknown as MockProduct}
             existingConfig={editingItemIndex !== null ? newOrder.items[editingItemIndex] : null}
             onSave={saveProductConfig}
             onClose={() => {
@@ -573,7 +744,7 @@ export default function CounterPage() {
       style={{ minHeight: '100vh', fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)' }}
     >
       <OpsHeader
-        title={MOCK_TXOSNA.name}
+        title={txosnaName}
         subtitle="Janaria · Mostradore"
         statusColor="green"
         right={

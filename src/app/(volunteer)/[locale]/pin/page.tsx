@@ -1,10 +1,9 @@
 'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
-const MOCK_PIN = '1234';
 const MODES = [
   { id: 'food', label: 'Janaria', icon: '🍽', route: '/eu/counter' },
   { id: 'drinks', label: 'Edariak', icon: '🍺', route: '/eu/drinks' },
@@ -13,9 +12,27 @@ const MODES = [
 
 export default function PinPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedMode, setSelectedMode] = useState(MODES[0]);
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
+  const [txosnaName, setTxosnaName] = useState('Txosna');
+  const [slug, setSlug] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const urlSlug = searchParams.get('slug');
+    if (urlSlug) {
+      setSlug(urlSlug);
+      // Fetch txosna name for display
+      fetch(`/api/txosnak/${urlSlug}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.name) setTxosnaName(data.name);
+        })
+        .catch(() => {});
+    }
+  }, [searchParams]);
 
   function pressDigit(d: string) {
     if (pin.length < 4) setPin((p) => p + d);
@@ -25,23 +42,32 @@ export default function PinPage() {
     setPin((p) => p.slice(0, -1));
   }
 
-  function confirm() {
-    if (pin === MOCK_PIN) {
-      router.push(selectedMode.route);
-    } else {
-      setError('PIN okerra. Saiatu berriro.');
+  async function confirm() {
+    if (pin.length < 4) return;
+    setIsLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/auth/pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ txosnaSlug: slug, pin }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        if (slug) sessionStorage.setItem('txosna_slug', slug);
+        if (data.txosnaId) sessionStorage.setItem('txosna_id', data.txosnaId);
+        router.push(selectedMode.route);
+      } else {
+        setError('PIN okerra. Saiatu berriro.');
+        setPin('');
+      }
+    } catch {
+      setError('Konexio errorea. Saiatu berriro.');
       setPin('');
+    } finally {
+      setIsLoading(false);
     }
   }
-
-  const t = {
-    title: 'Aste Nagusia 2026',
-    subtitle: 'Txosna',
-    modeLabel: 'Aukeratu modua',
-    pinLabel: 'PIN sartu',
-    confirm: 'Sartu',
-    back: '← Itzuli',
-  };
 
   return (
     <div className="ops-theme min-h-screen flex items-center justify-center px-4 py-8">
@@ -52,13 +78,13 @@ export default function PinPage() {
         {/* Header */}
         <div className="text-center mb-6">
           <div className="text-sm mb-1" style={{ color: 'var(--ops-text-sec)' }}>
-            {t.subtitle}
+            Txosna
           </div>
           <div
             className="text-xl font-black"
             style={{ fontFamily: 'var(--font-nunito), sans-serif', color: 'var(--ops-text-pri)' }}
           >
-            {t.title}
+            {txosnaName}
           </div>
         </div>
 
@@ -72,7 +98,7 @@ export default function PinPage() {
               className="text-xs font-semibold uppercase tracking-wider mb-2"
               style={{ color: 'var(--ops-text-sec)' }}
             >
-              {t.modeLabel}
+              Aukeratu modua
             </div>
             <div className="grid grid-cols-3 gap-2">
               {MODES.map((m) => (
@@ -100,7 +126,7 @@ export default function PinPage() {
               className="text-xs font-semibold uppercase tracking-wider mb-3"
               style={{ color: 'var(--ops-text-sec)' }}
             >
-              {t.pinLabel}
+              PIN sartu
             </div>
             <div className="flex justify-center gap-4 mb-1">
               {[0, 1, 2, 3].map((i) => (
@@ -126,10 +152,10 @@ export default function PinPage() {
               <button
                 key={i}
                 onClick={() => (d === '⌫' ? backspace() : d ? pressDigit(d) : undefined)}
-                disabled={!d}
+                disabled={!d || isLoading}
                 className="rounded-xl py-4 text-xl font-bold transition-opacity hover:opacity-80 active:scale-95 disabled:opacity-0"
                 style={{
-                  background: d === '⌫' ? 'var(--ops-surface-hi)' : 'var(--ops-surface-hi)',
+                  background: 'var(--ops-surface-hi)',
                   border: '1px solid var(--ops-border)',
                   color: 'var(--ops-text-pri)',
                   minHeight: 56,
@@ -143,17 +169,17 @@ export default function PinPage() {
           {/* Confirm */}
           <button
             onClick={confirm}
-            disabled={pin.length < 4}
+            disabled={pin.length < 4 || isLoading}
             className="w-full rounded-xl py-3.5 font-bold text-sm transition-opacity disabled:opacity-40"
             style={{ background: 'var(--ops-orange)', color: '#fff', minHeight: 52 }}
           >
-            {t.confirm} — {selectedMode.icon} {selectedMode.label}
+            {isLoading ? 'Egiaztatzen...' : `Sartu — ${selectedMode.icon} ${selectedMode.label}`}
           </button>
         </div>
 
         <div className="mt-4 text-center">
           <Link href="/login" className="text-sm" style={{ color: 'var(--ops-text-dim)' }}>
-            {t.back}
+            ← Itzuli
           </Link>
         </div>
       </div>

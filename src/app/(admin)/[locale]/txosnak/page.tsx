@@ -1,7 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
-import { MOCK_ASSOCIATION, MockTxosna } from '@/lib/mock-data';
+import { useState, useEffect } from 'react';
 
 const STATUS_LABEL: Record<string, string> = {
   OPEN: 'Irekita',
@@ -14,8 +13,17 @@ const STATUS_COLOR: Record<string, string> = {
   CLOSED: '#6b7280',
 };
 
+interface Txosna {
+  id: string;
+  name: string;
+  slug: string;
+  status: 'OPEN' | 'PAUSED' | 'CLOSED';
+  waitMinutes?: number | null;
+  counterSetup?: string;
+}
+
 interface CloneDialogProps {
-  txosna: MockTxosna;
+  txosna: Txosna;
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (newName: string) => void;
@@ -174,34 +182,41 @@ function CloneDialog({ txosna, isOpen, onClose, onConfirm }: CloneDialogProps) {
 }
 
 export default function TxosnakPage() {
-  const [txosnak, setTxosnak] = useState(MOCK_ASSOCIATION.txosnak);
+  const [txosnak, setTxosnak] = useState<Txosna[]>([]);
+  const [associationName, setAssociationName] = useState('');
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
-  const [selectedTxosna, setSelectedTxosna] = useState<MockTxosna | null>(null);
+  const [selectedTxosna, setSelectedTxosna] = useState<Txosna | null>(null);
 
-  const totalOrders = txosnak.reduce((s, t) => s + (t.ordersToday ?? 0), 0);
-  const totalRevenue = txosnak.reduce((s, t) => s + (t.revenueToday ?? 0), 0);
+  useEffect(() => {
+    fetch('/api/admin/txosnak')
+      .then((r) => r.json())
+      .then((d: { association?: { name: string }; txosnak?: Txosna[] }) => {
+        if (d.association?.name) setAssociationName(d.association.name);
+        if (d.txosnak) setTxosnak(d.txosnak);
+      })
+      .catch(() => {});
+  }, []);
+
   const openCount = txosnak.filter((t) => t.status === 'OPEN').length;
 
-  const handleCloneClick = (txosna: MockTxosna) => {
+  const handleCloneClick = (txosna: Txosna) => {
     setSelectedTxosna(txosna);
     setCloneDialogOpen(true);
   };
 
   const handleCloneConfirm = (newName: string) => {
     if (!selectedTxosna) return;
-
-    const newTxosna: MockTxosna = {
-      ...selectedTxosna,
-      id: `txosna-${Date.now()}`,
-      name: newName,
-      slug: `${selectedTxosna.slug}-kopia-${Date.now()}`,
-      pin: Math.floor(1000 + Math.random() * 9000).toString(),
-      status: 'CLOSED',
-      ordersToday: 0,
-      revenueToday: 0,
-    };
-
-    setTxosnak([...txosnak, newTxosna]);
+    const slug = `${selectedTxosna.slug}-kopia-${Date.now()}`;
+    fetch('/api/txosnak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName, slug }),
+    })
+      .then((r) => r.json())
+      .then((d: Txosna) => {
+        setTxosnak((prev) => [...prev, d]);
+      })
+      .catch(() => {});
     setCloneDialogOpen(false);
     setSelectedTxosna(null);
   };
@@ -219,10 +234,10 @@ export default function TxosnakPage() {
             margin: '0 0 4px',
           }}
         >
-          {MOCK_ASSOCIATION.name}
+          {associationName}
         </h1>
         <div style={{ fontSize: 14, color: 'var(--adm-text-sec)' }}>
-          {MOCK_ASSOCIATION.txosnak.length} txosna · {openCount} irekita
+          {txosnak.length} txosna · {openCount} irekita
         </div>
       </div>
 
@@ -237,9 +252,8 @@ export default function TxosnakPage() {
         }}
       >
         {[
-          { label: 'Txosnak', value: MOCK_ASSOCIATION.txosnak.length, accent: '#e85d2f' },
-          { label: 'Eskariak gaur', value: totalOrders, accent: '#3b82f6' },
-          { label: 'Diru-sarrerak gaur', value: `${totalRevenue} €`, accent: '#22c55e' },
+          { label: 'Txosnak', value: txosnak.length, accent: '#e85d2f' },
+          { label: 'Irekita', value: openCount, accent: '#22c55e' },
         ].map((s) => (
           <div
             key={s.label}
@@ -314,9 +328,6 @@ export default function TxosnakPage() {
                   <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--adm-text-pri)' }}>
                     {tx.name}
                   </div>
-                  {tx.location && (
-                    <div style={{ fontSize: 12, color: 'var(--adm-text-sec)' }}>{tx.location}</div>
-                  )}
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -341,30 +352,6 @@ export default function TxosnakPage() {
                 borderBottom: '1px solid var(--adm-border)',
               }}
             >
-              <div style={{ fontSize: 13, color: 'var(--adm-text-sec)' }}>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-mono, monospace)',
-                    fontWeight: 700,
-                    color: 'var(--adm-text-pri)',
-                  }}
-                >
-                  {tx.ordersToday ?? 0}
-                </span>{' '}
-                eskaera gaur
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--adm-text-sec)' }}>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-mono, monospace)',
-                    fontWeight: 700,
-                    color: 'var(--adm-text-pri)',
-                  }}
-                >
-                  {tx.revenueToday ?? 0} €
-                </span>{' '}
-                diru-sarrera
-              </div>
               <div style={{ fontSize: 13, color: 'var(--adm-text-sec)' }}>
                 {tx.counterSetup === 'SEPARATE' ? 'Banandutako mostradoreak' : 'Mostradore bakarra'}
               </div>

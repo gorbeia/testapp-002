@@ -179,8 +179,37 @@ export interface StoredVolunteer {
   passwordHash: string;
   role: VolunteerRole;
   active: boolean;
+  passwordResetToken: string | null;
+  passwordResetExpiresAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// ── Payment providers ─────────────────────────────────────────────────────────
+
+export type PaymentProviderType = 'STRIPE' | 'REDSYS';
+
+export interface StoredPaymentProvider {
+  id: string;
+  associationId: string;
+  providerType: PaymentProviderType;
+  displayName: string | null;
+  enabled: boolean;
+  testMode: boolean;
+  credentials: Record<string, string>;
+  bizumEnabled: boolean;
+  verifiedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreatePaymentProviderInput {
+  associationId: string;
+  providerType: PaymentProviderType;
+  displayName?: string;
+  testMode: boolean;
+  credentials: Record<string, string>;
+  bizumEnabled?: boolean;
 }
 
 // ── Repository input types ────────────────────────────────────────────────────
@@ -238,11 +267,35 @@ export interface TicketFilter {
 
 // ── Repository interfaces ─────────────────────────────────────────────────────
 
+export interface CreateTxosnaInput {
+  associationId: string;
+  name: string;
+  slug: string;
+  pinHash?: string;
+}
+
 export interface TxosnaRepository {
   findBySlug(slug: string): Promise<StoredTxosna | null>;
   findById(id: string): Promise<StoredTxosna | null>;
   list(associationId: string): Promise<StoredTxosna[]>;
+  create(data: CreateTxosnaInput): Promise<StoredTxosna>;
   update(id: string, patch: Partial<Omit<StoredTxosna, 'id' | 'createdAt'>>): Promise<StoredTxosna>;
+}
+
+export interface AssociationRepository {
+  create(name: string): Promise<StoredAssociation>;
+  findById(id: string): Promise<StoredAssociation | null>;
+}
+
+export interface PaymentProviderRepository {
+  listByAssociation(associationId: string): Promise<StoredPaymentProvider[]>;
+  findById(id: string): Promise<StoredPaymentProvider | null>;
+  create(data: CreatePaymentProviderInput): Promise<StoredPaymentProvider>;
+  update(
+    id: string,
+    patch: Partial<Omit<StoredPaymentProvider, 'id' | 'associationId' | 'createdAt'>>
+  ): Promise<StoredPaymentProvider>;
+  delete(id: string): Promise<void>;
 }
 
 export interface OrderRepository {
@@ -269,6 +322,7 @@ export interface TicketRepository {
 export interface VolunteerRepository {
   findByEmail(email: string): Promise<StoredVolunteer | null>;
   findById(id: string): Promise<StoredVolunteer | null>;
+  findByResetToken(token: string): Promise<StoredVolunteer | null>;
   listByAssociation(associationId: string): Promise<StoredVolunteer[]>;
   create(data: CreateVolunteerInput): Promise<StoredVolunteer>;
   update(

@@ -1,25 +1,81 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function RegisterPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ name: '', email: '', password: '', txosna: '', event: '' });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    associationName: '',
+    event: '',
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const update = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (step < 2) {
       setStep((s) => s + 1);
       return;
     }
-    router.push('/eu/onboarding');
+
+    setError(null);
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/associations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminName: form.name,
+          adminEmail: form.email,
+          adminPassword: form.password,
+          associationName: form.associationName,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? 'Errorea gertatu da. Saiatu berriro.');
+        return;
+      }
+
+      // Auto-login after registration
+      const loginResult = await signIn('credentials', {
+        redirect: false,
+        email: form.email,
+        password: form.password,
+      });
+      if (loginResult?.error) {
+        // Registration succeeded but auto-login failed — send to login
+        router.push('/login');
+        return;
+      }
+
+      router.push('/eu/onboarding');
+    } catch {
+      setError('Konexio errorea. Saiatu berriro.');
+    } finally {
+      setIsLoading(false);
+    }
   }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '10px 12px',
+    borderRadius: 8,
+    border: '1px solid #e5e7eb',
+    fontSize: 14,
+    outline: 'none',
+    boxSizing: 'border-box',
+  };
 
   return (
     <div
@@ -98,15 +154,7 @@ export default function RegisterPage() {
                     onChange={update('name')}
                     placeholder="Zure izena"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #e5e7eb',
-                      fontSize: 14,
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
+                    style={inputStyle}
                   />
                 </div>
                 <div>
@@ -127,15 +175,7 @@ export default function RegisterPage() {
                     onChange={update('email')}
                     placeholder="zure@posta.eus"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #e5e7eb',
-                      fontSize: 14,
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
+                    style={inputStyle}
                   />
                 </div>
                 <div>
@@ -156,15 +196,8 @@ export default function RegisterPage() {
                     onChange={update('password')}
                     placeholder="••••••••"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #e5e7eb',
-                      fontSize: 14,
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
+                    minLength={8}
+                    style={inputStyle}
                   />
                 </div>
               </>
@@ -180,22 +213,14 @@ export default function RegisterPage() {
                       marginBottom: 5,
                     }}
                   >
-                    Txosna izena
+                    Elkartearen izena
                   </label>
                   <input
-                    value={form.txosna}
-                    onChange={update('txosna')}
+                    value={form.associationName}
+                    onChange={update('associationName')}
                     placeholder="Adib.: Bilbao Zaharra"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #e5e7eb',
-                      fontSize: 14,
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
+                    style={inputStyle}
                   />
                 </div>
                 <div>
@@ -214,23 +239,30 @@ export default function RegisterPage() {
                     value={form.event}
                     onChange={update('event')}
                     placeholder="Adib.: Aste Nagusia 2026"
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #e5e7eb',
-                      fontSize: 14,
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
+                    style={inputStyle}
                   />
                 </div>
               </>
             )}
 
+            {error && (
+              <div
+                style={{
+                  fontSize: 13,
+                  padding: '10px 12px',
+                  borderRadius: 8,
+                  background: 'rgba(239,68,68,0.1)',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  color: '#dc2626',
+                }}
+              >
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
+              disabled={isLoading}
               style={{
                 background: '#e85d2f',
                 border: 'none',
@@ -239,13 +271,35 @@ export default function RegisterPage() {
                 color: '#fff',
                 fontSize: 15,
                 fontWeight: 700,
-                cursor: 'pointer',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
                 minHeight: 48,
+                opacity: isLoading ? 0.7 : 1,
               }}
             >
-              {step === 1 ? 'Hurrengoa →' : 'Kontua sortu'}
+              {isLoading ? 'Sortzen...' : step === 1 ? 'Hurrengoa →' : 'Kontua sortu'}
             </button>
           </form>
+
+          {step === 2 && (
+            <button
+              onClick={() => {
+                setStep(1);
+                setError(null);
+              }}
+              style={{
+                marginTop: 12,
+                display: 'block',
+                width: '100%',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 13,
+                color: '#6b7280',
+              }}
+            >
+              ← Itzuli
+            </button>
+          )}
 
           <div style={{ marginTop: 16, textAlign: 'center' }}>
             <Link href="/login" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>

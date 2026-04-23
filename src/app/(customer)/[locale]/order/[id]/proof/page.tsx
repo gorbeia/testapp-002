@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { MOCK_TXOSNA } from '@/lib/mock-data';
 
 export default function ProofPage() {
   const params = useParams();
@@ -54,7 +53,7 @@ export default function ProofPage() {
           marginBottom: 8,
         }}
       >
-        {MOCK_TXOSNA.name}
+        {'Txosna'}
       </div>
       <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', marginBottom: 32 }}>
         Erakutsi zure eskaera jasotzeko

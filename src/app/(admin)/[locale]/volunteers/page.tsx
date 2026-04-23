@@ -1,12 +1,19 @@
 'use client';
-import { useState } from 'react';
-import { MOCK_VOLUNTEERS, MOCK_TXOSNA, type MockVolunteer } from '@/lib/mock-data';
+import { useState, useEffect } from 'react';
+
+interface Volunteer {
+  id: string;
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'VOLUNTEER';
+  active: boolean;
+}
 
 function AddVolunteerModal({
   onSave,
   onClose,
 }: {
-  onSave: (v: MockVolunteer) => void;
+  onSave: (v: Volunteer) => void;
   onClose: () => void;
 }) {
   const [name, setName] = useState('');
@@ -15,7 +22,7 @@ function AddVolunteerModal({
 
   const handleSave = () => {
     if (!name || !email) return;
-    onSave({ id: 'vol-' + Date.now(), name, email, role, active: true });
+    onSave({ id: '', name, email, role, active: true });
   };
 
   return (
@@ -189,11 +196,39 @@ function AddVolunteerModal({
 }
 
 export default function VolunteersPage() {
-  const [volunteers, setVolunteers] = useState<MockVolunteer[]>(MOCK_VOLUNTEERS);
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
+  const [associationId, setAssociationId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
 
+  useEffect(() => {
+    fetch('/api/auth/session')
+      .then((r) => r.json())
+      .then((s: { user?: { associationId?: string } }) => {
+        const aid = s?.user?.associationId;
+        if (aid) {
+          setAssociationId(aid);
+          return fetch(`/api/associations/${aid}/volunteers`);
+        }
+      })
+      .then((r) => r?.json())
+      .then((d: { volunteers?: Volunteer[] } | undefined) => {
+        if (d?.volunteers) setVolunteers(d.volunteers);
+      })
+      .catch(() => {});
+  }, []);
+
   const toggleActive = (id: string) => {
-    setVolunteers((prev) => prev.map((v) => (v.id === id ? { ...v, active: !v.active } : v)));
+    const vol = volunteers.find((v) => v.id === id);
+    if (!vol) return;
+    const newActive = !vol.active;
+    setVolunteers((prev) => prev.map((v) => (v.id === id ? { ...v, active: newActive } : v)));
+    fetch(`/api/volunteers/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active: newActive }),
+    }).catch(() => {
+      setVolunteers((prev) => prev.map((v) => (v.id === id ? { ...v, active: !newActive } : v)));
+    });
   };
 
   const activeCount = volunteers.filter((v) => v.active).length;
@@ -231,7 +266,7 @@ export default function VolunteersPage() {
           </button>
         </div>
         <div style={{ fontSize: 14, color: 'var(--adm-text-sec)' }}>
-          {MOCK_TXOSNA.name} · {activeCount} aktibo / {volunteers.length} guztira
+          {activeCount} aktibo / {volunteers.length} guztira
         </div>
       </div>
 
@@ -439,7 +474,22 @@ export default function VolunteersPage() {
       {showAdd && (
         <AddVolunteerModal
           onSave={(v) => {
-            setVolunteers((prev) => [...prev, v]);
+            if (!associationId) return;
+            fetch(`/api/associations/${associationId}/volunteers`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: v.name,
+                email: v.email,
+                role: v.role,
+                password: 'Temp1234!',
+              }),
+            })
+              .then((r) => r.json())
+              .then((created: Volunteer) => {
+                setVolunteers((prev) => [...prev, created]);
+              })
+              .catch(() => {});
             setShowAdd(false);
           }}
           onClose={() => setShowAdd(false)}

@@ -1,7 +1,6 @@
 'use client';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { MaskedInput } from '@/components/ui/masked-input';
-import { MOCK_ASSOCIATION } from '@/lib/mock-data';
 import { Dialog } from '@base-ui/react/dialog';
 import { X, Plus, CreditCard, Building2, Power, Trash2, Edit2, Check } from 'lucide-react';
 
@@ -200,7 +199,15 @@ function SaveButton({ saved, onClick }: { saved: boolean; onClick: () => void })
 
 // ── Tab 1: General (Association) ───────────────────────────────────────────────
 function GeneralTab() {
-  const [name, setName] = useState(MOCK_ASSOCIATION.name);
+  const [name, setName] = useState('');
+  useEffect(() => {
+    fetch('/api/admin/txosnak')
+      .then((r) => r.json())
+      .then((d: { association?: { name: string } }) => {
+        if (d.association?.name) setName(d.association.name);
+      })
+      .catch(() => {});
+  }, []);
   const [email, setEmail] = useState('kontaktua@elkartea.eus');
   const [phone, setPhone] = useState('');
   const [cif, setCif] = useState('');
@@ -1196,7 +1203,10 @@ function VatTab() {
 
   const handleToggleTicketBai = async (newValue: boolean) => {
     try {
-      const resp = await fetch('/api/associations/' + (MOCK_ASSOCIATION as any).id, {
+      const sessionRes = await fetch('/api/auth/session');
+      const session = await sessionRes.json();
+      const associationId = session?.user?.associationId ?? '';
+      const resp = await fetch('/api/associations/' + associationId, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticketBaiEnabled: newValue }),

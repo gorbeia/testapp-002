@@ -22,13 +22,18 @@ import {
   DEMO_VOLUNTEERS,
 } from '@/lib/fixtures/demo';
 import type {
+  AssociationRepository,
   CatalogRepository,
   CreateOrderInput,
+  CreatePaymentProviderInput,
+  CreateTxosnaInput,
   CreateVolunteerInput,
   OrderRepository,
+  PaymentProviderRepository,
   StoredAssociation,
   StoredCategory,
   StoredOrder,
+  StoredPaymentProvider,
   StoredProduct,
   StoredProductView,
   StoredTicket,
@@ -53,6 +58,7 @@ const tickets = new Map<string, StoredTicket>();
 const volunteers = new Map<string, StoredVolunteer>();
 /** Highest order number issued per txosna. */
 const orderCounters = new Map<string, number>();
+const paymentProviders = new Map<string, StoredPaymentProvider>();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -226,7 +232,9 @@ function seed() {
       associationId: MOCK_ASSOCIATION.id,
       name: mv.name,
       email: mv.email,
-      passwordHash: 'plain:test1234', // replaced with bcrypt hash in Phase 6
+      passwordHash: 'plain:test1234',
+      passwordResetToken: null,
+      passwordResetExpiresAt: null, // replaced with bcrypt hash in Phase 6
       role: mv.role,
       active: mv.active,
       createdAt: t,
@@ -251,6 +259,28 @@ export const txosnaRepo: TxosnaRepository = {
 
   async list(associationId) {
     return [...txosnak.values()].filter((t) => t.associationId === associationId);
+  },
+
+  async create(data: CreateTxosnaInput) {
+    const t = now();
+    const txosna: StoredTxosna = {
+      id: newId(),
+      slug: data.slug,
+      name: data.name,
+      status: 'OPEN',
+      counterSetup: 'SINGLE',
+      waitMinutes: null,
+      pinHash: data.pinHash ?? '0000',
+      enabledChannels: ['COUNTER', 'SELF_SERVICE'],
+      enabledPaymentMethods: ['CASH'],
+      pendingPaymentTimeout: 15,
+      printingEnabled: false,
+      associationId: data.associationId,
+      createdAt: t,
+      updatedAt: t,
+    };
+    txosnak.set(txosna.id, txosna);
+    return txosna;
   },
 
   async update(id, patch) {
@@ -422,6 +452,13 @@ export const volunteerRepo: VolunteerRepository = {
     return volunteers.get(id) ?? null;
   },
 
+  async findByResetToken(token) {
+    for (const v of volunteers.values()) {
+      if (v.passwordResetToken === token) return v;
+    }
+    return null;
+  },
+
   async listByAssociation(associationId) {
     return [...volunteers.values()].filter((v) => v.associationId === associationId);
   },
@@ -432,6 +469,8 @@ export const volunteerRepo: VolunteerRepository = {
       id: newId(),
       ...data,
       active: true,
+      passwordResetToken: null,
+      passwordResetExpiresAt: null,
       createdAt: t,
       updatedAt: t,
     };
@@ -489,6 +528,64 @@ export const catalogRepo: CatalogRepository = {
     }
 
     return result;
+  },
+};
+
+// ── AssociationRepository ─────────────────────────────────────────────────────
+
+export const associationRepo: AssociationRepository = {
+  async create(name: string) {
+    const t = now();
+    const assoc: StoredAssociation = { id: newId(), name, createdAt: t };
+    associations.set(assoc.id, assoc);
+    return assoc;
+  },
+
+  async findById(id: string) {
+    return associations.get(id) ?? null;
+  },
+};
+
+// ── PaymentProviderRepository ─────────────────────────────────────────────────
+
+export const paymentProviderRepo: PaymentProviderRepository = {
+  async listByAssociation(associationId) {
+    return [...paymentProviders.values()].filter((p) => p.associationId === associationId);
+  },
+
+  async findById(id) {
+    return paymentProviders.get(id) ?? null;
+  },
+
+  async create(data: CreatePaymentProviderInput) {
+    const t = now();
+    const provider: StoredPaymentProvider = {
+      id: newId(),
+      associationId: data.associationId,
+      providerType: data.providerType,
+      displayName: data.displayName ?? null,
+      enabled: true,
+      testMode: data.testMode,
+      credentials: data.credentials,
+      bizumEnabled: data.bizumEnabled ?? false,
+      verifiedAt: null,
+      createdAt: t,
+      updatedAt: t,
+    };
+    paymentProviders.set(provider.id, provider);
+    return provider;
+  },
+
+  async update(id, patch) {
+    const existing = paymentProviders.get(id);
+    if (!existing) throw new Error(`PaymentProvider not found: ${id}`);
+    const updated = { ...existing, ...patch, id, updatedAt: now() };
+    paymentProviders.set(id, updated);
+    return updated;
+  },
+
+  async delete(id) {
+    paymentProviders.delete(id);
   },
 };
 
@@ -659,6 +756,8 @@ function seedDemoAssociation() {
       name: mv.name,
       email: mv.email,
       passwordHash: 'plain:demo0000',
+      passwordResetToken: null,
+      passwordResetExpiresAt: null,
       role: mv.role,
       active: mv.active,
       createdAt: t,
@@ -700,6 +799,7 @@ export function resetStore() {
   tickets.clear();
   volunteers.clear();
   orderCounters.clear();
+  paymentProviders.clear();
   seed();
   seedDemoAssociation();
 }

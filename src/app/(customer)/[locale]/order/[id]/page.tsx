@@ -4,7 +4,27 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { CustomerHeader } from '@/components/layout/customer-header';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import type { StoredOrder } from '@/lib/store/types';
+interface OrderWithTickets {
+  id: string;
+  orderNumber: number;
+  txosnaId: string;
+  status: string;
+  verificationCode: string;
+  customerName: string | null;
+  total: number;
+  channel: string;
+  notes: string | null;
+  createdAt: string;
+  expiresAt?: string | null;
+  cancellationReason?: string | null;
+  tickets: {
+    id: string;
+    counterType: string;
+    status: string;
+    readyAt: string | null;
+    completedAt: string | null;
+  }[];
+}
 
 function ReceiptDownload({ orderId: _orderId }: { orderId: string }) {
   const [downloading, setDownloading] = useState(false);
@@ -75,7 +95,7 @@ const STEPS: {
 
 export default function OrderStatusPage() {
   const params = useParams();
-  const [order, setOrder] = useState<StoredOrder | null>(null);
+  const [order, setOrder] = useState<OrderWithTickets | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [txosnaSlug, setTxosnaSlug] = useState('');
@@ -168,7 +188,14 @@ export default function OrderStatusPage() {
 
   const isPending = order.status === 'PENDING_PAYMENT';
   const isCancelled = order.status === 'CANCELLED';
-  const isReady = order.status === 'CONFIRMED'; // Simplified for now
+
+  // Derive current step from ticket statuses
+  const ticketStatuses = order.tickets?.map((t) => t.status) ?? [];
+  const allReady =
+    ticketStatuses.length > 0 && ticketStatuses.every((s) => s === 'READY' || s === 'COMPLETED');
+  const anyInPrep = ticketStatuses.some((s) => s === 'IN_PREPARATION');
+  const currentStep = allReady ? 2 : anyInPrep ? 1 : order.status === 'CONFIRMED' ? 0 : -1;
+  const isReady = allReady;
 
   return (
     <div className="cust-theme" style={{ minHeight: '100vh', background: 'var(--cust-bg)' }}>
@@ -290,9 +317,8 @@ export default function OrderStatusPage() {
             }}
           >
             {STEPS.map((step, i) => {
-              // Simplified: show as completed if order is CONFIRMED or beyond
-              const done = order.status === 'CONFIRMED' && i < STEPS.length;
-              const active = i === STEPS.length - 1;
+              const done = i <= currentStep;
+              const active = i === currentStep;
               return (
                 <div
                   key={step.key}
