@@ -128,9 +128,13 @@ Used by the automated test suite. Avoid making changes during manual testing as 
 
 ---
 
-## Proto mode notes
+## Quick-start (Demo Elkartea)
 
-- **Login step 1:** any text is accepted as association name (API returns a mock)
-- **Login step 2:** any email / password combination works
-- **PIN screen:** `0000` (demo) or `1234` / `5678` / `9012` (mock)
+1. Go to `http://localhost:3000/login`
+2. Association: **Demo Elkartea**
+3. Email: `amaia@demo.eus` · Password: `demo0000`
+4. PIN screen: **`0000`**
+
+## Notes
+
 - Data resets on server restart — there is no persistence between sessions
