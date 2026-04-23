@@ -340,7 +340,7 @@ function VatTypeSelect({ value, onChange }: { value: string; onChange: (id: stri
   const [vatTypes, setVatTypes] = useState<VatType[]>([]);
   const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetch('/api/vat-types')
       .then((r) => r.json())
       .then((data) => {

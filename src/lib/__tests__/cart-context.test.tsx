@@ -11,7 +11,9 @@ function makeItem(overrides?: Partial<CartItem>): CartItem {
     quantity: 1,
     unitPrice: 8.5,
     selectedVariant: null,
+    selectedVariantOptionId: null,
     selectedModifiers: [],
+    selectedModifierIds: [],
     ...overrides,
   };
 }

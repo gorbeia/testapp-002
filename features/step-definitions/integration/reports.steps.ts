@@ -72,7 +72,7 @@ Given(
     for (let i = 0; i < confirmedCount; i++) {
       const order = makeOrder({
         id: `test-order-confirmed-${i}`,
-        txosnaId: this.currentTxosna.id,
+        txosnaId: this.currentTxosna!.id,
         orderNumber: orderNumber++,
         status: 'CONFIRMED',
         total: 5.0,
@@ -85,7 +85,7 @@ Given(
     for (let i = 0; i < cancelledCount; i++) {
       const order = makeOrder({
         id: `test-order-cancelled-${i}`,
-        txosnaId: this.currentTxosna.id,
+        txosnaId: this.currentTxosna!.id,
         orderNumber: orderNumber++,
         status: 'CANCELLED',
         cancellationReason: 'CUSTOMER',

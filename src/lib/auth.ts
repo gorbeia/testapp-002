@@ -6,7 +6,8 @@ import { volunteerRepo } from '@/lib/store';
 import bcrypt from 'bcryptjs';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adapter: PrismaAdapter(prisma) as any,
   session: { strategy: 'jwt' },
   providers: [
     Credentials({
@@ -43,16 +44,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
-        token.associationId = user.associationId;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        token.role = (user as any).role;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        token.associationId = (user as any).associationId;
       }
       return token;
     },
     session({ session, token }) {
       if (session.user && token.sub && token.role && token.associationId) {
         session.user.id = token.sub;
-        session.user.role = token.role;
-        session.user.associationId = token.associationId;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        session.user.role = token.role as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        session.user.associationId = token.associationId as any;
       }
       return session;
     },

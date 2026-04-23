@@ -1,7 +1,6 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import type { NextRequest } from 'next/server';
-import type { Prisma } from '@prisma/client';
 
 // GET /api/txosnak/[slug]/products
 // Returns the full master catalog annotated with per-txosna TxosnaProduct data
@@ -23,21 +22,8 @@ export async function GET(
 
   const txosnaId = txosna.id;
 
-  const categories: Array<
-    Prisma.CategoryGetPayload<{
-      include: {
-        products: {
-          include: {
-            variantGroups: {
-              include: { options: true };
-            };
-            modifiers: true;
-            txosnaProducts: true;
-          };
-        };
-      };
-    }>
-  > = await prisma.category.findMany({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const categories: any[] = await prisma.category.findMany({
     where: { associationId },
     orderBy: { displayOrder: 'asc' },
     include: {

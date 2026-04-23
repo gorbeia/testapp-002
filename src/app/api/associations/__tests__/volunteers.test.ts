@@ -22,7 +22,8 @@ const authMock = vi.mocked(authModule.auth);
 beforeEach(() => {
   resetStore();
   // Default to no auth unless overridden
-  authMock.mockResolvedValue(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  authMock.mockResolvedValue(null as any);
 });
 
 afterEach(() => {
@@ -34,7 +35,7 @@ afterEach(() => {
 function mockSession(role: string, associationId: string) {
   authMock.mockResolvedValue({
     user: { id: 'v1', role, associationId, email: 'admin@test.com' },
-  });
+  } as any);
 }
 
 function makeGetVolunteers(associationId: string) {
@@ -68,7 +69,7 @@ function makePinRequest(txosnaSlug: string, pin: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ txosnaSlug, pin }),
-  });
+  }) as any;
 }
 
 async function resolveParams<T extends Record<string, any>>(

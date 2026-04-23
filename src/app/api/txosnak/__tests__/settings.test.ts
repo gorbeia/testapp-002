@@ -39,7 +39,7 @@ afterEach(() => {
 function mockSession(role: string, associationId: string) {
   authMock.mockResolvedValue({
     user: { id: 'v1', role, associationId, email: 'admin@test.com' },
-  });
+  } as any);
 }
 
 function makeGetSettings(slug: string) {

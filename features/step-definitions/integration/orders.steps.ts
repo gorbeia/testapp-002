@@ -179,6 +179,9 @@ When(
       total: 16,
       verificationCode: 'TEST-1',
       registeredById: null,
+      cancellationReason: null,
+      paymentSessionId: null,
+      confirmedAt: null,
       expiresAt: null,
       pendingLines: null,
       createdAt: new Date(),
@@ -186,7 +189,7 @@ When(
     };
     this.lastResponse = new Response(JSON.stringify(this.currentOrder), { status: 201 });
     this.lastBody = this.currentOrder;
-    this.savedOrders.push(this.currentOrder);
+    this.savedOrders.push(this.currentOrder!);
   }
 );
 

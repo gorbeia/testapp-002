@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Production: look up association by name
-  const { default: prisma } = await import('@/lib/prisma');
+  const { prisma } = await import('@/lib/prisma');
   if (!prisma) {
     return NextResponse.json({ error: 'Datu-basea ez dago erabilgarri' }, { status: 503 });
   }

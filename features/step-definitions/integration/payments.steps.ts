@@ -32,12 +32,14 @@ function makeOnlineOrder(
     expiresAt: new Date(Date.now() + 30 * 60_000), // 30 minutes from now
     pendingLines: [
       {
-        counterType: 'COUNTER_1',
+        counterType: 'FOOD',
         requiresPreparation: true,
         notes: null,
         lines: [
           {
             productId: 'prod-1',
+            productName: 'Test Product',
+            unitPrice: 25.0,
             quantity: 1,
             selectedVariant: null,
             selectedModifiers: [],
