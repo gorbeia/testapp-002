@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { CustomerHeader } from '@/components/layout/customer-header';
-import { PrototypeNav } from '@/components/prototype-nav';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import type { StoredOrder } from '@/lib/store/types';
 
@@ -388,8 +387,6 @@ export default function OrderStatusPage() {
           </div>
         )}
       </div>
-
-      <PrototypeNav />
     </div>
   );
 }

@@ -40,7 +40,6 @@ export default function PinPage() {
     modeLabel: 'Aukeratu modua',
     pinLabel: 'PIN sartu',
     confirm: 'Sartu',
-    hint: 'Proto modua: PIN 1234',
     back: '← Itzuli',
   };
 
@@ -139,14 +138,6 @@ export default function PinPage() {
                 {d}
               </button>
             ))}
-          </div>
-
-          {/* Proto hint */}
-          <div
-            className="text-xs rounded-lg px-3 py-2 mb-3 text-center"
-            style={{ background: 'var(--ops-orange-dim)', color: '#fdba74' }}
-          >
-            {t.hint}
           </div>
 
           {/* Confirm */}

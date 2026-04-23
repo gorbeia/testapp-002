@@ -322,20 +322,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           >
             ← Mostradorera itzuli
           </Link>
-          {process.env.NODE_ENV !== 'production' && (
-            <Link
-              href="/prototype"
-              style={{
-                fontSize: 12,
-                color: 'var(--adm-sidebar-label)',
-                textDecoration: 'none',
-                padding: '4px 12px',
-                opacity: 0.6,
-              }}
-            >
-              ← Prototipoa
-            </Link>
-          )}
         </div>
       </aside>
 

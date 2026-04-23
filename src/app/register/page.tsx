@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { PrototypeNav } from '@/components/prototype-nav';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function RegisterPage() {
@@ -34,7 +33,6 @@ export default function RegisterPage() {
         fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)',
       }}
     >
-      <PrototypeNav />
       <div style={{ position: 'absolute', top: 12, right: 12 }}>
         <ThemeToggle variant="ops" />
       </div>
@@ -230,19 +228,6 @@ export default function RegisterPage() {
                 </div>
               </>
             )}
-
-            <div
-              className="text-xs rounded-lg px-3 py-2"
-              style={{
-                background: '#fff7ed',
-                color: '#c2410c',
-                fontSize: 12,
-                padding: '8px 12px',
-                borderRadius: 8,
-              }}
-            >
-              Proto modua: edozein daturekin erregistratu daiteke
-            </div>
 
             <button
               type="submit"

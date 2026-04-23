@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { PrototypeNav } from '@/components/prototype-nav';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 type Step = 1 | 2;
@@ -55,7 +54,6 @@ export default function LoginPage() {
 
   return (
     <div className="ops-theme min-h-screen flex items-center justify-center px-4">
-      <PrototypeNav />
       <div style={{ position: 'absolute', top: 12, right: 12 }}>
         <ThemeToggle variant="ops" />
       </div>
@@ -147,14 +145,6 @@ export default function LoginPage() {
                     {error}
                   </div>
                 )}
-
-                <div
-                  className="text-xs rounded-lg px-3 py-2.5 flex items-start gap-2"
-                  style={{ background: 'var(--ops-orange-dim)', color: '#fdba74' }}
-                >
-                  <span className="mt-0.5">💡</span>
-                  <span>Proto modua: edozein elkarte izenarekin jarraitu daiteke</span>
-                </div>
 
                 <button
                   type="submit"
@@ -252,14 +242,6 @@ export default function LoginPage() {
                     <span>{error}</span>
                   </div>
                 )}
-
-                <div
-                  className="text-xs rounded-lg px-3 py-2.5 flex items-start gap-2"
-                  style={{ background: 'var(--ops-orange-dim)', color: '#fdba74' }}
-                >
-                  <span className="mt-0.5">💡</span>
-                  <span>Proto modua: edozein datuarekin sartu daiteke</span>
-                </div>
 
                 <button
                   type="submit"

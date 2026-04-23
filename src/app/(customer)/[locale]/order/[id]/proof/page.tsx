@@ -2,7 +2,6 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { PrototypeNav } from '@/components/prototype-nav';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { MOCK_TXOSNA } from '@/lib/mock-data';
 
@@ -117,7 +116,6 @@ export default function ProofPage() {
       >
         ← Egoerara itzuli
       </Link>
-      <PrototypeNav />
     </div>
   );
 }
