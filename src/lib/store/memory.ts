@@ -544,6 +544,11 @@ export const associationRepo: AssociationRepository = {
   async findById(id: string) {
     return associations.get(id) ?? null;
   },
+
+  async findByName(query: string) {
+    const q = query.toLowerCase();
+    return [...associations.values()].find((a) => a.name.toLowerCase().includes(q)) ?? null;
+  },
 };
 
 // ── PaymentProviderRepository ─────────────────────────────────────────────────

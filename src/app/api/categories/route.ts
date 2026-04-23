@@ -3,12 +3,30 @@ import { prisma } from '@/lib/prisma';
 import type { NextRequest } from 'next/server';
 
 export async function GET() {
-  if (!prisma) return new Response('Service unavailable', { status: 503 });
-
   const session = await auth();
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
 
   const associationId = (session.user as any).associationId as string;
+
+  if (!prisma) {
+    const { catalogRepo } = await import('@/lib/store');
+    const cats = await catalogRepo.listCategories(associationId);
+    const categories = await Promise.all(
+      cats.map(async (cat) => {
+        const products = await catalogRepo.listProducts(cat.id);
+        return {
+          ...cat,
+          products: products.map((p) => ({
+            ...p,
+            defaultPrice: p.defaultPrice,
+            customerImageUrl: p.imageUrl,
+            ingredients: p.removableIngredients.join(', ') || null,
+          })),
+        };
+      })
+    );
+    return Response.json(categories);
+  }
 
   const categories = await prisma.category.findMany({
     where: { associationId },

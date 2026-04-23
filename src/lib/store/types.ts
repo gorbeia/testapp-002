@@ -1,7 +1,7 @@
 // ── Domain enums ─────────────────────────────────────────────────────────────
 
 export type TxosnaStatus = 'OPEN' | 'PAUSED' | 'CLOSED';
-export type OrderStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'CANCELLED';
+export type OrderStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
 export type CancellationReason =
   | 'CUSTOMER'
   | 'SOLD_OUT'
@@ -285,6 +285,7 @@ export interface TxosnaRepository {
 export interface AssociationRepository {
   create(name: string): Promise<StoredAssociation>;
   findById(id: string): Promise<StoredAssociation | null>;
+  findByName(query: string): Promise<StoredAssociation | null>;
 }
 
 export interface PaymentProviderRepository {

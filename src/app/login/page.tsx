@@ -175,6 +175,7 @@ export default function LoginPage() {
 
                 <button
                   type="submit"
+                  suppressHydrationWarning
                   disabled={isLoading || !query.trim()}
                   className="w-full rounded-xl py-4 font-bold text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.98]"
                   style={{

@@ -1,7 +1,7 @@
 // ── Types ──────────────────────────────────────────────────────────────────
 
 export type TxosnaStatus = 'OPEN' | 'PAUSED' | 'CLOSED';
-export type OrderStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'CANCELLED';
+export type OrderStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
 export type TicketStatus = 'RECEIVED' | 'IN_PREPARATION' | 'READY' | 'COMPLETED' | 'CANCELLED';
 export type CategoryType = 'FOOD' | 'DRINKS';
 export type CounterType = 'FOOD' | 'DRINKS';

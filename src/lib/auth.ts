@@ -26,8 +26,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // Bcrypt hash
           valid = await bcrypt.compare(credentials.password as string, volunteer.passwordHash);
         } else {
-          // Plain string (dev/test)
-          valid = credentials.password === volunteer.passwordHash;
+          // Plain string sentinel (dev/test): stored as "plain:<password>"
+          const plain = volunteer.passwordHash.startsWith('plain:')
+            ? volunteer.passwordHash.slice(6)
+            : volunteer.passwordHash;
+          valid = credentials.password === plain;
         }
         if (!valid) return null;
 

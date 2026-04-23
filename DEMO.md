@@ -1,12 +1,23 @@
 # Txosnabai — Demo & Testing Guide
 
-All data is seeded in-memory on server start and resets on restart. Use the prototype navigator at `/prototype` to jump between screens directly.
+All data is seeded in-memory on server start and resets on restart.
+
+---
+
+## Quick-start
+
+> Use **Demo Elkartea** for all demos. _Erreka Gaztedi_ is the automated test fixture — avoid it during manual testing.
+
+1. Go to `http://localhost:3000/login`
+2. Association: **Demo Elkartea** ← type this exactly in the first field
+3. Email: `amaia@demo.eus` · Password: `demo0000`
+4. PIN screen: **`0000`**
 
 ---
 
 ## Associations
 
-Two associations are pre-loaded. Use their name in the login **step 1** field.
+Two associations are pre-loaded. Enter the association name in login **step 1**.
 
 | Association        | Purpose                                                    |
 | ------------------ | ---------------------------------------------------------- |
@@ -66,19 +77,23 @@ All orders are scoped to `demo-janaria`.
 | 4   | Leire    | CONFIRMED       | €13.00 | `GH-0004` | Counter         | Food: 2× Txorizoa ogian (⚠ slow, 13 min) · Drinks: 2× Garagardoa |
 | 5   | Txomin   | CONFIRMED       | €12.50 | `JK-0005` | Self-service    | Food: Burgerra + Gazta (READY) · Drinks: 3× Ura (READY)          |
 | 6   | Beñat    | CANCELLED       | €12.00 | `LM-0006` | Counter         | 2× Pintxo nahasia (sold-out cancellation)                        |
+| 7   | Nerea    | COMPLETED       | €7.00  | `NP-0007` | Counter         | Txorizoa ogian + Freskagarria                                    |
+| 8   | Koldo    | COMPLETED       | €5.00  | `QR-0008` | Self-service    | 2× Freskagarria (drinks only)                                    |
 
 ### KDS ticket states at startup
 
-| Ticket        | Order     | Counter | Status         | Notes                          |
-| ------------- | --------- | ------- | -------------- | ------------------------------ |
-| demo-ticket-1 | #1 Miren  | FOOD    | RECEIVED       |                                |
-| demo-ticket-2 | #2 Josu   | FOOD    | RECEIVED       |                                |
-| demo-ticket-3 | #3 Ander  | FOOD    | IN_PREPARATION | "Burgerra ondo eginda mesedez" |
-| demo-ticket-4 | #4 Leire  | FOOD    | IN_PREPARATION | ⚠ Slow order (13 min)          |
-| demo-ticket-5 | #4 Leire  | DRINKS  | RECEIVED       |                                |
-| demo-ticket-6 | #5 Txomin | FOOD    | READY          |                                |
-| demo-ticket-7 | #5 Txomin | DRINKS  | READY          |                                |
-| demo-ticket-8 | #6 Beñat  | FOOD    | CANCELLED      |                                |
+| Ticket         | Order     | Counter | Status         | Notes                          |
+| -------------- | --------- | ------- | -------------- | ------------------------------ |
+| demo-ticket-1  | #1 Miren  | FOOD    | RECEIVED       |                                |
+| demo-ticket-2  | #2 Josu   | FOOD    | RECEIVED       |                                |
+| demo-ticket-3  | #3 Ander  | FOOD    | IN_PREPARATION | "Burgerra ondo eginda mesedez" |
+| demo-ticket-4  | #4 Leire  | FOOD    | IN_PREPARATION | ⚠ Slow order (13 min)          |
+| demo-ticket-5  | #4 Leire  | DRINKS  | RECEIVED       |                                |
+| demo-ticket-6  | #5 Txomin | FOOD    | READY          |                                |
+| demo-ticket-7  | #5 Txomin | DRINKS  | READY          |                                |
+| demo-ticket-8  | #6 Beñat  | FOOD    | CANCELLED      |                                |
+| demo-ticket-9  | #7 Nerea  | FOOD    | COMPLETED      |                                |
+| demo-ticket-10 | #8 Koldo  | DRINKS  | COMPLETED      |                                |
 
 ---
 
@@ -112,13 +127,11 @@ Used by the automated test suite. Avoid making changes during manual testing as 
 | Landing page         | `http://localhost:3000/`                       |
 | Login                | `http://localhost:3000/login`                  |
 | Register             | `http://localhost:3000/register`               |
-| Prototype navigator  | `http://localhost:3000/prototype`              |
 | PIN entry            | `http://localhost:3000/eu/pin`                 |
 | Admin dashboard      | `http://localhost:3000/eu/dashboard`           |
 | Txosnak list (admin) | `http://localhost:3000/eu/txosna`              |
 | Volunteers (admin)   | `http://localhost:3000/eu/volunteers`          |
 | Reports (admin)      | `http://localhost:3000/eu/reports`             |
-| Onboarding           | `http://localhost:3000/eu/onboarding`          |
 | Kitchen (KDS)        | `http://localhost:3000/eu/kitchen`             |
 | Counter              | `http://localhost:3000/eu/counter`             |
 | Drinks counter       | `http://localhost:3000/eu/drinks`              |
@@ -127,13 +140,6 @@ Used by the automated test suite. Avoid making changes during manual testing as 
 | Public menu (mock)   | `http://localhost:3000/eu/t/aste-nagusia-2026` |
 
 ---
-
-## Quick-start (Demo Elkartea)
-
-1. Go to `http://localhost:3000/login`
-2. Association: **Demo Elkartea**
-3. Email: `amaia@demo.eus` · Password: `demo0000`
-4. PIN screen: **`0000`**
 
 ## Notes
 
