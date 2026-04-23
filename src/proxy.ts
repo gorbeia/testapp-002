@@ -17,9 +17,12 @@ const adminPaths = ['/menu', '/txosna', '/volunteers', '/reports', '/onboarding'
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Auth pages — bypass entirely (no locale prefix, no auth check)
+  // Root and auth pages — bypass entirely (no locale prefix, no auth check)
   const isAuthPage =
-    pathname === '/login' || pathname === '/register' || pathname === '/reset-password';
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/reset-password';
 
   if (isAuthPage) {
     return NextResponse.next();
