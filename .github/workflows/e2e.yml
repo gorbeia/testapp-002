@@ -32,6 +32,7 @@ jobs:
       NEXTAUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       PAYMENT_CREDENTIALS_KEY: ${{ secrets.PAYMENT_CREDENTIALS_KEY }}
+      PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/ms-playwright
 
     steps:
       - uses: actions/checkout@v4
