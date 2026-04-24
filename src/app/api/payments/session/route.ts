@@ -1,4 +1,4 @@
-import { paymentProvider } from '@/lib/payments';
+import { getPaymentProvider } from '@/lib/payments';
 import { orderRepo } from '@/lib/store';
 
 export async function POST(request: Request) {
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
   const returnUrl = body.returnUrl ?? `${process.env.NEXT_PUBLIC_BASE_URL}/orders/${order.id}`;
 
-  const session = await paymentProvider.createSession(order, returnUrl);
+  const session = await getPaymentProvider().createSession(order, returnUrl);
 
   await orderRepo.update(order.id, { paymentSessionId: session.sessionId });
 
