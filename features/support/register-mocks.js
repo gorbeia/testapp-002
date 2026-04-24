@@ -74,6 +74,7 @@ Module.prototype.require = function (id) {
   if (id === '@/lib/payments') {
     return {
       paymentProvider: global.fakePaymentProvider,
+      getPaymentProvider: () => global.fakePaymentProvider,
     };
   }
   return originalRequire.apply(this, arguments);
