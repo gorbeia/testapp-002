@@ -1,0 +1,36 @@
+name: Integration tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  integration:
+    name: Cucumber BDD (mocked)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run integration tests
+        run: pnpm test:integration
+
+      - name: Upload Cucumber report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cucumber-integration-report
+          path: reports/cucumber.html
+          retention-days: 14
