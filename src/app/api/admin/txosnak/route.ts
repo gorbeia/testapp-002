@@ -3,17 +3,10 @@ import { auth } from '@/lib/auth';
 import { txosnaRepo, associationRepo } from '@/lib/store';
 
 export async function GET() {
-  let sessionAssociationId: string;
-  let sessionRole: string;
+  const session = await auth();
+  if (!session?.user) return new Response('Unauthorized', { status: 401 });
 
-  if (process.env.PROTO_MODE === 'true') {
-    sessionAssociationId = (global as any).__TEST_ASSOCIATION_ID__ ?? 'assoc-1';
-    sessionRole = 'ADMIN';
-  } else {
-    const session = await auth();
-    if (!session?.user) return new Response('Unauthorized', { status: 401 });
-    ({ role: sessionRole, associationId: sessionAssociationId } = session.user as any);
-  }
+  const { role: sessionRole, associationId: sessionAssociationId } = session.user as any;
 
   if (sessionRole !== 'ADMIN') return new Response('Forbidden', { status: 403 });
 
