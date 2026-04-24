@@ -69,7 +69,7 @@ const eslintConfig = [
   
   // Ignored files
   {
-    ignores: [".next/", "node_modules/", "dist/", "out/", ".husky/", "prototypes/"],
+    ignores: [".next/", "node_modules/", "dist/", "out/", ".husky/", "prototypes/", ".claude/"],
   },
 ];
 
