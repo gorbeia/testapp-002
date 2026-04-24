@@ -1,3 +1,4 @@
+@e2e-only
 Feature: Admin pages accessibility
   As an association admin
   I want the core management pages to load without crashing

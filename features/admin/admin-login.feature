@@ -1,3 +1,4 @@
+@e2e-only
 Feature: Admin login
   As an association admin
   I want to log in through the two-step login flow
