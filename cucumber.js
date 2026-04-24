@@ -20,9 +20,9 @@ module.exports = {
   // Slow — real browser against running Next.js dev server
   e2e: {
     ...common,
-    require: ['features/step-definitions/e2e/**/*.ts', 'features/support/hooks.ts'],
+    require: ['features/step-definitions/e2e/**/*.ts', 'features/support/e2e-hooks.ts'],
     requireModule: ['ts-node/register'],
     paths: ['features/**/*.feature'],
-    tags: '@smoke or @e2e',
+    tags: '@e2e and not @wip',
   },
 };
