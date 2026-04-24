@@ -297,7 +297,7 @@ Sukaldeko langileek 📦 Stocka botoia erabiliz produktuak agortuta marka ditzak
 
 **Janari Mostradorea:**
 
-![Janari Mostradorea](../screenshots/12-counter-food.png)
+![Janari Mostradorea](../screenshots/12-counter-food-v2.png)
 
 **Edari Mostradorea:**
 
@@ -455,7 +455,7 @@ Txosna bakoitzak konfigurazio propioa du, 4 fitxatan antolatuta:
 
 ##### 3. Eskaerak fitxa
 
-![Txosna konfigurazioa - Eskaerak](../screenshots/24-txosna-settings-orders.png)
+![Txosna konfigurazioa - Eskaerak](../screenshots/24-txosna-settings-orders-v2.png)
 
 **Eskaera kanalak:**
 
@@ -562,51 +562,17 @@ Elkarte mailan ordainketa metodo globalak konfiguratu daitezke. Orri honetan:
 
 ---
 
-### 2.4 Txosna Ezarpen Espezifikoak
-
-Txosna bakoitzak bere konfigurazio independentea du. Administrazio panelean txosna bakoitzaren ezarpenak kudeatu daitezke:
-
-#### Txosnako Produktuen Kudeaketa
-
-![Txosnako produktuak](../screenshots/26-txosna-products.png)
-
-Txosna bakoitzean produktuen kudeaketa independentea dago. Orri honetan:
-
-- **Produktuen zerrenda**: Txosnako produktu guztiak ikusi eta bilatu
-- **Gaitu/Desgaitu**: Aukeratu zein produktu eskainiko diren txosna honetan
-- **Stock egoera**: Produktu bakoitzaren eskuragarritasuna kontrolatu (agortuta / eskuragarri)
-- **Prezioak**: Txosna bakoitzeko prezio bereziak ezarri
-
-**Produktuak gaituta:**
-
-![Produktuak gaituta](../screenshots/26-txosna-products-enabled.png)
-
-Produktuak gaitu eta konfiguratzeko, aktibatu etengailua eta egin klik "Editatu" botoian:
-
-- ✅ **Gaituta** - Produktua txosna honetan eskaintzen da
-- ⚙️ **Editatu** - Ireki ezarpenen dialogoa
-
-**Produktuen ezarpenak txosnako:**
-
-![Produktu ezarpenak txosnako](../screenshots/26-txosna-product-override-dialog.png)
-
-Produktu bat txosna batean gaitzean, hurrengo ezarpenak alda daitezke:
-
-| Ezarpena                  | Azalpena                                                            |
-| ------------------------- | ------------------------------------------------------------------- |
-| **Gaituta**               | Produktua txosna honetan eskaintzen den ala ez                      |
-| **Prezioa aldatu**        | Produktuaren prezioa txosna honetarako (hutsik = prezio lehenetsia) |
-| **Prestaketa argibideak** | Sukaldeko argibide espezifikoak produktu honetarako                 |
-
----
-
-### 2.5 Sistema Oinarrizkoak
+### 2.4 Sistema Oinarrizkoak
 
 #### Saioa Hasi
 
 ![Login](../screenshots/13-login.png)
 
-- Posta elektronikoa eta pasahitza
+**2 pausoko prozesua:**
+
+1. **Elkartea hautatu** — Elkartearen izena idatzi eta "Jarraitu" sakatu
+2. **Kredentziakak sartu** — Posta elektronikoa eta pasahitza
+
 - Pasahitza berrezarri aukera
 - Segurtasun-tokenak
 
