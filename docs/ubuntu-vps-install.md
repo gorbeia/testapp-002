@@ -1,66 +1,98 @@
 # Txosnabai — Ubuntu VPS Installation Guide
 
-This guide covers a fresh installation of the Txosnabai app on an Ubuntu 22.04 LTS (or 24.04 LTS) VPS, including a zero-downtime upgrade strategy using PM2 cluster mode.
+The application is built entirely in GitHub Actions and published as a
+self-contained tarball. The VPS never needs the source code, Node.js
+build tools, or heavy `node_modules` — it only runs the pre-built bundle.
 
 ---
 
 ## Table of Contents
 
-1. [Prerequisites](#1-prerequisites)
-2. [System Preparation](#2-system-preparation)
-3. [Install Node.js and pnpm](#3-install-nodejs-and-pnpm)
-4. [Install and Configure PostgreSQL](#4-install-and-configure-postgresql)
-5. [Install nginx](#5-install-nginx)
-6. [Deploy the Application](#6-deploy-the-application)
-7. [Configure Environment Variables](#7-configure-environment-variables)
-8. [Run Database Migrations and Seed](#8-run-database-migrations-and-seed)
-9. [Build and Start with PM2](#9-build-and-start-with-pm2)
-10. [Configure nginx Reverse Proxy](#10-configure-nginx-reverse-proxy)
-11. [TLS with Let's Encrypt](#11-tls-with-lets-encrypt)
-12. [Upgrading with Minimum Downtime](#12-upgrading-with-minimum-downtime)
-13. [Environment Variable Reference](#13-environment-variable-reference)
-14. [Troubleshooting](#14-troubleshooting)
+1. [How the build pipeline works](#1-how-the-build-pipeline-works)
+2. [Prerequisites](#2-prerequisites)
+3. [System preparation](#3-system-preparation)
+4. [Install Node.js runtime and tools](#4-install-nodejs-runtime-and-tools)
+5. [Install and configure PostgreSQL](#5-install-and-configure-postgresql)
+6. [Install nginx](#6-install-nginx)
+7. [Initial deploy](#7-initial-deploy)
+8. [Configure environment variables](#8-configure-environment-variables)
+9. [Run database migrations](#9-run-database-migrations)
+10. [Start with PM2](#10-start-with-pm2)
+11. [Configure nginx reverse proxy](#11-configure-nginx-reverse-proxy)
+12. [TLS with Let's Encrypt](#12-tls-with-lets-encrypt)
+13. [Upgrading with minimum downtime](#13-upgrading-with-minimum-downtime)
+14. [GitHub Actions setup](#14-github-actions-setup)
+15. [Environment variable reference](#15-environment-variable-reference)
+16. [Troubleshooting](#16-troubleshooting)
 
 ---
 
-## 1. Prerequisites
+## 1. How the build pipeline works
+
+Every push to `main` (and every `v*` tag) triggers `.github/workflows/release.yml`:
+
+```
+GitHub Actions
+  └─ pnpm install --frozen-lockfile
+  └─ pnpm prisma generate          ← no DB needed
+  └─ pnpm build                    ← Next.js standalone output
+  └─ assemble tarball
+       .next/standalone/            ← runnable Node.js app
+       .next/standalone/.next/static/  ← pre-built JS/CSS chunks
+       .next/standalone/public/    ← static assets
+       .next/standalone/prisma/    ← schema + migration files
+  └─ upload artifact               ← available for 30 days
+  └─ create GitHub Release         ← only on v* tags
+```
+
+The tarball is a complete, runnable application. The VPS only needs:
+
+- Node.js 24 (to run `server.js`)
+- PostgreSQL 16 (the database)
+- `prisma` CLI (to apply migrations — installed once, globally)
+- `pm2` (process manager)
+- `nginx` (reverse proxy)
+- `gh` CLI (to download bundles from GitHub)
+
+---
+
+## 2. Prerequisites
 
 **Minimum server specs:**
 
 | Resource | Minimum | Recommended |
 |----------|---------|-------------|
 | CPU      | 1 vCPU  | 2+ vCPUs    |
-| RAM      | 2 GB    | 4 GB        |
-| Disk     | 20 GB   | 40 GB SSD   |
+| RAM      | 1 GB    | 2 GB        |
+| Disk     | 10 GB   | 20 GB SSD   |
 | OS       | Ubuntu 22.04 LTS | Ubuntu 24.04 LTS |
 
-**Required external services:**
+> RAM requirement is much lower than a build-on-server approach because
+> `next build` never runs on the VPS.
 
-- A domain name pointed at the server's IP (e.g. `txosnabai.example.com`)
-- A Stripe account (for online payments) — or skip if using cash-only mode
-- Outbound SMTP or a transactional mail service (optional, for notifications)
+**Required before you start:**
+
+- A domain name pointing at the server IP (e.g. `txosnabai.example.com`)
+- A GitHub fine-grained PAT with **read** access to the repository
+  (needed so the server can download artifacts — see [Section 14](#14-github-actions-setup))
+- Stripe account credentials (if online payments are used)
+- The value of `NEXT_PUBLIC_BASE_URL` added to GitHub repository secrets
+  (see [Section 14](#14-github-actions-setup))
 
 ---
 
-## 2. System Preparation
-
-Log in as root or a user with `sudo` privileges, then:
+## 3. System preparation
 
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y git curl wget unzip build-essential ca-certificates gnupg lsb-release
 ```
 
-Create a dedicated system user that will own the app process. Running as a non-root user limits blast radius if the process is ever compromised.
+Create a dedicated OS user that owns the app process:
 
 ```bash
 sudo useradd -m -s /bin/bash txosnabai
-sudo passwd txosnabai   # set a strong password, or use SSH key only
-```
-
-Add your SSH public key to the new user if you prefer key-based access:
-
-```bash
+# Add your SSH public key if preferred over password login:
 sudo mkdir -p /home/txosnabai/.ssh
 sudo cp ~/.ssh/authorized_keys /home/txosnabai/.ssh/
 sudo chown -R txosnabai:txosnabai /home/txosnabai/.ssh
@@ -69,43 +101,49 @@ sudo chmod 700 /home/txosnabai/.ssh
 
 ---
 
-## 3. Install Node.js and pnpm
+## 4. Install Node.js runtime and tools
 
-The app requires **Node.js 24.x** and **pnpm 10.22.0**. Use the NodeSource repository for the correct version.
+The VPS only runs the app, so only the Node.js **runtime** is needed —
+not the full build toolchain. `pnpm` is not required on the server.
 
 ```bash
-# Add NodeSource repository for Node.js 24
+# Node.js 24 (runtime only)
 curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
 sudo apt install -y nodejs
-
-# Verify
 node --version   # must be v24.x
-npm --version
-```
 
-Install pnpm via npm (runs globally for all users):
-
-```bash
-sudo npm install -g pnpm@10.22.0
-
-# Verify
-pnpm --version   # must be 10.22.0
-```
-
-Install PM2 globally — this is the process manager used to keep the app running and enable zero-downtime restarts:
-
-```bash
+# PM2 — process manager
 sudo npm install -g pm2
+
+# Prisma CLI — used only to apply database migrations
+sudo npm install -g prisma@7.7.0
+
+# gh CLI — used to download build artifacts from GitHub
+sudo apt install -y gh
+# or via the official repo:
+# curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+#   | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+# echo "deb [arch=$(dpkg --print-architecture) \
+#   signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] \
+#   https://cli.github.com/packages stable main" \
+#   | sudo tee /etc/apt/sources.list.d/github-cli.list
+# sudo apt update && sudo apt install -y gh
+```
+
+Authenticate `gh` as the `txosnabai` user using the fine-grained PAT:
+
+```bash
+sudo -i -u txosnabai bash
+gh auth login --with-token <<< "github_pat_YOUR_TOKEN_HERE"
+gh auth status   # should show: Logged in to github.com
+exit
 ```
 
 ---
 
-## 4. Install and Configure PostgreSQL
-
-The app requires **PostgreSQL 16**.
+## 5. Install and configure PostgreSQL
 
 ```bash
-# Add official PostgreSQL repo
 sudo apt install -y postgresql-common
 sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
 sudo apt install -y postgresql-16
@@ -124,28 +162,18 @@ GRANT ALL PRIVILEGES ON DATABASE txosnabai TO txosnabai;
 SQL
 ```
 
-> **Security note:** Replace `change_me_strong_password` with a randomly generated password (e.g. `openssl rand -base64 24`). Store it in a password manager — you will need it for the `DATABASE_URL` environment variable.
-
-Restrict PostgreSQL to localhost (it does so by default, but verify):
-
-```bash
-sudo grep "listen_addresses" /etc/postgresql/16/main/postgresql.conf
-# Should show: listen_addresses = 'localhost'
-```
+> Generate a strong password with `openssl rand -base64 24` and store it
+> in a password manager — you will need it for `DATABASE_URL`.
 
 ---
 
-## 5. Install nginx
+## 6. Install nginx
 
 ```bash
 sudo apt install -y nginx
 sudo systemctl enable nginx
 sudo systemctl start nginx
-```
 
-Open the firewall for HTTP and HTTPS:
-
-```bash
 sudo ufw allow OpenSSH
 sudo ufw allow 'Nginx Full'
 sudo ufw enable
@@ -153,146 +181,160 @@ sudo ufw enable
 
 ---
 
-## 6. Deploy the Application
+## 7. Initial deploy
 
-Switch to the app user, clone the repo, and install dependencies:
+All deployment steps run as the `txosnabai` user.
 
 ```bash
 sudo -i -u txosnabai bash
-cd ~
-
-git clone https://github.com/gorbeia/testapp-002.git txosnabai
-cd txosnabai
-
-# Install production dependencies (frozen lockfile ensures reproducible installs)
-pnpm install --frozen-lockfile
+mkdir -p /home/txosnabai/{releases,logs}
 ```
 
-The app directory will be `/home/txosnabai/txosnabai/`. All subsequent commands in this guide assume this working directory unless noted.
+### Download the bundle
+
+**Option A — from a tagged release (recommended for production):**
+
+```bash
+cd /home/txosnabai/releases
+gh release download v1.0.0 \
+  --repo gorbeia/testapp-002 \
+  --pattern '*.tar.gz'
+```
+
+**Option B — latest artifact from the `main` branch (pre-release / staging):**
+
+```bash
+cd /home/txosnabai/releases
+gh run download \
+  --repo gorbeia/testapp-002 \
+  --name txosnabai-bundle
+```
+
+### Extract
+
+```bash
+cd /home/txosnabai/releases
+VERSION="v1.0.0"   # match the downloaded filename
+
+mkdir "$VERSION"
+tar -xzf "txosnabai-${VERSION}.tar.gz" -C "$VERSION"
+
+# Point the 'current' symlink at the new release
+ln -sfn "/home/txosnabai/releases/$VERSION" /home/txosnabai/current
+```
+
+The live app will always be at `/home/txosnabai/current`.
 
 ---
 
-## 7. Configure Environment Variables
+## 8. Configure environment variables
 
-Create an `.env.production` file. This file is read by Next.js when `NODE_ENV=production`.
+Create `.env.production` once. It is **not** bundled in the artifact —
+it stays on the server and is reused across every upgrade.
 
 ```bash
-nano /home/txosnabai/txosnabai/.env.production
+nano /home/txosnabai/.env.production
 ```
 
-Paste and fill in the values (see [Section 13](#13-environment-variable-reference) for details):
-
 ```dotenv
-# ── Database ─────────────────────────────────────────────────────────────────
+# ── Database ──────────────────────────────────────────────────────────────────
 DATABASE_URL="postgresql://txosnabai:change_me_strong_password@localhost:5432/txosnabai"
 
-# ── Auth ─────────────────────────────────────────────────────────────────────
+# ── Auth ──────────────────────────────────────────────────────────────────────
 NEXTAUTH_SECRET="<output of: openssl rand -base64 32>"
 NEXTAUTH_URL="https://txosnabai.example.com"
 
-# ── Public URL (used in client-side code and payment redirects) ───────────────
+# ── Public URL (must match the value used at build time) ──────────────────────
 NEXT_PUBLIC_BASE_URL="https://txosnabai.example.com"
 
-# ── Payments ─────────────────────────────────────────────────────────────────
+# ── Payments ──────────────────────────────────────────────────────────────────
 STRIPE_SECRET_KEY="sk_live_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
 PAYMENT_CREDENTIALS_KEY="<output of: openssl rand -hex 32>"
 
-# ── Runtime ──────────────────────────────────────────────────────────────────
+# ── Runtime ───────────────────────────────────────────────────────────────────
 NODE_ENV="production"
+PORT=3000
 
-# ── Optional ─────────────────────────────────────────────────────────────────
-# DEMO_RESET_SECRET=""   # leave unset in production
-# PROTO_MODE=""          # NEVER set to true in production
+# ── Never set in production ───────────────────────────────────────────────────
+# DEMO_RESET_SECRET=
+# PROTO_MODE=
 ```
 
-Set strict permissions so only the app user can read it:
+```bash
+chmod 600 /home/txosnabai/.env.production
+```
+
+> `NEXT_PUBLIC_BASE_URL` is baked into the client bundle at build time via
+> the `NEXT_PUBLIC_BASE_URL` GitHub repository secret. The value here must
+> be identical to that secret, or payment redirects will break.
+
+---
+
+## 9. Run database migrations
 
 ```bash
-chmod 600 /home/txosnabai/txosnabai/.env.production
+prisma migrate deploy \
+  --schema /home/txosnabai/current/prisma/schema.prisma
+```
+
+> `migrate deploy` applies versioned migration files and is safe for
+> production. It is idempotent — running it again applies only pending
+> migrations.
+
+For the very first install you can optionally seed demo data:
+
+```bash
+# Seed requires source code + pnpm; skip if not needed
+# pnpm prisma db seed
 ```
 
 ---
 
-## 8. Run Database Migrations and Seed
+## 10. Start with PM2
 
-Generate the Prisma client and apply migrations:
-
-```bash
-cd /home/txosnabai/txosnabai
-
-# Generate Prisma client
-pnpm prisma generate
-
-# Apply schema to database (first install)
-pnpm prisma migrate deploy
-```
-
-> **`migrate deploy` vs `db push`:** `migrate deploy` applies versioned SQL migration files and is safe for production. Use `db push` only in development — it can cause data loss on schema conflicts.
-
-Optionally seed the database with demo data (useful for first-time setup):
+Create the PM2 ecosystem file (one-time, lives outside the release directory):
 
 ```bash
-pnpm prisma db seed
-```
-
----
-
-## 9. Build and Start with PM2
-
-Build the production bundle:
-
-```bash
-cd /home/txosnabai/txosnabai
-pnpm build
-```
-
-Create a PM2 ecosystem file. This file drives both the normal start and zero-downtime upgrades later:
-
-```bash
-cat > /home/txosnabai/txosnabai/ecosystem.config.cjs << 'EOF'
+cat > /home/txosnabai/ecosystem.config.cjs << 'EOF'
 module.exports = {
   apps: [
     {
       name: 'txosnabai',
-      script: 'node_modules/.bin/next',
-      args: 'start',
-      cwd: '/home/txosnabai/txosnabai',
-      instances: 'max',          // one worker per CPU core
-      exec_mode: 'cluster',      // enables zero-downtime reload
-      env_file: '.env.production',
+      script: '/home/txosnabai/current/server.js',
+      cwd: '/home/txosnabai/current',
+      instances: 'max',       // one worker per CPU core
+      exec_mode: 'cluster',   // enables zero-downtime rolling reload
+      env_file: '/home/txosnabai/.env.production',
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
       },
       max_memory_restart: '512M',
       error_file: '/home/txosnabai/logs/err.log',
-      out_file: '/home/txosnabai/logs/out.log',
+      out_file:   '/home/txosnabai/logs/out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     },
   ],
 };
 EOF
-
-mkdir -p /home/txosnabai/logs
 ```
 
-Start the app:
+Start and persist:
 
 ```bash
-pm2 start ecosystem.config.cjs
-pm2 save   # persist process list so it survives reboots
+pm2 start /home/txosnabai/ecosystem.config.cjs
+pm2 save
 ```
 
-Configure PM2 to start on system boot (run this as the `txosnabai` user, then follow the printed instructions as root):
+Configure PM2 to start on boot (run as `txosnabai`, then paste and run the
+printed `sudo ...` command as root):
 
 ```bash
 pm2 startup
-# Copy and run the command it prints — it typically looks like:
-# sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u txosnabai --hp /home/txosnabai
 ```
 
-Check that the app is running:
+Verify:
 
 ```bash
 pm2 status
@@ -301,9 +343,9 @@ pm2 logs txosnabai --lines 50
 
 ---
 
-## 10. Configure nginx Reverse Proxy
+## 11. Configure nginx reverse proxy
 
-Create an nginx site config. Exit the `txosnabai` user session first (`exit`), then:
+Exit the `txosnabai` shell (`exit`), then as your sudo user:
 
 ```bash
 sudo nano /etc/nginx/sites-available/txosnabai
@@ -311,7 +353,6 @@ sudo nano /etc/nginx/sites-available/txosnabai
 
 ```nginx
 upstream txosnabai_app {
-    # All PM2 cluster workers bind to the same port
     server 127.0.0.1:3000;
     keepalive 64;
 }
@@ -319,8 +360,6 @@ upstream txosnabai_app {
 server {
     listen 80;
     server_name txosnabai.example.com;
-
-    # Redirect all HTTP to HTTPS (fill in after TLS setup)
     return 301 https://$host$request_uri;
 }
 
@@ -328,236 +367,237 @@ server {
     listen 443 ssl http2;
     server_name txosnabai.example.com;
 
-    # TLS — filled in by certbot in Section 11
     ssl_certificate     /etc/letsencrypt/live/txosnabai.example.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/txosnabai.example.com/privkey.pem;
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
-    # Security headers
-    add_header X-Frame-Options           SAMEORIGIN;
-    add_header X-Content-Type-Options    nosniff;
-    add_header Referrer-Policy           strict-origin-when-cross-origin;
-    add_header Permissions-Policy        "geolocation=(), camera=(), microphone=()";
+    add_header X-Frame-Options        SAMEORIGIN;
+    add_header X-Content-Type-Options nosniff;
+    add_header Referrer-Policy        strict-origin-when-cross-origin;
 
-    # Increase timeout for SSE (Server-Sent Events) connections
-    proxy_read_timeout  3600s;
-    proxy_send_timeout  3600s;
+    # SSE connections must not time out — default is 60 s
+    proxy_read_timeout 3600s;
+    proxy_send_timeout 3600s;
 
     location / {
         proxy_pass         http://txosnabai_app;
         proxy_http_version 1.1;
-
-        proxy_set_header Host              $host;
-        proxy_set_header X-Real-IP         $remote_addr;
-        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
 
         # Required for SSE — disable response buffering
-        proxy_set_header Connection        '';
-        proxy_buffering                    off;
-        proxy_cache                        off;
+        proxy_set_header   Connection '';
+        proxy_buffering    off;
+        proxy_cache        off;
     }
 
-    # Cache static Next.js assets aggressively — they are content-hashed
+    # Content-hashed chunks — cache forever
     location /_next/static/ {
-        proxy_pass       http://txosnabai_app;
-        proxy_cache_valid 200 365d;
-        add_header       Cache-Control "public, max-age=31536000, immutable";
-    }
-
-    # Serve public/ files directly (avoids a round-trip to Node)
-    location /public/ {
-        root    /home/txosnabai/txosnabai;
-        expires 7d;
+        proxy_pass   http://txosnabai_app;
+        add_header   Cache-Control "public, max-age=31536000, immutable";
     }
 }
 ```
 
-Enable the site and reload nginx:
-
 ```bash
 sudo ln -s /etc/nginx/sites-available/txosnabai /etc/nginx/sites-enabled/
-sudo nginx -t          # must print: syntax is ok / test is successful
+sudo nginx -t
 sudo systemctl reload nginx
 ```
 
 ---
 
-## 11. TLS with Let's Encrypt
+## 12. TLS with Let's Encrypt
 
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
-
-# Obtain certificate (temporarily stops nginx to answer the ACME challenge)
 sudo certbot --nginx -d txosnabai.example.com
-
-# Verify auto-renewal
-sudo systemctl status certbot.timer
+sudo systemctl status certbot.timer   # verify auto-renewal
 sudo certbot renew --dry-run
-```
-
-After certbot completes it patches the nginx config automatically. Reload nginx one more time:
-
-```bash
 sudo systemctl reload nginx
 ```
 
 ---
 
-## 12. Upgrading with Minimum Downtime
+## 13. Upgrading with minimum downtime
 
-The strategy uses **PM2 cluster mode + rolling reload**: new Node.js workers are started before old ones are killed. Combined with an atomic build directory swap, this keeps the site serving traffic throughout the upgrade.
+The strategy is: **build new bundle in CI → download to a new directory →
+apply migrations → repoint symlink → PM2 rolling reload**.
 
-### How it works
+PM2 cluster mode replaces workers one at a time. nginx keeps routing to
+whichever workers are alive, so users experience no dropped connections.
 
-PM2 cluster mode runs multiple worker processes. During `pm2 reload`:
-
-1. PM2 starts a new worker with the updated code.
-2. Waits until the new worker is listening (ready signal).
-3. Sends the old worker a `SIGINT` to drain its connections.
-4. Repeats until all workers have been replaced.
-
-nginx continues proxying to whichever workers are alive, so users experience no downtime — at most a single in-flight request is retried.
+```
+Old workers: [W1] [W2] [W3] [W4]
+                 ↓ rolling reload ↓
+Step 1:      [W1*]  [W2]  [W3]  [W4]   ← W1 replaced
+Step 2:      [W1*] [W2*]  [W3]  [W4]   ← W2 replaced
+...
+Done:        [W1*] [W2*] [W3*] [W4*]   ← all workers on new code
+```
 
 ### Upgrade procedure
 
-Run the following steps as the `txosnabai` user (`sudo -i -u txosnabai`):
+Run as the `txosnabai` user (`sudo -i -u txosnabai`):
 
 ```bash
-cd /home/txosnabai
+# 1. Download new bundle
+cd /home/txosnabai/releases
+NEW="v1.1.0"   # the new version tag
+gh release download "$NEW" \
+  --repo gorbeia/testapp-002 \
+  --pattern '*.tar.gz'
 
-# 1. Clone or update the codebase into a NEW directory (never build in-place)
-git clone https://github.com/gorbeia/testapp-002.git txosnabai-next
-cd txosnabai-next
+# 2. Extract into a versioned directory
+mkdir "$NEW"
+tar -xzf "txosnabai-${NEW}.tar.gz" -C "$NEW"
 
-# 2. Install dependencies
-pnpm install --frozen-lockfile
+# 3. Apply database migrations against the live DB
+#    Migrations are backwards-compatible with the running code,
+#    so it is safe to run this before the reload.
+prisma migrate deploy --schema "/home/txosnabai/releases/${NEW}/prisma/schema.prisma"
 
-# 3. Copy the production env file from the current release
-cp ../txosnabai/.env.production .
+# 4. Repoint the symlink atomically
+ln -sfn "/home/txosnabai/releases/$NEW" /home/txosnabai/current
 
-# 4. Generate Prisma client against the new schema
-pnpm prisma generate
-
-# 5. Build the production bundle
-pnpm build
-
-# 6. Apply any new database migrations
-#    This runs against the live database — migrations are designed to be
-#    backwards-compatible with the current code, so the running app keeps working.
-pnpm prisma migrate deploy
-
-# 7. Atomic swap: rename directories
-cd /home/txosnabai
-mv txosnabai txosnabai-old
-mv txosnabai-next txosnabai
-
-# 8. Tell PM2 to perform a rolling reload
-#    Workers restart one-by-one; the app stays online throughout.
+# 5. Rolling reload — workers restart one by one, site stays up
 pm2 reload txosnabai --update-env
 
-# 9. Verify all workers came up healthy
+# 6. Verify
 pm2 status
 pm2 logs txosnabai --lines 30
 
-# 10. Remove the previous release once satisfied
-rm -rf txosnabai-old
+# 7. Remove old releases (keep one previous for fast rollback)
+ls -dt /home/txosnabai/releases/v* | tail -n +3 | xargs rm -rf
 ```
 
 ### Rolling back
 
-If the new version has a critical bug, roll back in seconds:
-
 ```bash
-cd /home/txosnabai
-
-# Swap back
-mv txosnabai txosnabai-bad
-mv txosnabai-old txosnabai
-
-# Reload PM2 with the old code
+# Point current at the previous release
+PREV="v1.0.0"
+ln -sfn "/home/txosnabai/releases/$PREV" /home/txosnabai/current
 pm2 reload txosnabai --update-env
 ```
 
-> **Database rollback:** Prisma does not auto-generate down-migrations. If the upgrade included a destructive schema change you need to roll back, restore from a pre-upgrade database snapshot. Always take a `pg_dump` before step 6 when schema changes are involved.
-
-### Pre-upgrade checklist
-
-- [ ] Take a database backup: `pg_dump -Fc txosnabai > backup-$(date +%Y%m%d-%H%M%S).dump`
-- [ ] Read the changelog for breaking schema changes or required env var additions
-- [ ] Add any new env vars to `.env.production` before the reload
-- [ ] Run `pnpm lint && pnpm typecheck` locally before pushing
-
----
-
-## 13. Environment Variable Reference
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | Yes | PostgreSQL connection string: `postgresql://user:pass@host:5432/db` |
-| `NEXTAUTH_SECRET` | Yes | Random 32+ byte string. Generate: `openssl rand -base64 32` |
-| `NEXTAUTH_URL` | Yes | Full public URL, e.g. `https://txosnabai.example.com` |
-| `NEXT_PUBLIC_BASE_URL` | Yes | Same as `NEXTAUTH_URL` — sent to the browser for payment redirects |
-| `STRIPE_SECRET_KEY` | Yes* | Stripe secret key (`sk_live_…`). *Required only if Stripe is enabled. |
-| `STRIPE_WEBHOOK_SECRET` | Yes* | Stripe webhook signing secret (`whsec_…`). *Required only if Stripe is enabled. |
-| `PAYMENT_CREDENTIALS_KEY` | Yes | 64-char hex key for encrypting stored payment credentials. Generate: `openssl rand -hex 32` |
-| `NODE_ENV` | Yes | Always `production` in production |
-| `PORT` | No | Port for Next.js to listen on (default: `3000`) |
-| `DEMO_RESET_SECRET` | No | Leave unset in production. Enables a demo-reset API endpoint. |
-| `PROTO_MODE` | No | **Never set in production.** Bypasses authentication for integration tests. |
+> **Database rollback:** Prisma does not generate down-migrations
+> automatically. If the upgrade included a destructive schema change,
+> restore from a pre-upgrade `pg_dump` snapshot. Always snapshot before
+> step 3 when migrations are involved:
+> ```bash
+> pg_dump -Fc txosnabai > ~/backup-$(date +%Y%m%d-%H%M%S).dump
+> ```
 
 ---
 
-## 14. Troubleshooting
+## 14. GitHub Actions setup
 
-### App is not starting
+### Repository secret
+
+The workflow bakes `NEXT_PUBLIC_BASE_URL` into the client bundle at build
+time. Add it as a repository secret:
+
+1. Go to **Settings → Secrets and variables → Actions → New repository secret**
+2. Name: `NEXT_PUBLIC_BASE_URL`
+3. Value: `https://txosnabai.example.com`
+
+### Fine-grained PAT for the server
+
+The server needs read-only access to download artifacts and releases.
+
+1. Go to **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**
+2. Resource owner: the account that owns the repo
+3. Repository access: **Only select repositories** → pick `testapp-002`
+4. Permissions:
+   - **Contents**: Read-only (for releases)
+   - **Actions**: Read-only (for workflow artifacts)
+5. Copy the token and use it in [Section 4](#4-install-nodejs-runtime-and-tools) (`gh auth login`)
+
+### Triggering a release
+
+Tag a commit to produce a GitHub Release with a downloadable asset:
+
+```bash
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+The workflow builds and attaches `txosnabai-v1.1.0.tar.gz` to the release.
+Every push to `main` also produces a workflow artifact for staging deploys.
+
+---
+
+## 15. Environment variable reference
+
+| Variable | Required | Set in | Description |
+|----------|----------|--------|-------------|
+| `DATABASE_URL` | Yes | `.env.production` | PostgreSQL connection string |
+| `NEXTAUTH_SECRET` | Yes | `.env.production` | Random ≥32-char string. `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | Yes | `.env.production` | Full public URL: `https://txosnabai.example.com` |
+| `NEXT_PUBLIC_BASE_URL` | Yes | GitHub secret **and** `.env.production` | Must match in both places |
+| `STRIPE_SECRET_KEY` | Yes* | `.env.production` | `sk_live_…` — required if Stripe is enabled |
+| `STRIPE_WEBHOOK_SECRET` | Yes* | `.env.production` | `whsec_…` — required if Stripe is enabled |
+| `PAYMENT_CREDENTIALS_KEY` | Yes | `.env.production` | 64-char hex. `openssl rand -hex 32` |
+| `NODE_ENV` | Yes | `.env.production` | Always `production` |
+| `PORT` | No | `.env.production` | Default `3000` |
+| `DEMO_RESET_SECRET` | No | — | Leave unset in production |
+| `PROTO_MODE` | No | — | **Never set in production** |
+
+---
+
+## 16. Troubleshooting
+
+### App not starting
 
 ```bash
 pm2 logs txosnabai --lines 100
-# Look for: missing env vars, Prisma connection errors, port conflicts
+# Common causes: missing env var, wrong PORT, DB unreachable
 ```
 
-Check whether PostgreSQL is reachable:
+Check database connectivity:
 
 ```bash
-sudo -u txosnabai psql "$DATABASE_URL" -c "SELECT 1;"
+psql "$DATABASE_URL" -c "SELECT 1;"
 ```
 
 ### nginx returns 502 Bad Gateway
 
-The Node.js process is not listening. Check:
-
 ```bash
-pm2 status
-sudo ss -tlnp | grep 3000   # confirm something is bound to port 3000
+pm2 status                       # are workers running?
+sudo ss -tlnp | grep 3000        # is something bound to port 3000?
 ```
 
 ### SSE connections drop after 60 seconds
 
-nginx's default `proxy_read_timeout` is 60 s. Confirm the site config has `proxy_read_timeout 3600s` as shown in Section 10, then reload nginx.
+Confirm the nginx site config contains `proxy_read_timeout 3600s` and
+reload nginx: `sudo systemctl reload nginx`.
 
-### Prisma migration fails during upgrade
-
-Run the migration manually to see the full error:
+### `gh release download` fails
 
 ```bash
-cd /home/txosnabai/txosnabai-next
-DATABASE_URL="$(grep DATABASE_URL .env.production | cut -d= -f2-)" pnpm prisma migrate status
+gh auth status                   # confirm token is valid
+gh release list --repo gorbeia/testapp-002   # confirm release exists
 ```
 
-If migrations are in a dirty state: never run `migrate reset` on production. Investigate the specific failed migration and fix it manually via `psql`.
+### `prisma migrate deploy` errors
+
+```bash
+prisma migrate status --schema /home/txosnabai/current/prisma/schema.prisma
+```
+
+Never run `migrate reset` on production. Fix the specific failed migration
+manually via `psql` then mark it as applied.
 
 ### High memory usage
 
-Next.js with many cluster workers can be memory-intensive. Tune `instances` in `ecosystem.config.cjs`:
+Lower the number of PM2 workers in `ecosystem.config.cjs`:
 
 ```js
-instances: 2,   // fixed number instead of 'max'
-```
-
-Or lower the restart threshold:
-
-```js
+instances: 2,            // fixed count instead of 'max'
 max_memory_restart: '384M',
 ```
+
+Then reload: `pm2 reload txosnabai --update-env && pm2 save`.
