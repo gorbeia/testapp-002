@@ -58,7 +58,7 @@ src/app/api/[resource]/route.ts   ← exports GET, POST, PUT, DELETE
 - Unit tests: `src/**/__tests__/*.test.ts(x)` with Vitest; use fixtures from `src/lib/fixtures/demo.ts`
 - BDD scenarios: `features/**/*.feature` with Cucumber + Playwright
 - Run: `pnpm test` (unit), `pnpm test:e2e` (E2E)
-- `pnpm lint && pnpm typecheck` before committing
+- Run `pnpm lint && pnpm typecheck && pnpm format:check` before every push — this matches the pre-push hook exactly. Fix format errors with `pnpm format` (auto-fixes in place), then re-run the check.
 
 ## Code Style
 
