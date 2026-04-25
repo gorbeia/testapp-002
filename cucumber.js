@@ -14,7 +14,7 @@ module.exports = {
     ],
     requireModule: ['ts-node/register'],
     paths: ['features/**/*.feature'],
-    tags: 'not @e2e-only and not @wip',
+    tags: 'not @e2e-only and not @e2e and not @wip',
   },
 
   // Slow — real browser against running Next.js dev server
