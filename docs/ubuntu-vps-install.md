@@ -60,11 +60,11 @@ The tarball is a complete, runnable application. The VPS only needs:
 
 **Minimum server specs:**
 
-| Resource | Minimum | Recommended |
-|----------|---------|-------------|
-| CPU      | 1 vCPU  | 2+ vCPUs    |
-| RAM      | 1 GB    | 2 GB        |
-| Disk     | 10 GB   | 20 GB SSD   |
+| Resource | Minimum          | Recommended      |
+| -------- | ---------------- | ---------------- |
+| CPU      | 1 vCPU           | 2+ vCPUs         |
+| RAM      | 1 GB             | 2 GB             |
+| Disk     | 10 GB            | 20 GB SSD        |
 | OS       | Ubuntu 22.04 LTS | Ubuntu 24.04 LTS |
 
 > RAM requirement is much lower than a build-on-server approach because
@@ -487,6 +487,7 @@ pm2 reload txosnabai --update-env
 > automatically. If the upgrade included a destructive schema change,
 > restore from a pre-upgrade `pg_dump` snapshot. Always snapshot before
 > step 3 when migrations are involved:
+>
 > ```bash
 > pg_dump -Fc txosnabai > ~/backup-$(date +%Y%m%d-%H%M%S).dump
 > ```
@@ -532,19 +533,19 @@ Every push to `main` also produces a workflow artifact for staging deploys.
 
 ## 15. Environment variable reference
 
-| Variable | Required | Set in | Description |
-|----------|----------|--------|-------------|
-| `DATABASE_URL` | Yes | `.env.production` | PostgreSQL connection string |
-| `NEXTAUTH_SECRET` | Yes | `.env.production` | Random ≥32-char string. `openssl rand -base64 32` |
-| `NEXTAUTH_URL` | Yes | `.env.production` | Full public URL: `https://txosnabai.example.com` |
-| `NEXT_PUBLIC_BASE_URL` | Yes | GitHub secret **and** `.env.production` | Must match in both places |
-| `STRIPE_SECRET_KEY` | Yes* | `.env.production` | `sk_live_…` — required if Stripe is enabled |
-| `STRIPE_WEBHOOK_SECRET` | Yes* | `.env.production` | `whsec_…` — required if Stripe is enabled |
-| `PAYMENT_CREDENTIALS_KEY` | Yes | `.env.production` | 64-char hex. `openssl rand -hex 32` |
-| `NODE_ENV` | Yes | `.env.production` | Always `production` |
-| `PORT` | No | `.env.production` | Default `3000` |
-| `DEMO_RESET_SECRET` | No | — | Leave unset in production |
-| `PROTO_MODE` | No | — | **Never set in production** |
+| Variable                  | Required | Set in                                  | Description                                       |
+| ------------------------- | -------- | --------------------------------------- | ------------------------------------------------- |
+| `DATABASE_URL`            | Yes      | `.env.production`                       | PostgreSQL connection string                      |
+| `NEXTAUTH_SECRET`         | Yes      | `.env.production`                       | Random ≥32-char string. `openssl rand -base64 32` |
+| `NEXTAUTH_URL`            | Yes      | `.env.production`                       | Full public URL: `https://txosnabai.example.com`  |
+| `NEXT_PUBLIC_BASE_URL`    | Yes      | GitHub secret **and** `.env.production` | Must match in both places                         |
+| `STRIPE_SECRET_KEY`       | Yes\*    | `.env.production`                       | `sk_live_…` — required if Stripe is enabled       |
+| `STRIPE_WEBHOOK_SECRET`   | Yes\*    | `.env.production`                       | `whsec_…` — required if Stripe is enabled         |
+| `PAYMENT_CREDENTIALS_KEY` | Yes      | `.env.production`                       | 64-char hex. `openssl rand -hex 32`               |
+| `NODE_ENV`                | Yes      | `.env.production`                       | Always `production`                               |
+| `PORT`                    | No       | `.env.production`                       | Default `3000`                                    |
+| `DEMO_RESET_SECRET`       | No       | —                                       | Leave unset in production                         |
+| `PROTO_MODE`              | No       | —                                       | **Never set in production**                       |
 
 ---
 
