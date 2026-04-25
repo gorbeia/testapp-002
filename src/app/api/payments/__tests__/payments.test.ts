@@ -7,6 +7,7 @@ const fakeProvider = new FakePaymentProvider();
 
 vi.mock('@/lib/payments', () => ({
   paymentProvider: fakeProvider,
+  getPaymentProvider: () => fakeProvider,
 }));
 
 vi.mock('@/lib/sse', () => ({

@@ -1,4 +1,4 @@
-import { paymentProvider } from '@/lib/payments';
+import { getPaymentProvider } from '@/lib/payments';
 import { orderRepo } from '@/lib/store';
 import { confirmOrder } from '@/lib/confirm-order';
 import { broadcast } from '@/lib/sse';
@@ -15,7 +15,7 @@ export async function POST(
 
   let event;
   try {
-    event = await paymentProvider.verifyWebhook(request);
+    event = await getPaymentProvider().verifyWebhook(request);
   } catch {
     return Response.json({ error: 'Invalid webhook signature' }, { status: 400 });
   }
