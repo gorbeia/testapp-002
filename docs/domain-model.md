@@ -71,24 +71,24 @@ _Session 17 — April 2026_
 
 ### Product (Master Menu Item)
 
-| Attribute                | Type        | Notes                                                                    |
-| ------------------------ | ----------- | ------------------------------------------------------------------------ |
-| name                     | text        | e.g. "Burger", "Mojito"                                                  |
-| category                 | Category    | Determines FOOD or DRINKS routing                                        |
-| default_price            | decimal     | Base price before variant deltas and modifier prices                     |
-| description              | text        | Optional short description                                               |
-| customer_image           | file        | Optional photo shown to customers                                        |
-| allergens                | list        | Multi-select from 14 standard EU allergens                               |
-| dietary_flags            | list        | Vegetarian, vegan, gluten-free                                           |
-| age_restricted           | boolean     | Drink requires ID verification at counter before serving                 |
-| splittable               | boolean     | Food product that can be split across multiple units                     |
-| requires_preparation     | boolean     | Drink needing active preparation; drives full lifecycle on drinks ticket |
+| Attribute                | Type        | Notes                                                                          |
+| ------------------------ | ----------- | ------------------------------------------------------------------------------ |
+| name                     | text        | e.g. "Burger", "Mojito"                                                        |
+| category                 | Category    | Determines FOOD or DRINKS routing                                              |
+| default_price            | decimal     | Base price before variant deltas and modifier prices                           |
+| description              | text        | Optional short description                                                     |
+| customer_image           | file        | Optional photo shown to customers                                              |
+| allergens                | list        | Multi-select from 14 standard EU allergens                                     |
+| dietary_flags            | list        | Vegetarian, vegan, gluten-free                                                 |
+| age_restricted           | boolean     | Drink requires ID verification at counter before serving                       |
+| splittable               | boolean     | Food product that can be split across multiple units                           |
+| requires_preparation     | boolean     | Drink needing active preparation; drives full lifecycle on drinks ticket       |
 | kitchen_post             | text?       | Optional; tags which kitchen post handles this product; null = general kitchen |
-| display_order            | integer     | Position within its category                                             |
-| ingredients              | text        | Simple reference list for volunteers; not used for inventory             |
-| preparation_instructions | markdown    | General method; applies to all txosnak; may include embedded images      |
-| association              | Association | Owner                                                                    |
-| vat_type                 | VatType?    | Tax classification; optional unless TicketBAI is enabled                 |
+| display_order            | integer     | Position within its category                                                   |
+| ingredients              | text        | Simple reference list for volunteers; not used for inventory                   |
+| preparation_instructions | markdown    | General method; applies to all txosnak; may include embedded images            |
+| association              | Association | Owner                                                                          |
+| vat_type                 | VatType?    | Tax classification; optional unless TicketBAI is enabled                       |
 
 ---
 
@@ -138,24 +138,24 @@ _Session 17 — April 2026_
 
 ### Txosna (Stall)
 
-| Attribute               | Type        | Notes                                                             |
-| ----------------------- | ----------- | ----------------------------------------------------------------- |
-| name                    | text        | Name of the stall                                                 |
-| event                   | Event       | Which event it operates at                                        |
-| association             | Association | Which association runs it                                         |
-| slug                    | text        | URL-safe identifier; used in the public subdomain/URL             |
-| pin                     | hashed text | Session selector PIN                                              |
-| counter_setup           | enum        | SINGLE or SEPARATE                                                |
-| enabled_channels        | list        | COUNTER, PHONE_TO_COUNTER, SELF_SERVICE                           |
-| enabled_payment_methods | list        | CASH, ONLINE                                                      |
-| notification_modes      | list        | display, push, manual                                             |
-| qr_validation_enabled   | boolean     | Whether QR codes are shown and used for validation                |
-| printing_enabled        | boolean     | Whether ticket printing is available                              |
-| status                  | enum        | OPEN, PAUSED, CLOSED                                              |
-| is_demo                 | boolean     | Whether this is a demo/sandbox txosna; never visible to customers |
-| pending_payment_timeout | integer     | Minutes before unclaimed phone order is auto-cancelled            |
+| Attribute               | Type        | Notes                                                                                                                                    |
+| ----------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| name                    | text        | Name of the stall                                                                                                                        |
+| event                   | Event       | Which event it operates at                                                                                                               |
+| association             | Association | Which association runs it                                                                                                                |
+| slug                    | text        | URL-safe identifier; used in the public subdomain/URL                                                                                    |
+| pin                     | hashed text | Session selector PIN                                                                                                                     |
+| counter_setup           | enum        | SINGLE or SEPARATE                                                                                                                       |
+| enabled_channels        | list        | COUNTER, PHONE_TO_COUNTER, SELF_SERVICE                                                                                                  |
+| enabled_payment_methods | list        | CASH, ONLINE                                                                                                                             |
+| notification_modes      | list        | display, push, manual                                                                                                                    |
+| qr_validation_enabled   | boolean     | Whether QR codes are shown and used for validation                                                                                       |
+| printing_enabled        | boolean     | Whether ticket printing is available                                                                                                     |
+| status                  | enum        | OPEN, PAUSED, CLOSED                                                                                                                     |
+| is_demo                 | boolean     | Whether this is a demo/sandbox txosna; never visible to customers                                                                        |
+| pending_payment_timeout | integer     | Minutes before unclaimed phone order is auto-cancelled                                                                                   |
 | kitchen_posts           | list        | Named list of preparation stations within the food kitchen (e.g. `["griddle", "assembly"]`); empty = single kitchen (existing behaviour) |
-| enabled_providers       | list        | References to PaymentProviders configured at association level    |
+| enabled_providers       | list        | References to PaymentProviders configured at association level                                                                           |
 
 **Public URL:** each txosna has a unique public URL derived from its slug (e.g. `elkartea.txosna.app`). Used for the order board and customer ordering screens. Not active for demo txosnak.
 
@@ -241,18 +241,18 @@ A txosna can only enable providers that exist in its association.
 
 ### OrderTicket
 
-| Attribute            | Type              | Notes                                                    |
-| -------------------- | ----------------- | -------------------------------------------------------- |
-| order                | Order             | Which order this ticket belongs to                       |
-| counter_type         | enum              | FOOD or DRINKS                                           |
-| status               | enum              | RECEIVED, IN_PREPARATION, READY, COMPLETED, CANCELLED    |
-| requires_preparation | boolean           | True if any line has requires_preparation = true         |
+| Attribute            | Type              | Notes                                                                                           |
+| -------------------- | ----------------- | ----------------------------------------------------------------------------------------------- |
+| order                | Order             | Which order this ticket belongs to                                                              |
+| counter_type         | enum              | FOOD or DRINKS                                                                                  |
+| status               | enum              | RECEIVED, IN_PREPARATION, READY, COMPLETED, CANCELLED                                           |
+| requires_preparation | boolean           | True if any line has requires_preparation = true                                                |
 | kitchen_post         | text?             | Which kitchen post this ticket belongs to; null when the txosna has no kitchen posts configured |
-| flagged              | boolean           | True if ticket contains a sold out product after payment |
-| created_at           | datetime          | When the ticket was created                              |
-| ready_at             | datetime          | When marked READY                                        |
-| completed_at         | datetime          | When customer picked up this ticket                      |
-| lines                | list of OrderLine | The items in this ticket                                 |
+| flagged              | boolean           | True if ticket contains a sold out product after payment                                        |
+| created_at           | datetime          | When the ticket was created                                                                     |
+| ready_at             | datetime          | When marked READY                                                                               |
+| completed_at         | datetime          | When customer picked up this ticket                                                             |
+| lines                | list of OrderLine | The items in this ticket                                                                        |
 
 ---
 
@@ -420,23 +420,23 @@ Union of product + selected variant options + selected modifiers allergens. Show
 
 ### Features evaluated and deferred
 
-| Feature                          | Status       |
-| -------------------------------- | ------------ |
-| Portion size and yield           | Deferred     |
-| Preparation time per product     | Deferred     |
-| Time-based availability          | Deferred     |
-| Serving temperature flags        | Deferred     |
+| Feature                                               | Status                                          |
+| ----------------------------------------------------- | ----------------------------------------------- |
+| Portion size and yield                                | Deferred                                        |
+| Preparation time per product                          | Deferred                                        |
+| Time-based availability                               | Deferred                                        |
+| Serving temperature flags                             | Deferred                                        |
 | Kitchen posts (multiple stations within food kitchen) | Implemented — see Kitchen posts design decision |
-| Pre-preparation vs made-to-order | Deferred     |
-| Packaging and presentation notes | Deferred     |
-| Last orders announcement         | Deferred     |
-| Running tabs                     | Out of scope |
-| Alcohol content information      | Deferred     |
-| Drink temperature preferences    | Deferred     |
-| Waste and leftover tracking      | Out of scope |
-| Stock quantity tracking          | Out of scope |
-| Cross-event analytics            | Deferred     |
-| Data retention policy            | Not defined  |
+| Pre-preparation vs made-to-order                      | Deferred                                        |
+| Packaging and presentation notes                      | Deferred                                        |
+| Last orders announcement                              | Deferred                                        |
+| Running tabs                                          | Out of scope                                    |
+| Alcohol content information                           | Deferred                                        |
+| Drink temperature preferences                         | Deferred                                        |
+| Waste and leftover tracking                           | Out of scope                                    |
+| Stock quantity tracking                               | Out of scope                                    |
+| Cross-event analytics                                 | Deferred                                        |
+| Data retention policy                                 | Not defined                                     |
 
 ---
 
@@ -504,26 +504,26 @@ All tickets COMPLETED → receipt available for download
 
 ## Screens Overview
 
-| Screen                   | Used by                  | Device                     | Notes                                                                                                                                   |
-| ------------------------ | ------------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Registration             | First admin              | Any                        | One-time setup                                                                                                                          |
-| Onboarding guide         | First admin              | Any                        | Checklist-style setup walkthrough                                                                                                       |
-| Association settings     | Admin                    | Any                        | Association name, payment providers (Stripe/Redsys credentials), volunteer management                                                   |
-| Master menu management   | Admin                    | Any                        | Association-level catalog: categories, products, variants, modifiers, allergens, dietary flags, preparation instructions, display order |
-| Txosna configuration     | Admin                    | Any                        | Per-txosna config (counter setup, channels, enabled providers from association, QR, demo mode)                                          |
-| Txosna product selection | Admin                    | Any                        | Per-txosna: toggle which master catalog products to serve; optionally override price and preparation instructions                       |
-| Volunteer login          | Any volunteer            | Any                        | Email + password; password reset available                                                                                              |
-| Session PIN entry        | Any volunteer            | Any                        | Selects food counter, drinks counter, kitchen (with optional post selection when posts configured), or kitchen manager                  |
-| Menu & ordering          | Customer                 | Their phone                | Public txosna URL; images, allergens, dietary flags, variants, age declaration, wait time                                               |
-| Food counter screen      | Volunteer (food mode)    | Any                        | Food tickets primary; drinks accessible; change calculator; age prompt; pause                                                           |
-| Drinks counter screen    | Volunteer (drinks mode)  | Any                        | Speed-optimised; drinks primary; food accessible; age prompt; pause                                                                     |
-| Kitchen screen (KDS)     | Volunteer (kitchen mode) | Any                        | Post-filtered ticket view when posts configured; preparation instructions; sold out; slow order highlights                              |
-| Kitchen manager screen   | Volunteer (kitchen manager mode) | Any               | Order-level coordinator view across all posts; stock management; slow/flagged order summary; pause and close                           |
-| Status overview          | Any logged-in volunteer  | Any                        | Live snapshot; handover tool                                                                                                            |
-| Order board              | Everyone                 | Any (best on large screen) | Live ticket status; public txosna URL                                                                                                   |
-| Pickup proof             | Customer                 | Their phone                | Per ticket; QR if enabled; counter type shown; high contrast                                                                            |
-| Order status / receipt   | Customer                 | Their phone                | Current statuses; PDF download when all completed                                                                                       |
-| Event report             | Admin                    | Any                        | Post-event summary; downloadable PDF                                                                                                    |
+| Screen                   | Used by                          | Device                     | Notes                                                                                                                                   |
+| ------------------------ | -------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Registration             | First admin                      | Any                        | One-time setup                                                                                                                          |
+| Onboarding guide         | First admin                      | Any                        | Checklist-style setup walkthrough                                                                                                       |
+| Association settings     | Admin                            | Any                        | Association name, payment providers (Stripe/Redsys credentials), volunteer management                                                   |
+| Master menu management   | Admin                            | Any                        | Association-level catalog: categories, products, variants, modifiers, allergens, dietary flags, preparation instructions, display order |
+| Txosna configuration     | Admin                            | Any                        | Per-txosna config (counter setup, channels, enabled providers from association, QR, demo mode)                                          |
+| Txosna product selection | Admin                            | Any                        | Per-txosna: toggle which master catalog products to serve; optionally override price and preparation instructions                       |
+| Volunteer login          | Any volunteer                    | Any                        | Email + password; password reset available                                                                                              |
+| Session PIN entry        | Any volunteer                    | Any                        | Selects food counter, drinks counter, kitchen (with optional post selection when posts configured), or kitchen manager                  |
+| Menu & ordering          | Customer                         | Their phone                | Public txosna URL; images, allergens, dietary flags, variants, age declaration, wait time                                               |
+| Food counter screen      | Volunteer (food mode)            | Any                        | Food tickets primary; drinks accessible; change calculator; age prompt; pause                                                           |
+| Drinks counter screen    | Volunteer (drinks mode)          | Any                        | Speed-optimised; drinks primary; food accessible; age prompt; pause                                                                     |
+| Kitchen screen (KDS)     | Volunteer (kitchen mode)         | Any                        | Post-filtered ticket view when posts configured; preparation instructions; sold out; slow order highlights                              |
+| Kitchen manager screen   | Volunteer (kitchen manager mode) | Any                        | Order-level coordinator view across all posts; stock management; slow/flagged order summary; pause and close                            |
+| Status overview          | Any logged-in volunteer          | Any                        | Live snapshot; handover tool                                                                                                            |
+| Order board              | Everyone                         | Any (best on large screen) | Live ticket status; public txosna URL                                                                                                   |
+| Pickup proof             | Customer                         | Their phone                | Per ticket; QR if enabled; counter type shown; high contrast                                                                            |
+| Order status / receipt   | Customer                         | Their phone                | Current statuses; PDF download when all completed                                                                                       |
+| Event report             | Admin                            | Any                        | Post-event summary; downloadable PDF                                                                                                    |
 
 ---
 
