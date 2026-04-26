@@ -30,12 +30,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
   // Parse query params — status supports comma-separated values
   const url = new URL(request.url);
   const counterType = url.searchParams.get('counterType') as CounterType | null;
+  const kitchenPost = url.searchParams.get('kitchenPost');
   const statusParam = url.searchParams.get('status');
   const statuses = statusParam ? (statusParam.split(',').filter(Boolean) as TicketStatus[]) : null;
 
   // Fetch all matching tickets (filter per status below if multi-value)
   let tickets = await ticketRepo.listByTxosna(txosna.id, {
     counterType: counterType ?? undefined,
+    kitchenPost: kitchenPost ?? undefined,
     status: statuses?.length === 1 ? statuses[0] : undefined,
   });
 

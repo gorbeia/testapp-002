@@ -136,6 +136,7 @@ export interface StoredTicket {
   orderId: string;
   txosnaId: string;
   counterType: CounterType;
+  kitchenPost: string | null;
   status: TicketStatus;
   requiresPreparation: boolean;
   flagged: boolean;
@@ -226,6 +227,7 @@ export interface CreateOrderLineInput {
 
 export interface CreateTicketInput {
   counterType: CounterType;
+  kitchenPost?: string | null;
   requiresPreparation: boolean;
   notes: string | null;
   lines: CreateOrderLineInput[];
@@ -263,6 +265,7 @@ export interface OrderFilter {
 export interface TicketFilter {
   status?: TicketStatus;
   counterType?: CounterType;
+  kitchenPost?: string;
 }
 
 // ── Repository interfaces ─────────────────────────────────────────────────────
