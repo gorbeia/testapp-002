@@ -12,35 +12,13 @@ function params(slug: string) {
   return { params: Promise.resolve({ slug }) };
 }
 
-async function createCounterOrder(slug: string): Promise<StoredOrder | null> {
+// prod-1 (Burgerra) is FOOD in cat-1, which belongs to assoc-1 in the seed.
+async function createOrder(
+  slug: string,
+  channel: 'COUNTER' | 'SELF_SERVICE'
+): Promise<StoredOrder | null> {
   const body = {
-    channel: 'COUNTER',
-    customerName: null,
-    notes: null,
-    paymentMethod: 'CASH',
-    lines: [
-      {
-        productId: 'prod-1',
-        quantity: 1,
-        selectedVariantOptionId: null,
-        selectedModifierIds: [],
-        splitInstructions: null,
-      },
-    ],
-  };
-  const req = new Request(`http://localhost/api/txosnak/${slug}/orders`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const res = await ordersPOST(req, params(slug));
-  if (res.status !== 201) return null;
-  return res.json() as Promise<StoredOrder>;
-}
-
-async function createSelfServiceOrder(slug: string): Promise<StoredOrder | null> {
-  const body = {
-    channel: 'SELF_SERVICE',
+    channel,
     customerName: null,
     notes: null,
     paymentMethod: 'CASH',
@@ -71,8 +49,9 @@ Given(
   async function (this: IntegrationWorld, count: number, slug: string): Promise<void> {
     assert.ok(this.currentTxosna, 'currentTxosna must be set via Background');
     for (let i = 0; i < count; i++) {
-      const order = await createCounterOrder(slug);
-      if (order) this.savedOrders.push(order);
+      const order = await createOrder(slug, 'COUNTER');
+      assert.ok(order, 'COUNTER order creation failed');
+      this.savedOrders.push(order);
     }
   }
 );
@@ -81,7 +60,8 @@ Given(
   'a CONFIRMED order exists for {string}',
   async function (this: IntegrationWorld, slug: string): Promise<void> {
     assert.ok(this.currentTxosna, 'currentTxosna must be set via Background');
-    const order = await createCounterOrder(slug);
+    // COUNTER orders are confirmed immediately by the route handler
+    const order = await createOrder(slug, 'COUNTER');
     assert.ok(order, 'COUNTER order creation failed');
     this.savedOrders.push(order);
   }
@@ -91,7 +71,7 @@ Given(
   'a PENDING_PAYMENT order exists for {string}',
   async function (this: IntegrationWorld, slug: string): Promise<void> {
     assert.ok(this.currentTxosna, 'currentTxosna must be set via Background');
-    const order = await createSelfServiceOrder(slug);
+    const order = await createOrder(slug, 'SELF_SERVICE');
     assert.ok(order, 'SELF_SERVICE order creation failed');
     assert.equal(order.status, 'PENDING_PAYMENT');
     this.savedOrders.push(order);
@@ -102,7 +82,7 @@ Given(
   'a COUNTER order exists for {string}',
   async function (this: IntegrationWorld, slug: string): Promise<void> {
     assert.ok(this.currentTxosna, 'currentTxosna must be set via Background');
-    const order = await createCounterOrder(slug);
+    const order = await createOrder(slug, 'COUNTER');
     assert.ok(order, 'COUNTER order creation failed');
     this.savedOrders.push(order);
   }
@@ -112,20 +92,21 @@ Given(
   'a SELF_SERVICE order exists for {string}',
   async function (this: IntegrationWorld, slug: string): Promise<void> {
     assert.ok(this.currentTxosna, 'currentTxosna must be set via Background');
-    const order = await createSelfServiceOrder(slug);
+    const order = await createOrder(slug, 'SELF_SERVICE');
     assert.ok(order, 'SELF_SERVICE order creation failed');
     this.savedOrders.push(order);
   }
 );
 
 Given(
-  'a PENDING_PAYMENT order exists that expired {int} hour ago for {string}',
-  async function (this: IntegrationWorld, _hours: number, slug: string): Promise<void> {
+  'a PENDING_PAYMENT order exists that expired {int} hour(s) ago for {string}',
+  async function (this: IntegrationWorld, hours: number, slug: string): Promise<void> {
     assert.ok(this.currentTxosna, 'currentTxosna must be set via Background');
-    const order = await createSelfServiceOrder(slug);
+    const order = await createOrder(slug, 'SELF_SERVICE');
     assert.ok(order, 'SELF_SERVICE order creation failed');
-    // Set expiresAt to the past so the lazy expiry sweep cancels it
-    await orderRepo.update(order.id, { expiresAt: new Date(Date.now() - 60 * 60 * 1000) });
+    await orderRepo.update(order.id, {
+      expiresAt: new Date(Date.now() - hours * 60 * 60 * 1000),
+    });
     this.savedOrders.push(order);
   }
 );

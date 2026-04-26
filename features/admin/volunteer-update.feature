@@ -5,6 +5,7 @@ Feature: Volunteer profile update
 
   Background:
     Given I am authenticated as an ADMIN for association "elkartea-1"
+    # v2 = Gorka Zubia, role VOLUNTEER, active, belongs to assoc-1
     And volunteer "v2" exists and is active
 
   @smoke
@@ -35,3 +36,9 @@ Feature: Volunteer profile update
   Scenario: Updating a non-existent volunteer returns 404
     When I PATCH volunteer "does-not-exist" with name "Ghost"
     Then the response status is 404
+
+  @integration-only
+  Scenario: Admin cannot update a volunteer from another association
+    Given I am authenticated as an ADMIN for association "other-assoc"
+    When I PATCH volunteer "v2" with name "Hijacked"
+    Then the response status is 403
