@@ -26,7 +26,7 @@ _Session 17 — April 2026_
 | Volunteer         | Volunteer         | A person with an account; access to all txosnak and operational screens                              |
 | Role              | Role              | Level of access: Admin or Volunteer                                                                  |
 | Device login      | Device login      | Step 1 — authenticates with personal email and password                                              |
-| Session PIN       | Session PIN       | Step 2 — selects food counter, drinks counter, or kitchen mode for the session                       |
+| Session PIN       | Session PIN       | Step 2 — selects food counter, drinks counter, kitchen (with optional post selection), or kitchen manager mode for the session |
 | Self-registration | Self-registration | Association signs up and creates first admin account without assistance                              |
 | Volunteer account | Volunteer account | Personal account created by admin with own email and password                                        |
 | Password reset    | Password reset    | Email-based flow allowing a volunteer to set a new password via a short-lived link                   |
@@ -104,6 +104,8 @@ _Session 17 — April 2026_
 | Single counter       | Single counter       | Food and drinks at the same serving point                                                  |
 | Counter mode         | Counter mode         | Default view after PIN entry — a view filter, not an access restriction                    |
 | Cross-counter access | Cross-counter access | Ability to view and act on the other counter's tickets; always available but not prominent |
+| Kitchen post         | Kitchen post         | A named preparation workstation within the food kitchen (e.g. griddle, assembly); optional per txosna |
+| Kitchen Manager mode | Kitchen Manager mode | Session PIN mode giving a coordinator view across all kitchen posts; selectable by any volunteer |
 
 ---
 
@@ -171,8 +173,9 @@ _Session 17 — April 2026_
 | Term                         | English                      | Definition                                                                        |
 | ---------------------------- | ---------------------------- | --------------------------------------------------------------------------------- |
 | Sukaldea                     | Kitchen                      | The area where food is prepared                                                   |
-| Kitchen Display System (KDS) | Kitchen Display System (KDS) | Browser-based screen showing order tickets; runs on any device                    |
+| Kitchen Display System (KDS) | Kitchen Display System (KDS) | Browser-based screen showing order tickets; runs on any device; filtered to a single post when posts are configured |
 | Kitchen ticket               | Kitchen ticket               | Optional printed slip per ticket for associations with a printer                  |
+| Coordinator view             | Coordinator view             | The Kitchen Manager screen layout: one card per order, showing status of each post-ticket side by side |
 | Prestatu                     | Prepare / fulfill            | The act of making the food or drink ready                                         |
 | Jasotzen                     | Pick up                      | When the customer collects their ready ticket                                     |
 | Flagged order                | Flagged order                | Paid order with a sold out product; requires manual resolution                    |

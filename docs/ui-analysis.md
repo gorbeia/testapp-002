@@ -399,6 +399,8 @@ A counter badge on the header shows the number of pending phone orders. Tapping 
 
 A screen (tablet, old laptop, or phone) propped up in the kitchen near the cooking area. Kitchen volunteers glance at it while preparing food. It may be splashed with liquids. It needs to survive rough handling.
 
+When a txosna has kitchen posts configured, each post has its own KDS instance. The post is selected at PIN entry and displayed prominently in the header so there is no ambiguity about which station the device belongs to.
+
 ### Design priorities
 
 - Readable from 1 metre while standing
@@ -407,7 +409,7 @@ A screen (tablet, old laptop, or phone) propped up in the kitchen near the cooki
 - Sold out management quick and reversible
 - Clear visual hierarchy: new orders draw attention immediately
 
-### Layout
+### Layout — single kitchen (no posts configured)
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -424,6 +426,27 @@ A screen (tablet, old laptop, or phone) propped up in the kitchen near the cooki
 │  └─────────┘ │  └─────────┘     │  └─────────┘      │
 └──────────────┴───────────────────┴───────────────────┘
 ```
+
+### Layout — post-filtered view (kitchen posts configured)
+
+When the volunteer selected a specific post at PIN entry, the header shows the post name and the board shows only that post's tickets:
+
+```
+┌──────────────────────────────────────────────────────┐
+│  🔥 Griddle — Aste Nagusia       [⏸ Pause]           │
+├──────────────┬───────────────────┬───────────────────┤
+│  RECEIVED    │  IN PREPARATION   │  READY            │
+├──────────────┼───────────────────┼───────────────────┤
+│  ┌─────────┐ │  ┌─────────┐     │  ┌─────────┐      │
+│  │ #41     │ │  │ #38  ⏱  │     │  │ #35 ✓   │      │
+│  │ Josu    │ │  │ Miren   │     │  │ Ander   │      │
+│  │ 2×Burg  │ │  │ 1×Burg  │     │  │         │      │
+│  │ [→ Prep]│ │  │ [→ Ready│     │  │ [→Done] │      │
+│  └─────────┘ │  └─────────┘     │  └─────────┘      │
+└──────────────┴───────────────────┴───────────────────┘
+```
+
+Each ticket card shows only the lines that belong to this post. The card does not show items for other posts within the same order.
 
 ### Ticket card design
 
@@ -455,6 +478,70 @@ Products that have **complements** (sides or variant options) show an expand arr
 - **Tablet (landscape)**: Three-column Kanban layout as above
 - **Phone (portrait)**: Single column with status filter tabs (RECEIVED / IN_PREPARATION / READY)
 - **Large screen**: Four columns including COMPLETED (recent, last 10 minutes)
+
+---
+
+## 8a. Kitchen Manager Screen
+
+### Context
+
+A coordinator view for the volunteer overseeing the whole kitchen — not tied to one post. Used on a device placed where the coordinator can see the full operation: near the pass, at the assembly area, or anywhere with an overview of all posts.
+
+### Design priorities
+
+Same operational register as the KDS: dark theme, large touch targets, glanceable. Denser than a single-post KDS because it covers multiple posts, but ordered to surface urgency immediately.
+
+### Layout
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  Kitchen Manager — Aste Nagusia  [⏸ Pause] [✕ Close]    │
+├──────────────────────────────────────────────────────────┤
+│  [📦 Stock]   IN KITCHEN: 4   READY TO COLLECT: 2        │
+├──────────────────────────────────────────────────────────┤
+│  ┌──────────────────────────────────────────────────┐    │
+│  │ #41 Josu                               ⏱ 8 min  │    │
+│  │  Griddle    ██████████░░  IN PREPARATION         │    │
+│  │  Assembly   ░░░░░░░░░░░░  RECEIVED (waiting)     │    │
+│  └──────────────────────────────────────────────────┘    │
+│  ┌──────────────────────────────────────────────────┐    │
+│  │ #38 Miren                              ✓ ALL DONE│    │  ← highlighted green
+│  │  Griddle    ████████████  READY ✓                │    │
+│  │  Assembly   ████████████  READY ✓                │    │
+│  └──────────────────────────────────────────────────┘    │
+│  ┌──────────────────────────────────────────────────┐    │
+│  │ #35 Ander — 🔔 ORDER CHANGED                     │    │
+│  │  Griddle    ████████████  READY ✓                │    │
+│  │  Assembly   ████░░░░░░░░  IN PREPARATION         │    │
+│  └──────────────────────────────────────────────────┘    │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Order card design
+
+Each card represents one order and shows:
+
+- Order number (large) and customer name
+- One row per post-ticket with a compact status bar and status label
+- Time elapsed since order confirmation
+- Orders where all posts are READY highlighted in green — the coordinator calls out the order number
+- Slow order indicator (⏱) if any post ticket is significantly over the session average
+- Order changed alert (🔔 orange banner) if the counter edited the order while a ticket is in preparation
+
+No status-advance buttons — post volunteers advance their own tickets. The manager's role is coordination, not direct preparation.
+
+### Stock management
+
+Tapping the Stock button opens the same sold-out bottom sheet as the single-post KDS. The manager is the natural owner of stock decisions.
+
+### Sorting
+
+Orders sorted by: all-posts-READY first (needs collection call), then by time elapsed descending (oldest first within each group).
+
+### Layout on different devices
+
+- **Tablet / large screen**: Two-column grid of order cards
+- **Phone**: Single column
 
 ---
 

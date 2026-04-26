@@ -83,6 +83,7 @@ _Session 17 — April 2026_
 | age_restricted           | boolean     | Drink requires ID verification at counter before serving                 |
 | splittable               | boolean     | Food product that can be split across multiple units                     |
 | requires_preparation     | boolean     | Drink needing active preparation; drives full lifecycle on drinks ticket |
+| kitchen_post             | text?       | Optional; tags which kitchen post handles this product; null = general kitchen |
 | display_order            | integer     | Position within its category                                             |
 | ingredients              | text        | Simple reference list for volunteers; not used for inventory             |
 | preparation_instructions | markdown    | General method; applies to all txosnak; may include embedded images      |
@@ -153,6 +154,7 @@ _Session 17 — April 2026_
 | status                  | enum        | OPEN, PAUSED, CLOSED                                              |
 | is_demo                 | boolean     | Whether this is a demo/sandbox txosna; never visible to customers |
 | pending_payment_timeout | integer     | Minutes before unclaimed phone order is auto-cancelled            |
+| kitchen_posts           | list        | Named list of preparation stations within the food kitchen (e.g. `["griddle", "assembly"]`); empty = single kitchen (existing behaviour) |
 | enabled_providers       | list        | References to PaymentProviders configured at association level    |
 
 **Public URL:** each txosna has a unique public URL derived from its slug (e.g. `elkartea.txosna.app`). Used for the order board and customer ordering screens. Not active for demo txosnak.
@@ -245,6 +247,7 @@ A txosna can only enable providers that exist in its association.
 | counter_type         | enum              | FOOD or DRINKS                                           |
 | status               | enum              | RECEIVED, IN_PREPARATION, READY, COMPLETED, CANCELLED    |
 | requires_preparation | boolean           | True if any line has requires_preparation = true         |
+| kitchen_post         | text?             | Which kitchen post this ticket belongs to; null when the txosna has no kitchen posts configured |
 | flagged              | boolean           | True if ticket contains a sold out product after payment |
 | created_at           | datetime          | When the ticket was created                              |
 | ready_at             | datetime          | When marked READY                                        |
@@ -346,6 +349,25 @@ All queries scoped to the association. Single database; isolation enforced at ap
 
 Lines assigned based on `product.category.type`.
 
+### Kitchen posts
+
+When a txosna has `kitchen_posts` configured (a non-empty list of named stations):
+
+- Food lines are further grouped by `product.kitchen_post` on order confirmation
+- One `OrderTicket` is created per distinct `kitchen_post` value found in the food lines; products with `kitchen_post = null` go into a general food ticket
+- Each post-ticket has an independent lifecycle (RECEIVED → IN_PREPARATION → READY → COMPLETED)
+- `order:ready` fires when **all** tickets (food post-tickets + drinks ticket if any) reach READY
+- Stalls with no `kitchen_posts` configured get a single food ticket per order — existing behaviour unchanged
+
+### Kitchen Manager mode
+
+Any volunteer can select kitchen manager mode at PIN entry. It is a view filter, not an access restriction:
+
+- Provides an **order-level coordinator view**: each active order grouped with a status row per post-ticket
+- Orders where all post-tickets are READY are highlighted for collection coordination
+- Gives prominent access to stock management and the pause/close controls
+- No new database role or permissions required
+
 ### Drinks ticket lifecycle
 
 - Full lifecycle if `requires_preparation = true` on any line
@@ -404,7 +426,7 @@ Union of product + selected variant options + selected modifiers allergens. Show
 | Preparation time per product     | Deferred     |
 | Time-based availability          | Deferred     |
 | Serving temperature flags        | Deferred     |
-| More than two counter types      | Deferred     |
+| Kitchen posts (multiple stations within food kitchen) | Implemented — see Kitchen posts design decision |
 | Pre-preparation vs made-to-order | Deferred     |
 | Packaging and presentation notes | Deferred     |
 | Last orders announcement         | Deferred     |
@@ -451,11 +473,14 @@ PENDING_PAYMENT (phone-to-counter only)
 
 CONFIRMED — tickets created and routed
   │
-  ├── FOOD TICKET
-  │     RECEIVED → IN_PREPARATION → READY → COMPLETED
+  ├── FOOD TICKET(S)
+  │     If txosna has kitchen_posts: one ticket per post (kitchen_post set)
+  │     Otherwise: one ticket for the whole kitchen (kitchen_post = null)
+  │     Each ticket: RECEIVED → IN_PREPARATION → READY → COMPLETED
   │     ↘ sold out → flagged → manual → CANCELLED/COMPLETED
   │     ↘ end of service → CANCELLED + notification
   │     ↘ counter edits → order changed alert
+  │     All post-tickets READY → order:ready broadcast
   │
   └── DRINKS TICKET
         RECEIVED → (IN_PREPARATION if requires_preparation) → READY → COMPLETED
@@ -488,11 +513,12 @@ All tickets COMPLETED → receipt available for download
 | Txosna configuration     | Admin                    | Any                        | Per-txosna config (counter setup, channels, enabled providers from association, QR, demo mode)                                          |
 | Txosna product selection | Admin                    | Any                        | Per-txosna: toggle which master catalog products to serve; optionally override price and preparation instructions                       |
 | Volunteer login          | Any volunteer            | Any                        | Email + password; password reset available                                                                                              |
-| Session PIN entry        | Any volunteer            | Any                        | Selects food counter, drinks counter, or kitchen                                                                                        |
+| Session PIN entry        | Any volunteer            | Any                        | Selects food counter, drinks counter, kitchen (with optional post selection when posts configured), or kitchen manager                  |
 | Menu & ordering          | Customer                 | Their phone                | Public txosna URL; images, allergens, dietary flags, variants, age declaration, wait time                                               |
 | Food counter screen      | Volunteer (food mode)    | Any                        | Food tickets primary; drinks accessible; change calculator; age prompt; pause                                                           |
 | Drinks counter screen    | Volunteer (drinks mode)  | Any                        | Speed-optimised; drinks primary; food accessible; age prompt; pause                                                                     |
-| Kitchen screen (KDS)     | Volunteer (kitchen mode) | Any                        | All tickets; preparation instructions on demand; sold out; slow order highlights; pause and close                                       |
+| Kitchen screen (KDS)     | Volunteer (kitchen mode) | Any                        | Post-filtered ticket view when posts configured; preparation instructions; sold out; slow order highlights                              |
+| Kitchen manager screen   | Volunteer (kitchen manager mode) | Any               | Order-level coordinator view across all posts; stock management; slow/flagged order summary; pause and close                           |
 | Status overview          | Any logged-in volunteer  | Any                        | Live snapshot; handover tool                                                                                                            |
 | Order board              | Everyone                 | Any (best on large screen) | Live ticket status; public txosna URL                                                                                                   |
 | Pickup proof             | Customer                 | Their phone                | Per ticket; QR if enabled; counter type shown; high contrast                                                                            |

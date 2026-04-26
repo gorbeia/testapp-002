@@ -81,7 +81,7 @@ The application is **multitenant** — a single instance serves multiple associa
 ### Device login flow
 
 **Step 1 — Device login:** personal email and password
-**Step 2 — Session PIN:** selects food counter, drinks counter, or kitchen mode
+**Step 2 — Session PIN:** selects food counter, drinks counter, kitchen, or kitchen manager mode
 
 ### Password reset
 
@@ -156,6 +156,7 @@ Each txosna is independently configurable:
 | Setting                   | Options                                                                    |
 | ------------------------- | -------------------------------------------------------------------------- |
 | Counter setup             | SINGLE or SEPARATE — whether food and drinks share a counter               |
+| Kitchen posts             | Named list of preparation stations within the food kitchen; empty = single kitchen (current behaviour) |
 | Enabled ordering channels | COUNTER, PHONE_TO_COUNTER, SELF_SERVICE (future)                           |
 | Enabled payment methods   | CASH, ONLINE                                                               |
 | Enabled payment providers | Select from providers configured at association level                      |
@@ -233,6 +234,7 @@ Each txosna is independently configurable:
 | Age-restricted           | Drink requires ID verification at counter before serving             |
 | Splittable               | For food products ordered in multiple units                          |
 | Requires preparation     | For drink products needing active preparation (e.g. mojito)          |
+| Kitchen post             | Optional; tags which kitchen post handles this product at the food counter; null = general kitchen |
 | Display order            | Within its category                                                  |
 | Ingredients list         | Simple text reference for volunteers; not used for inventory         |
 | Preparation instructions | Markdown with embedded images; general method                        |
@@ -352,6 +354,29 @@ base price (or override) + sum of variant deltas + sum of modifier prices
 - Each ticket has its own independent lifecycle
 - Customer picks up food and drinks separately; notified independently per ticket
 - Pickup proof shows which ticket is ready and at which counter
+
+### Kitchen posts (food kitchen only)
+
+Some stalls have specialised workstations within the food kitchen (e.g. a griddle post and an assembly post). When a txosna has kitchen posts configured:
+
+- Each food product is optionally tagged with a `kitchen_post` value in the master menu
+- On order confirmation, food lines are grouped by their product's `kitchen_post`; one ticket is created per distinct post
+- A product with no `kitchen_post` tag goes into a "general" ticket covering the whole kitchen
+- Each post has its own independent ticket lifecycle (RECEIVED → IN_PREPARATION → READY → COMPLETED)
+- A kitchen volunteer selects their post during PIN entry and sees only their post's tickets on the KDS
+- The `order:ready` notification fires when **all** tickets across all posts are READY — no change to the existing logic
+- Stalls with no kitchen posts configured get exactly the current single-ticket behaviour
+
+### Kitchen Manager mode
+
+A fourth session PIN mode, selectable by any volunteer, that provides a coordinator view across all kitchen posts:
+
+- Shows an order-level summary: for each active order, a row per post-ticket with its current status
+- Highlights orders where all posts are READY but the order has not yet been collected
+- Gives prominent access to the sold-out management panel
+- Surfaces slow orders and flagged tickets across all posts
+- Holds the pause and close controls for the kitchen
+- No new role or access restriction — any volunteer can select this mode
 
 ### Drinks ticket lifecycle
 
@@ -504,7 +529,7 @@ base price (or override) + sum of variant deltas + sum of modifier prices
 | Preparation time per product          | Deferred                                       |
 | Time-based product availability       | Deferred                                       |
 | Serving temperature flags             | Deferred                                       |
-| More than two counter types           | Deferred                                       |
+| Kitchen posts (multiple stations within food kitchen) | Implemented — see section 12     |
 | Pre-preparation vs made-to-order flag | Deferred                                       |
 | Packaging and presentation notes      | Deferred                                       |
 | Last orders announcement              | Deferred                                       |
@@ -551,12 +576,16 @@ PENDING PAYMENT ──→ timeout / sold out / paused ────────�
       ↓
 CONFIRMED → tickets created and routed by category type
       │
-      ├── FOOD TICKET
-      │     RECEIVED → IN_PREPARATION → READY → COMPLETED
+      ├── FOOD TICKET(S)
+      │     If txosna has kitchen_posts configured:
+      │       one ticket per post (e.g. FOOD/griddle, FOOD/assembly)
+      │     Otherwise: one ticket for the whole kitchen
+      │     Each ticket: RECEIVED → IN_PREPARATION → READY → COMPLETED
       │     ↘ sold out → flagged → manual → CANCELLED/COMPLETED
       │     ↘ end of service → CANCELLED + notification
       │     ↘ counter edits → order changed alert
       │     ↘ preparation instructions on demand
+      │     All post-tickets READY → order:ready broadcast
       │
       └── DRINKS TICKET
             RECEIVED → (IN_PREPARATION if requires_preparation) → READY → COMPLETED
@@ -580,11 +609,12 @@ All tickets COMPLETED → receipt available for download
 | Txosna configuration     | Admin                    | Any                        | Per-txosna config (counter setup, channels, enabled providers from association, QR, demo mode)                                          |
 | Txosna product selection | Admin                    | Any                        | Per-txosna: toggle which master catalog products to serve; optionally override price and preparation instructions                       |
 | Volunteer login          | Any volunteer            | Any                        | Email + password; password reset available                                                                                              |
-| Session PIN entry        | Any volunteer            | Any                        | Selects food counter, drinks counter, or kitchen                                                                                        |
+| Session PIN entry        | Any volunteer            | Any                        | Selects food counter, drinks counter, kitchen (with optional post selection when posts are configured), or kitchen manager              |
 | Menu & ordering          | Customer                 | Their phone                | Images, allergens, dietary flags, variants, age declaration, wait time; public URL                                                      |
 | Food counter screen      | Volunteer (food mode)    | Any                        | Food tickets primary; drinks accessible; change calculator; age prompt; pause                                                           |
 | Drinks counter screen    | Volunteer (drinks mode)  | Any                        | Drinks tickets primary; food accessible; speed-optimised; age prompt; pause                                                             |
-| Kitchen screen (KDS)     | Volunteer (kitchen mode) | Any                        | All tickets; preparation instructions on demand; sold out; slow order highlights; pause and close                                       |
+| Kitchen screen (KDS)     | Volunteer (kitchen mode) | Any                        | Post-filtered ticket view when posts configured; preparation instructions; sold out; slow order highlights                              |
+| Kitchen manager screen   | Volunteer (kitchen manager mode) | Any               | Order-level coordinator view across all posts; stock management; slow/flagged order summary; pause and close                           |
 | Status overview          | Any logged-in volunteer  | Any                        | Live snapshot; handover tool                                                                                                            |
 | Order board              | Everyone                 | Any (best on large screen) | Live ticket status; accessible via public txosna URL                                                                                    |
 | Pickup proof             | Customer                 | Their phone                | Per ticket; QR if enabled; counter type shown; high contrast                                                                            |
