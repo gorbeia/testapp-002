@@ -93,76 +93,6 @@ Given(
 );
 
 Given(
-  'the txosna {string} has kitchen posts {string} and {string}',
-  function (this: IntegrationWorld, _slug: string, _post1: string, _post2: string): void {
-    // Kitchen posts are logical workstations; tickets are assigned to posts on creation.
-    // This step documents intent; post setup is implicit in subsequent Given steps.
-  }
-);
-
-Given(
-  'a confirmed order exists with a {string} post ticket and an {string} post ticket both in {string}',
-  async function (
-    this: IntegrationWorld,
-    post1: string,
-    post2: string,
-    status: string
-  ): Promise<void> {
-    assert.ok(this.currentTxosna, 'currentTxosna must be set via Background');
-
-    const body = {
-      channel: 'COUNTER',
-      customerName: 'Test Customer',
-      notes: null,
-      paymentMethod: 'CASH' as const,
-      lines: [
-        {
-          productId: 'prod-1',
-          quantity: 1,
-          selectedVariantOptionId: null,
-          selectedModifierIds: [],
-          splitInstructions: null,
-        },
-      ],
-    };
-
-    const req = new Request(`http://localhost/api/txosnak/${this.currentTxosna.slug}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-
-    const response = await ordersPOST(req, params(this.currentTxosna.slug));
-    const order = (await response.clone().json()) as StoredOrder;
-    this.currentOrder = order;
-
-    // Assign the auto-created ticket to post1
-    const existingTickets = await ticketRepo.listByOrder(order.id);
-    assert.ok(existingTickets.length > 0, 'order should have at least one ticket');
-    const ticket1 = await ticketRepo.update(existingTickets[0].id, {
-      kitchenPost: post1,
-      ...(status !== 'RECEIVED' ? { status: status as TicketStatus } : {}),
-    });
-
-    // Create a second ticket assigned to post2
-    const rawTicket2 = await ticketRepo.create(order.id, this.currentTxosna.id, {
-      counterType: 'FOOD',
-      kitchenPost: post2,
-      requiresPreparation: false,
-      notes: null,
-      lines: [],
-    });
-    const ticket2 =
-      status !== 'RECEIVED'
-        ? await ticketRepo.update(rawTicket2.id, { status: status as TicketStatus })
-        : rawTicket2;
-
-    this.namedTickets.set(post1, ticket1);
-    this.namedTickets.set(post2, ticket2);
-  }
-);
-
-Given(
   'there are FOOD tickets in {string} and DRINKS tickets in {string}',
   async function (this: IntegrationWorld, foodStatus: string, drinksStatus: string): Promise<void> {
     assert.ok(this.currentTxosna, 'currentTxosna must be set via Background');
@@ -293,50 +223,6 @@ When(
   }
 );
 
-When(
-  'I request tickets for {string} with counterType {string} and kitchenPost {string}',
-  async function (
-    this: IntegrationWorld,
-    slug: string,
-    counterType: string,
-    kitchenPost: string
-  ): Promise<void> {
-    const url = `http://localhost/api/txosnak/${slug}/tickets?counterType=${counterType}&kitchenPost=${kitchenPost}`;
-    const req = new Request(url, { method: 'GET' });
-
-    this.lastResponse = await txosnaTicketsGET(req, params(slug));
-    this.lastBody = await this.lastResponse
-      .clone()
-      .json()
-      .catch(() => null);
-  }
-);
-
-When(
-  'I advance the {string} post ticket to {string}',
-  async function (this: IntegrationWorld, post: string, status: string): Promise<void> {
-    const ticket = this.namedTickets.get(post);
-    assert.ok(ticket, `no ticket found for kitchen post "${post}"`);
-
-    const body = { status };
-    const req = new Request(`http://localhost/api/tickets/${ticket.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-
-    this.lastResponse = await ticketsPATCH(req, ticketParams(ticket.id));
-    this.lastBody = await this.lastResponse
-      .clone()
-      .json()
-      .catch(() => null);
-
-    if (this.lastResponse.status === 200) {
-      this.namedTickets.set(post, this.lastBody as StoredTicket);
-    }
-  }
-);
-
 // ===== Then steps =====
 
 Then(
@@ -364,35 +250,6 @@ Then(
     assert.ok(
       found,
       `broadcast should have been called with (${this.currentTxosna?.id}, ${eventName}, ...)`
-    );
-  }
-);
-
-Then('only the griddle post ticket is returned', function (this: IntegrationWorld): void {
-  const body = this.lastBody as { tickets: StoredTicket[] };
-  assert.ok(Array.isArray(body.tickets), 'response should have tickets array');
-  assert.ok(body.tickets.length > 0, 'should return at least one ticket');
-  for (const ticket of body.tickets) {
-    assert.equal(
-      ticket.kitchenPost,
-      'griddle',
-      `ticket ${ticket.id} should have kitchenPost "griddle", got "${ticket.kitchenPost}"`
-    );
-  }
-});
-
-Then(
-  'no {string} SSE event is broadcast',
-  function (this: IntegrationWorld, eventName: string): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const calls = (global as any).broadcastCalls || [];
-    const found = calls.some(
-      (call: { txosnaId: string; eventName: string }) =>
-        call.txosnaId === this.currentTxosna?.id && call.eventName === eventName
-    );
-    assert.ok(
-      !found,
-      `broadcast should NOT have been called with (${this.currentTxosna?.id}, ${eventName})`
     );
   }
 );
