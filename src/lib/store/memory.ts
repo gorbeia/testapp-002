@@ -200,6 +200,7 @@ function seed() {
       orderId: mt.orderId,
       txosnaId: 'txosna-1',
       counterType: mt.counterType,
+      kitchenPost: null,
       status: mt.status,
       requiresPreparation: mt.lines.some((l) => {
         const p = products.get(l.productId);
@@ -330,6 +331,7 @@ export const orderRepo: OrderRepository = {
           orderId: order.id,
           txosnaId: data.txosnaId,
           counterType: ticketInput.counterType,
+          kitchenPost: ticketInput.kitchenPost ?? null,
           status: 'RECEIVED',
           requiresPreparation: ticketInput.requiresPreparation,
           flagged: false,
@@ -399,6 +401,7 @@ export const ticketRepo: TicketRepository = {
       orderId,
       txosnaId,
       counterType: data.counterType,
+      kitchenPost: data.kitchenPost ?? null,
       status: 'RECEIVED',
       requiresPreparation: data.requiresPreparation,
       flagged: false,
@@ -422,6 +425,7 @@ export const ticketRepo: TicketRepository = {
     let result = [...tickets.values()].filter((t) => t.txosnaId === txosnaId);
     if (filter?.status) result = result.filter((t) => t.status === filter.status);
     if (filter?.counterType) result = result.filter((t) => t.counterType === filter.counterType);
+    if (filter?.kitchenPost) result = result.filter((t) => t.kitchenPost === filter.kitchenPost);
     return result.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   },
 
@@ -729,6 +733,7 @@ function seedDemoAssociation() {
       orderId: mt.orderId,
       txosnaId: 'demo-txosna-1',
       counterType: mt.counterType,
+      kitchenPost: null,
       status: mt.status,
       requiresPreparation: mt.lines.some((l) => {
         const p = products.get(l.productId);

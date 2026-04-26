@@ -16,6 +16,7 @@ export class IntegrationWorld extends World {
   savedOrders: StoredOrder[] = [];
   broadcastCalls: BroadcastSpyCall[] = [];
   namedOrders: Map<string, StoredOrder> = new Map();
+  namedTickets: Map<string, StoredTicket> = new Map();
 
   constructor(options: IWorldOptions) {
     super(options);
