@@ -523,9 +523,16 @@ Each card represents one order and shows:
 
 - Order number (large) and customer name
 - One row per post-ticket with a compact status bar and status label
+- A **pipeline progress indicator** — a single bar spanning the width of the card, divided into segments (one per post); each segment fills as its post-ticket reaches READY; the bar completes when all posts are done
+
+```
+  ○────[Griddle ✓]────[Fryer ⏳]────○  (1 of 2 posts done)
+  ○────[Griddle ✓]────[Fryer  ✓]────● (all done — highlighted green)
+```
+
 - Time elapsed since order confirmation
 - Orders where all posts are READY highlighted in green — the coordinator calls out the order number
-- Slow order indicator (⏱) if any post ticket is significantly over the session average
+- Slow order indicator (⏱) if any post-ticket is significantly over the session average
 - Order changed alert (🔔 orange banner) if the counter edited the order while a ticket is in preparation
 
 No status-advance buttons — post volunteers advance their own tickets. The manager's role is coordination, not direct preparation.
@@ -584,6 +591,16 @@ The most complex admin screen. Key interactions:
 - **Product list**: drag-and-drop reordering within category; inline price editing; quick toggle for availability
 - **Product detail**: full form with all fields; image upload; preparation instructions written in a Markdown editor with preview; variant group builder; modifier builder
 - **Allergen selector**: visual grid of the 14 EU allergens with icon + name; toggleable
+- **Kitchen post field**: when the txosna has kitchen posts configured, a dropdown appears on the product, on each variant option, and on each modifier to assign a `kitchen_post` value (or leave null)
+- **Kitchen routing preview**: a live summary card below the variant/modifier sections showing the set of posts that will be triggered for each possible variant combination — recomputes on every change; only shown when posts are configured
+
+```
+┌─ Kitchen routing preview ─────────────────────────────────┐
+│  With Fries   →  🔥 Griddle  +  🍟 Fryer                  │
+│  With Salad   →  🔥 Griddle                               │
+│  With Rice    →  🔥 Griddle                               │
+└───────────────────────────────────────────────────────────┘
+```
 
 ### Txosna configuration
 

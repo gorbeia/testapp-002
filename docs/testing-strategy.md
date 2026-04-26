@@ -303,13 +303,23 @@ Feature: Counter order creation
 
   @integration-only
   Scenario: Food lines split into kitchen post tickets when posts are configured
-    Given the txosna "aste-nagusia" has kitchen posts "griddle" and "assembly"
-    And product "prod-griddle" has kitchenPost "griddle"
-    And product "prod-assembly" has kitchenPost "assembly"
-    When I submit a COUNTER order with "prod-griddle" and "prod-assembly"
+    Given the txosna "aste-nagusia" has kitchen posts "griddle" and "fryer"
+    And product "prod-burger" has kitchenPost "griddle"
+    And variant option "opt-fries" has kitchenPost "fryer"
+    And variant option "opt-salad" has kitchenPost null
+    When I submit a COUNTER order for "prod-burger" with variant "opt-fries"
     Then the order has 2 FOOD tickets
     And one ticket has kitchenPost "griddle"
-    And one ticket has kitchenPost "assembly"
+    And one ticket has kitchenPost "fryer"
+
+  @integration-only
+  Scenario: Variant with null kitchenPost does not add an extra ticket
+    Given the txosna "aste-nagusia" has kitchen posts "griddle" and "fryer"
+    And product "prod-burger" has kitchenPost "griddle"
+    And variant option "opt-salad" has kitchenPost null
+    When I submit a COUNTER order for "prod-burger" with variant "opt-salad"
+    Then the order has 1 FOOD ticket
+    And that ticket has kitchenPost "griddle"
 
   @integration-only
   Scenario: Food order without post tags produces a single general ticket

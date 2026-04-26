@@ -121,7 +121,7 @@ Logic:
 3. Compute per-line `unitPrice` (base + variant delta + modifiers)
 4. Allocate next `orderNumber` (atomic increment per txosna)
 5. Generate `verificationCode` (2 letters + 4 digits)
-6. Split lines into tickets by `counterType` (FOOD vs DRINKS) based on product category; if the txosna has `kitchenPosts` configured, further split FOOD lines by `product.kitchenPost` — one ticket per distinct post (`kitchenPost = null` lines go into a general food ticket)
+6. Split lines into tickets by `counterType` (FOOD vs DRINKS) based on product category; if the txosna has `kitchenPosts` configured, further split FOOD lines by kitchen post: for each line collect all non-null `kitchenPost` values from `product.kitchenPost`, each selected `variantOption.kitchenPost`, and each selected `modifier.kitchenPost`; de-duplicate; each distinct post value becomes a ticket (lines with an empty set go into a general food ticket with `kitchenPost = null`); lines for the same post across multiple order lines are merged into one ticket
 7. Create `StoredOrder` with status `CONFIRMED` + nested tickets (each with `kitchenPost` set or null) with status `RECEIVED`
 8. Broadcast SSE event `order:created` to txosna channel
 9. Return created order
