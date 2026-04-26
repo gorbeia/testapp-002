@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { Given, When, Then } from '@cucumber/cucumber';
-import { GET as txosnaGET } from '@/app/api/txosnak/[slug]/route';
-import { GET as catalogGET } from '@/app/api/txosnak/[slug]/catalog/route';
+import { GET as txosnaGET } from '../../../src/app/api/handlers/txosna';
+import { GET as catalogGET } from '../../../src/app/api/handlers/catalog';
 import {
   _test_insertTxosna,
   _test_insertProduct,

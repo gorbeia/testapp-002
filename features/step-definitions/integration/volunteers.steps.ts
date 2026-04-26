@@ -2,8 +2,8 @@
 import assert from 'assert';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { NextRequest } from 'next/server';
-import { POST as volunteersPost } from '../../../src/app/api/associations/[associationId]/volunteers/route';
-import { DELETE as volunteerDelete } from '../../../src/app/api/volunteers/[volunteerId]/route';
+import { POST as volunteersPost } from '../../../src/app/api/handlers/assoc-volunteers';
+import { DELETE as volunteerDelete } from '../../../src/app/api/handlers/volunteer';
 import { POST as pinPost } from '../../../src/app/api/auth/pin/route';
 import { volunteerRepo, _test_insertTxosna } from '../../../src/test/store-setup';
 import type { IntegrationWorld } from './world';

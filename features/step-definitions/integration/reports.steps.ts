@@ -2,7 +2,7 @@
 import assert from 'assert';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { NextRequest } from 'next/server';
-import { GET as reportsGET } from '../../../src/app/api/txosnak/[slug]/reports/route';
+import { GET as reportsGET } from '../../../src/app/api/handlers/txosna-reports';
 import { _test_insertOrder, _test_insertTxosna } from '../../../src/test/store-setup';
 import type { StoredOrder } from '../../../src/lib/store/types';
 import type { IntegrationWorld } from './world';
