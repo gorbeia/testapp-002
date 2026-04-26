@@ -114,7 +114,6 @@ Saskian bildutako produktuak ikusteko, saskia ikonoa sakatu beheko barran:
 - **Mostradorean**: Esku-diruz edo txartelaz bertan ordaindu
 
 - Saskia ikonoa behean
-- Eskaera kopuruagatik dohainik
 - Ordainketa segurua Stripe/Redsys
 
 #### Eskaera Egoera
