@@ -32,3 +32,19 @@ Feature: KDS ticket lifecycle
     Given there are FOOD tickets in "RECEIVED" and DRINKS tickets in "IN_PREPARATION"
     When I request tickets for "aste-nagusia" with counterType "FOOD" and status "RECEIVED"
     Then only FOOD tickets in RECEIVED status are returned
+
+  @integration-only
+  Scenario: KDS filters by kitchen post
+    Given the txosna "aste-nagusia" has kitchen posts "griddle" and "assembly"
+    And a confirmed order exists with a "griddle" post ticket and an "assembly" post ticket both in "RECEIVED"
+    When I request tickets for "aste-nagusia" with counterType "FOOD" and kitchenPost "griddle"
+    Then only the griddle post ticket is returned
+
+  @integration-only
+  Scenario: Order ready fires only when all post-tickets are READY
+    Given the txosna "aste-nagusia" has kitchen posts "griddle" and "assembly"
+    And a confirmed order exists with a "griddle" post ticket and an "assembly" post ticket both in "RECEIVED"
+    When I advance the "griddle" post ticket to "READY"
+    Then no "order:ready" SSE event is broadcast
+    When I advance the "assembly" post ticket to "READY"
+    Then a "order:ready" SSE event is broadcast to "aste-nagusia"

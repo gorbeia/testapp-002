@@ -121,8 +121,8 @@ Logic:
 3. Compute per-line `unitPrice` (base + variant delta + modifiers)
 4. Allocate next `orderNumber` (atomic increment per txosna)
 5. Generate `verificationCode` (2 letters + 4 digits)
-6. Split lines into tickets by `counterType` (FOOD vs DRINKS) based on product category
-7. Create `StoredOrder` with status `CONFIRMED` + nested tickets with status `RECEIVED`
+6. Split lines into tickets by `counterType` (FOOD vs DRINKS) based on product category; if the txosna has `kitchenPosts` configured, further split FOOD lines by `product.kitchenPost` — one ticket per distinct post (`kitchenPost = null` lines go into a general food ticket)
+7. Create `StoredOrder` with status `CONFIRMED` + nested tickets (each with `kitchenPost` set or null) with status `RECEIVED`
 8. Broadcast SSE event `order:created` to txosna channel
 9. Return created order
 
@@ -137,6 +137,8 @@ Returns orders with their tickets and lines. Used by the counter and KDS screens
 **Integration tests**
 
 - POST valid order → 201, order in store, tickets split correctly
+- POST order to txosna with kitchen posts configured → FOOD lines grouped into per-post tickets with correct `kitchenPost` values
+- POST order to txosna without kitchen posts → single FOOD ticket with `kitchenPost = null`
 - POST with soldOut product → 422
 - POST to PAUSED txosna → 409
 - GET with `status=CONFIRMED` → returns only confirmed orders
@@ -164,9 +166,9 @@ Logic:
 
 `GET /api/txosnak/[slug]/tickets`
 
-Query params: `status`, `counterType`
+Query params: `status`, `counterType`, `kitchenPost` (optional — when provided returns only tickets for that post; omit to return all)
 
-Returns tickets with lines and order metadata (customerName, orderNumber, notes). Used by KDS and counter.
+Returns tickets with lines and order metadata (customerName, orderNumber, notes). Used by KDS (post-filtered view) and kitchen manager (all posts).
 
 `PATCH /api/tickets/[ticketId]/flag`
 
@@ -177,7 +179,10 @@ Toggles `flagged` boolean. Used by KDS for manual attention markers.
 - PATCH ticket `RECEIVED → IN_PREPARATION` → status updated, SSE broadcast recorded
 - PATCH ticket `IN_PREPARATION → RECEIVED` → 422 (backwards transition rejected)
 - All tickets of an order reach READY → order receives `order:ready` broadcast
+- Order with two kitchen post-tickets: `order:ready` fires only after both post-tickets are READY
 - GET `/tickets?status=RECEIVED&counterType=FOOD` → only food tickets in received state
+- GET `/tickets?counterType=FOOD&kitchenPost=griddle` → only griddle post tickets returned
+- GET `/tickets?counterType=FOOD` (no kitchenPost) → all FOOD tickets regardless of post
 
 ---
 
@@ -267,7 +272,7 @@ Password hashing uses `bcryptjs` (already a dependency).
 
 - Request: `{ txosnaSlug, pin }`
 - Verifies pin against `txosna.pinHash` (bcrypt)
-- Returns `{ valid: true, txosnaId, counterSetup }` — no session created; PIN auth is ephemeral per device
+- Returns `{ valid: true, txosnaId, counterSetup, kitchenPosts }` — no session created; PIN auth is ephemeral per device; `kitchenPosts` is included so the PIN entry screen can present post selection when the volunteer chooses kitchen mode
 
 **Integration tests**
 
