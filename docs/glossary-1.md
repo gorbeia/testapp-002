@@ -95,17 +95,19 @@ _Session 17 — April 2026_
 
 ## Counters
 
-| Term                 | English              | Definition                                                                                            |
-| -------------------- | -------------------- | ----------------------------------------------------------------------------------------------------- |
-| Counter type         | Counter type         | FOOD or DRINKS — the type of serving point                                                            |
-| Food counter         | Food counter         | Serving point for all food items; always uses full preparation lifecycle                              |
-| Drinks counter       | Drinks counter       | Serving point for all drink items; full lifecycle if any item requires preparation                    |
-| Separate counters    | Separate counters    | Food and drinks at independent serving points; customers pick up separately                           |
-| Single counter       | Single counter       | Food and drinks at the same serving point                                                             |
-| Counter mode         | Counter mode         | Default view after PIN entry — a view filter, not an access restriction                               |
-| Cross-counter access | Cross-counter access | Ability to view and act on the other counter's tickets; always available but not prominent            |
-| Kitchen post         | Kitchen post         | A named preparation workstation within the food kitchen (e.g. griddle, assembly); optional per txosna |
-| Kitchen Manager mode | Kitchen Manager mode | Session PIN mode giving a coordinator view across all kitchen posts; selectable by any volunteer      |
+| Term                        | English                     | Definition                                                                                                                                                                      |
+| --------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Counter type                | Counter type                | FOOD or DRINKS — the type of serving point                                                                                                                                      |
+| Food counter                | Food counter                | Serving point for all food items; always uses full preparation lifecycle                                                                                                        |
+| Drinks counter              | Drinks counter              | Serving point for all drink items; full lifecycle if any item requires preparation                                                                                              |
+| Separate counters           | Separate counters           | Food and drinks at independent serving points; customers pick up separately                                                                                                     |
+| Single counter              | Single counter              | Food and drinks at the same serving point                                                                                                                                       |
+| Counter mode                | Counter mode                | Default view after PIN entry — a view filter, not an access restriction                                                                                                         |
+| Cross-counter access        | Cross-counter access        | Ability to view and act on the other counter's tickets; always available but not prominent                                                                                      |
+| Kitchen post                | Kitchen post                | A named preparation workstation within the food kitchen (e.g. griddle, fryer); optional per txosna; assignable on products, variant options, and modifiers                      |
+| Kitchen Manager mode        | Kitchen Manager mode        | Session PIN mode giving a coordinator view across all kitchen posts; selectable by any volunteer                                                                                |
+| Kitchen routing preview     | Kitchen routing preview     | Live card in the product editor showing which posts are triggered per variant combination; computed from kitchen_post fields on the product, its variant options, and modifiers |
+| Pipeline progress indicator | Pipeline progress indicator | Visual bar on each kitchen manager order card showing how many posts have reached READY; completes when all posts are done                                                      |
 
 ---
 

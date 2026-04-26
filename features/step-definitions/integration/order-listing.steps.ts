@@ -1,9 +1,6 @@
 import assert from 'assert';
 import { Given, When, Then } from '@cucumber/cucumber';
-import {
-  POST as ordersPOST,
-  GET as ordersGET,
-} from '../../../src/app/api/txosnak/[slug]/orders/route';
+import { POST as ordersPOST, GET as ordersGET } from '../../../src/app/api/handlers/txosna-orders';
 import { orderRepo } from '../../../src/test/store-setup';
 import type { StoredOrder } from '../../../src/lib/store/types';
 import type { IntegrationWorld } from './world';

@@ -222,32 +222,34 @@ Each txosna is independently configurable:
 
 ### Product fields
 
-| Field                    | Notes                                                                                              |
-| ------------------------ | -------------------------------------------------------------------------------------------------- |
-| Name                     | Required                                                                                           |
-| Category                 | Required; determines FOOD or DRINKS routing                                                        |
-| Default price            | Required                                                                                           |
-| Description              | Optional                                                                                           |
-| Customer-facing image    | Optional                                                                                           |
-| Allergens                | Multi-select from 14 standard EU allergens                                                         |
-| Dietary flags            | Vegetarian, vegan, gluten-free                                                                     |
-| Age-restricted           | Drink requires ID verification at counter before serving                                           |
-| Splittable               | For food products ordered in multiple units                                                        |
-| Requires preparation     | For drink products needing active preparation (e.g. mojito)                                        |
-| Kitchen post             | Optional; tags which kitchen post handles this product at the food counter; null = general kitchen |
-| Display order            | Within its category                                                                                |
-| Ingredients list         | Simple text reference for volunteers; not used for inventory                                       |
-| Preparation instructions | Markdown with embedded images; general method                                                      |
-| VAT type (IVA)           | Optional unless TicketBAI is enabled; defaults to IVA Reducido (10%)                               |
+| Field                    | Notes                                                                       |
+| ------------------------ | --------------------------------------------------------------------------- |
+| Name                     | Required                                                                    |
+| Category                 | Required; determines FOOD or DRINKS routing                                 |
+| Default price            | Required                                                                    |
+| Description              | Optional                                                                    |
+| Customer-facing image    | Optional                                                                    |
+| Allergens                | Multi-select from 14 standard EU allergens                                  |
+| Dietary flags            | Vegetarian, vegan, gluten-free                                              |
+| Age-restricted           | Drink requires ID verification at counter before serving                    |
+| Splittable               | For food products ordered in multiple units                                 |
+| Requires preparation     | For drink products needing active preparation (e.g. mojito)                 |
+| Kitchen post             | Optional; primary kitchen post for the base product; null = general kitchen |
+| Display order            | Within its category                                                         |
+| Ingredients list         | Simple text reference for volunteers; not used for inventory                |
+| Preparation instructions | Markdown with embedded images; general method                               |
+| VAT type (IVA)           | Optional unless TicketBAI is enabled; defaults to IVA Reducido (10%)        |
 
 ### Variant groups
 
-- Required choices per product; each option has name, price delta, allergens
+- Required choices per product; each option has name, price delta, allergens, and an optional `kitchen_post`
+- A variant option's `kitchen_post` routes that component to an additional kitchen post when the option is selected (e.g. a "Fries" option with `kitchen_post = "fryer"` means any order containing this variant also creates a fryer ticket)
 - Drinks counter UI simplified for speed
 
 ### Modifiers
 
-- Optional additions/removals; each has name, price, allergens
+- Optional additions/removals; each has name, price, allergens, and an optional `kitchen_post`
+- A modifier's `kitchen_post` works the same way as a variant option's: it adds an additional kitchen post to the order line's routing when the modifier is selected
 
 ### Effective order line price
 
@@ -357,15 +359,29 @@ base price (or override) + sum of variant deltas + sum of modifier prices
 
 ### Kitchen posts (food kitchen only)
 
-Some stalls have specialised workstations within the food kitchen (e.g. a griddle post and an assembly post). When a txosna has kitchen posts configured:
+Some stalls have specialised workstations within the food kitchen (e.g. a griddle post and a fryer post). When a txosna has kitchen posts configured, routing happens at the **order line level** using posts defined on the product, its variant options, and its modifiers:
 
-- Each food product is optionally tagged with a `kitchen_post` value in the master menu
-- On order confirmation, food lines are grouped by their product's `kitchen_post`; one ticket is created per distinct post
-- A product with no `kitchen_post` tag goes into a "general" ticket covering the whole kitchen
+**Routing rule per order line:** collect all non-null `kitchen_post` values from `product.kitchen_post`, each selected `VariantOption.kitchen_post`, and each selected `Modifier.kitchen_post`. De-duplicate. One ticket is created per distinct post across all order lines in the order.
+
+- A "Burger + fries" order line where the Fries variant has `kitchen_post = "fryer"` creates tickets at both griddle and fryer
+- A "Burger + salad" order line where the Salad variant has `kitchen_post = null` creates a ticket at griddle only
+- Each post-ticket shows the full order line — post volunteers know from their station context which part they handle
+- Order lines with no post values at all go into a general food ticket (`kitchen_post = null`)
 - Each post has its own independent ticket lifecycle (RECEIVED → IN_PREPARATION → READY → COMPLETED)
 - A kitchen volunteer selects their post during PIN entry and sees only their post's tickets on the KDS
 - The `order:ready` notification fires when **all** tickets across all posts are READY — no change to the existing logic
 - Stalls with no kitchen posts configured get exactly the current single-ticket behaviour
+
+### Kitchen routing preview
+
+The admin product editor shows a live **"Kitchen routing preview"** card that recomputes as variant options and modifiers are configured. It displays all possible post combinations per variant choice, allowing the admin to verify routing before saving:
+
+```
+With Fries   →  Griddle  +  Fryer
+With Salad   →  Griddle
+```
+
+Only visible when the txosna has kitchen posts configured. No additional data required — computed from existing `kitchen_post` fields.
 
 ### Kitchen Manager mode
 

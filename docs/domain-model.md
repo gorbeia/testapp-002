@@ -114,25 +114,27 @@ _Session 17 — April 2026_
 
 ### VariantOption
 
-| Attribute     | Type         | Notes                                        |
-| ------------- | ------------ | -------------------------------------------- |
-| variant_group | VariantGroup | Which group this belongs to                  |
-| name          | text         | e.g. "Chips", "Salad"                        |
-| price_delta   | decimal      | Amount added to base price; zero or positive |
-| allergens     | list         | Allergens introduced by this option          |
-| display_order | integer      | Position within the group                    |
+| Attribute     | Type         | Notes                                                                                               |
+| ------------- | ------------ | --------------------------------------------------------------------------------------------------- |
+| variant_group | VariantGroup | Which group this belongs to                                                                         |
+| name          | text         | e.g. "Chips", "Salad"                                                                               |
+| price_delta   | decimal      | Amount added to base price; zero or positive                                                        |
+| allergens     | list         | Allergens introduced by this option                                                                 |
+| kitchen_post  | text?        | Optional; if set, selecting this option adds an additional kitchen post to the order line's routing |
+| display_order | integer      | Position within the group                                                                           |
 
 ---
 
 ### Modifier
 
-| Attribute     | Type    | Notes                                        |
-| ------------- | ------- | -------------------------------------------- |
-| product       | Product | Which product this modifier belongs to       |
-| name          | text    | e.g. "Extra sauce", "No onion"               |
-| price         | decimal | Amount added to base price; zero or positive |
-| allergens     | list    | Allergens introduced by this modifier        |
-| display_order | integer | Position among modifiers on the product      |
+| Attribute     | Type    | Notes                                                                                              |
+| ------------- | ------- | -------------------------------------------------------------------------------------------------- |
+| product       | Product | Which product this modifier belongs to                                                             |
+| name          | text    | e.g. "Extra sauce", "No onion"                                                                     |
+| price         | decimal | Amount added to base price; zero or positive                                                       |
+| allergens     | list    | Allergens introduced by this modifier                                                              |
+| kitchen_post  | text?   | Optional; if set, adding this modifier adds an additional kitchen post to the order line's routing |
+| display_order | integer | Position among modifiers on the product                                                            |
 
 ---
 
@@ -353,20 +355,45 @@ Lines assigned based on `product.category.type`.
 
 When a txosna has `kitchen_posts` configured (a non-empty list of named stations):
 
-- Food lines are further grouped by `product.kitchen_post` on order confirmation
-- One `OrderTicket` is created per distinct `kitchen_post` value found in the food lines; products with `kitchen_post = null` go into a general food ticket
-- Each post-ticket has an independent lifecycle (RECEIVED → IN_PREPARATION → READY → COMPLETED)
-- `order:ready` fires when **all** tickets (food post-tickets + drinks ticket if any) reach READY
-- Stalls with no `kitchen_posts` configured get a single food ticket per order — existing behaviour unchanged
+**Routing algorithm per order line:**
+
+1. Collect all non-null `kitchen_post` values from: `product.kitchen_post`, each selected `VariantOption.kitchen_post`, each selected `Modifier.kitchen_post`
+2. De-duplicate — the resulting set is the list of posts that need to work on this line
+3. If the set is empty, the line goes into a general food ticket (`kitchen_post = null`)
+4. Lines across multiple order lines that share the same post are grouped into one ticket for that post
+
+Example — "Burger":
+
+- `product.kitchen_post = "griddle"`
+- Variant "Fries" has `kitchen_post = "fryer"` → posts: `{ griddle, fryer }`
+- Variant "Salad" has `kitchen_post = null` → posts: `{ griddle }`
+
+Each post-ticket has an independent lifecycle (RECEIVED → IN_PREPARATION → READY → COMPLETED). `order:ready` fires when **all** tickets (food post-tickets + drinks ticket if any) reach READY. Stalls with no `kitchen_posts` configured get a single food ticket per order — existing behaviour unchanged.
+
+Each post-ticket shows the **full order line** (not just the component for that post). Post volunteers know from their station context what part of the item they handle.
+
+### Kitchen routing preview
+
+The product editor in admin shows a live **"Kitchen routing preview"** card that recomputes as the admin configures variant options and modifiers. It lists all possible post combinations based on variant choices, so the admin can verify routing consequences before saving:
+
+```
+With Fries   →  🔥 Griddle  +  🍟 Fryer
+With Salad   →  🔥 Griddle
+With Rice    →  🔥 Griddle
+```
+
+Only shown when the txosna has `kitchen_posts` configured. Computed from existing fields — no additional data needed.
 
 ### Kitchen Manager mode
 
 Any volunteer can select kitchen manager mode at PIN entry. It is a view filter, not an access restriction:
 
 - Provides an **order-level coordinator view**: each active order grouped with a status row per post-ticket
+- Each order card includes a **pipeline progress indicator** — a bar that advances as each post-ticket reaches READY, giving the coordinator an at-a-glance sense of overall completion
 - Orders where all post-tickets are READY are highlighted for collection coordination
 - Gives prominent access to stock management and the pause/close controls
 - No new database role or permissions required
+- All posts treated as parallel (no modelled sequencing between them); volunteers manage physical sequencing themselves
 
 ### Drinks ticket lifecycle
 

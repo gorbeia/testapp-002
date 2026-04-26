@@ -3,7 +3,7 @@ import assert from 'assert';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { NextRequest } from 'next/server';
 import { POST as sessionPOST } from '../../../src/app/api/payments/session/route';
-import { POST as webhookPOST } from '../../../src/app/api/payments/webhook/[provider]/route';
+import { POST as webhookPOST } from '../../../src/app/api/handlers/payment-webhook';
 import { orderRepo, ticketRepo, _test_insertOrder } from '../../../src/test/store-setup';
 import type { StoredOrder } from '../../../src/lib/store/types';
 import type { IntegrationWorld } from './world';

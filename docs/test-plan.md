@@ -80,7 +80,9 @@ The boolean predicate `available AND NOT sold_out AND txosna.status = OPEN AND N
 - DRINKS category type → drinks ticket
 - SINGLE counter → one ticket with all lines
 - SEPARATE counters → two tickets, lines split by category type
-- Txosna with kitchen posts: FOOD lines split by `product.kitchenPost` — one ticket per distinct post; products with no post tag → general food ticket (`kitchenPost = null`)
+- Txosna with kitchen posts: posts collected per order line from `product.kitchenPost` + selected `variantOption.kitchenPost` + selected `modifier.kitchenPost`; one ticket per distinct post across the order; lines with empty post set → general food ticket (`kitchenPost = null`)
+- "Burger + fries" (fries variant has `kitchenPost = "fryer"`, product has `kitchenPost = "griddle"`) → two FOOD tickets: one griddle, one fryer; both contain the full order line
+- "Burger + salad" (salad variant has `kitchenPost = null`) → one FOOD ticket: griddle only
 - Txosna without kitchen posts: single FOOD ticket with `kitchenPost = null` (unchanged behaviour)
 
 ### Multitenancy Filtering

@@ -1,9 +1,9 @@
 import assert from 'assert';
 import { Given, When, Then } from '@cucumber/cucumber';
-import { POST as ordersPOST } from '../../../src/app/api/txosnak/[slug]/orders/route';
-import { PATCH as ticketsPATCH } from '../../../src/app/api/tickets/[id]/route';
-import { GET as txosnaTicketsGET } from '../../../src/app/api/txosnak/[slug]/tickets/route';
-import { ticketRepo } from '../../../src/test/store-setup';
+import { POST as ordersPOST } from '../../../src/app/api/handlers/txosna-orders';
+import { PATCH as ticketsPATCH } from '../../../src/app/api/handlers/ticket';
+import { GET as txosnaTicketsGET } from '../../../src/app/api/handlers/txosna-tickets';
+import { ticketRepo, orderRepo, _test_insertOrder } from '../../../src/test/store-setup';
 import type { StoredOrder, StoredTicket, TicketStatus } from '../../../src/lib/store/types';
 import type { IntegrationWorld } from './world';
 
@@ -401,7 +401,6 @@ Then('only FOOD tickets in RECEIVED status are returned', function (this: Integr
   const body = this.lastBody as { tickets: StoredTicket[] };
   assert.ok(Array.isArray(body.tickets), 'response should have tickets array');
 
-  // All returned tickets should be FOOD and RECEIVED
   for (const ticket of body.tickets) {
     assert.equal(
       ticket.counterType,
@@ -415,6 +414,142 @@ Then('only FOOD tickets in RECEIVED status are returned', function (this: Integr
     );
   }
 
-  // Should have at least one ticket
   assert.ok(body.tickets.length > 0, 'should return at least one FOOD ticket in RECEIVED');
 });
+
+// ===== Kitchen post steps =====
+
+Given(
+  'the txosna {string} has kitchen posts {string} and {string}',
+  function (this: IntegrationWorld, _slug: string, _post1: string, _post2: string): void {
+    // Kitchen posts are a runtime configuration detail; the store setup
+    // does not require explicit registration for filter tests.
+  }
+);
+
+Given(
+  'a confirmed order exists with a {string} post ticket and an {string} post ticket both in {string}',
+  async function (
+    this: IntegrationWorld,
+    post1: string,
+    post2: string,
+    status: string
+  ): Promise<void> {
+    assert.ok(this.currentTxosna, 'currentTxosna must be set via Background');
+
+    const orderId = `order-post-${Date.now()}`;
+    const orderNumber = await orderRepo.nextOrderNumber(this.currentTxosna.id);
+    const now = new Date();
+
+    const order = {
+      id: orderId,
+      orderNumber,
+      txosnaId: this.currentTxosna.id,
+      status: 'CONFIRMED' as const,
+      cancellationReason: null,
+      channel: 'COUNTER' as const,
+      paymentMethod: 'CASH' as const,
+      customerName: 'Test Customer',
+      notes: null,
+      total: 0,
+      verificationCode: `TST-${orderNumber}`,
+      registeredById: null,
+      paymentSessionId: null,
+      confirmedAt: now,
+      expiresAt: null,
+      pendingLines: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    _test_insertOrder(order);
+    this.currentOrder = order;
+
+    for (const post of [post1, post2]) {
+      const ticket = await ticketRepo.create(orderId, this.currentTxosna.id, {
+        counterType: 'FOOD',
+        kitchenPost: post,
+        requiresPreparation: true,
+        notes: null,
+        lines: [],
+      });
+
+      const ticketStatus = status as TicketStatus;
+      const stored =
+        ticketStatus !== 'RECEIVED'
+          ? await ticketRepo.update(ticket.id, { status: ticketStatus })
+          : ticket;
+
+      this.namedTickets.set(post, stored);
+    }
+  }
+);
+
+When(
+  'I request tickets for {string} with counterType {string} and kitchenPost {string}',
+  async function (
+    this: IntegrationWorld,
+    slug: string,
+    counterType: string,
+    kitchenPost: string
+  ): Promise<void> {
+    const url = `http://localhost/api/txosnak/${slug}/tickets?counterType=${counterType}&kitchenPost=${kitchenPost}`;
+    const req = new Request(url, { method: 'GET' });
+
+    this.lastResponse = await txosnaTicketsGET(req, params(slug));
+    this.lastBody = await this.lastResponse
+      .clone()
+      .json()
+      .catch(() => null);
+  }
+);
+
+When(
+  'I advance the {string} post ticket to {string}',
+  async function (this: IntegrationWorld, post: string, status: string): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global as any).broadcastCalls = [];
+
+    const ticket = this.namedTickets.get(post);
+    assert.ok(ticket, `no ticket named "${post}" — check the Given setup step`);
+
+    const body = { status };
+    const req = new Request(`http://localhost/api/tickets/${ticket.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    this.lastResponse = await ticketsPATCH(req, ticketParams(ticket.id));
+    this.lastBody = await this.lastResponse
+      .clone()
+      .json()
+      .catch(() => null);
+
+    if (this.lastResponse.status === 200) {
+      this.namedTickets.set(post, this.lastBody as StoredTicket);
+    }
+  }
+);
+
+Then('only the griddle post ticket is returned', function (this: IntegrationWorld): void {
+  const body = this.lastBody as { tickets: StoredTicket[] };
+  assert.ok(Array.isArray(body.tickets), 'response should have tickets array');
+  assert.equal(body.tickets.length, 1, 'should return exactly one ticket');
+  assert.equal(
+    body.tickets[0].kitchenPost,
+    'griddle',
+    `ticket kitchenPost should be "griddle", got "${body.tickets[0].kitchenPost}"`
+  );
+});
+
+Then(
+  'no {string} SSE event is broadcast',
+  function (this: IntegrationWorld, eventName: string): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const calls = (global as any).broadcastCalls || [];
+    const found = calls.some(
+      (call: { txosnaId: string; eventName: string }) => call.eventName === eventName
+    );
+    assert.ok(!found, `broadcast should NOT have been called with event "${eventName}"`);
+  }
+);
