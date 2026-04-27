@@ -601,6 +601,8 @@ function QrTab() {
 // ── Tab 4: Kitchen Posts ──────────────────────────────────────────────────────
 function KitchenTab({ slug }: { slug: string | null }) {
   const [posts, setPosts] = React.useState<string[]>([]);
+  const [editingIdx, setEditingIdx] = React.useState<number | null>(null);
+  const [editValue, setEditValue] = React.useState('');
   const [newPost, setNewPost] = React.useState('');
   const [saved, setSaved] = React.useState(false);
 
@@ -621,7 +623,26 @@ function KitchenTab({ slug }: { slug: string | null }) {
     setNewPost('');
   };
 
-  const removePost = (i: number) => setPosts((prev) => prev.filter((_, j) => j !== i));
+  const startEdit = (i: number) => {
+    setEditingIdx(i);
+    setEditValue(posts[i]);
+  };
+
+  const confirmEdit = () => {
+    if (editingIdx === null) return;
+    const trimmed = editValue.trim();
+    if (!trimmed) {
+      setEditingIdx(null);
+      return;
+    }
+    setPosts((prev) => prev.map((p, j) => (j === editingIdx ? trimmed : p)));
+    setEditingIdx(null);
+  };
+
+  const removePost = (i: number) => {
+    if (editingIdx === i) setEditingIdx(null);
+    setPosts((prev) => prev.filter((_, j) => j !== i));
+  };
 
   const handleSave = () => {
     if (!slug) return;
@@ -634,6 +655,25 @@ function KitchenTab({ slug }: { slug: string | null }) {
     setTimeout(() => setSaved(false), 2000);
   };
 
+  const rowStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '10px 12px',
+    background: 'var(--adm-surface)',
+    border: '1px solid var(--adm-border)',
+    borderRadius: 10,
+  };
+  const iconBtnStyle: React.CSSProperties = {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: 'var(--adm-text-sec)',
+    fontSize: 14,
+    padding: '0 4px',
+    lineHeight: 1,
+  };
+
   return (
     <div style={{ maxWidth: 520, display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
@@ -644,43 +684,69 @@ function KitchenTab({ slug }: { slug: string | null }) {
         </FormHint>
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {posts.length === 0 && (
-          <div style={{ fontSize: 13, color: 'var(--adm-text-sec)', fontStyle: 'italic' }}>
+          <div
+            style={{
+              fontSize: 13,
+              color: 'var(--adm-text-sec)',
+              fontStyle: 'italic',
+              padding: '4px 0',
+            }}
+          >
             Ez dago posturik — sukaldea estazio bakarrekoa da.
           </div>
         )}
         {posts.map((p, i) => (
-          <div
-            key={p}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 12px 6px 14px',
-              background: 'var(--adm-surface)',
-              border: '1px solid var(--adm-border)',
-              borderRadius: 99,
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--adm-text-pri)',
-            }}
-          >
-            <span>👨‍🍳 {p}</span>
-            <button
-              onClick={() => removePost(i)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--adm-text-sec)',
-                fontSize: 15,
-                padding: '0 2px',
-                lineHeight: 1,
-              }}
-            >
-              ✕
-            </button>
+          <div key={i} style={rowStyle}>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>👨‍🍳</span>
+            {editingIdx === i ? (
+              <>
+                <input
+                  autoFocus
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') confirmEdit();
+                    if (e.key === 'Escape') setEditingIdx(null);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '4px 8px',
+                    borderRadius: 6,
+                    border: '1px solid var(--adm-accent)',
+                    background: 'var(--adm-surface)',
+                    color: 'var(--adm-text-pri)',
+                    fontSize: 14,
+                    outline: 'none',
+                  }}
+                />
+                <button
+                  onClick={confirmEdit}
+                  style={{ ...iconBtnStyle, color: 'var(--ops-green, #22c55e)', fontSize: 16 }}
+                  title="Baieztatu"
+                >
+                  ✓
+                </button>
+                <button onClick={() => setEditingIdx(null)} style={iconBtnStyle} title="Utzi">
+                  ✕
+                </button>
+              </>
+            ) : (
+              <>
+                <span
+                  style={{ flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--adm-text-pri)' }}
+                >
+                  {p}
+                </span>
+                <button onClick={() => startEdit(i)} style={iconBtnStyle} title="Aldatu izena">
+                  ✏️
+                </button>
+                <button onClick={() => removePost(i)} style={iconBtnStyle} title="Ezabatu">
+                  ✕
+                </button>
+              </>
+            )}
           </div>
         ))}
       </div>
