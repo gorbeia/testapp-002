@@ -674,7 +674,7 @@ function ProductModal({
                     }
                     style={{ ...inputStyle, background: 'var(--adm-surface)' }}
                   >
-                    <option value="">— Orokorra (post guztiak) —</option>
+                    <option value="">— Orokorra (postu guztiak) —</option>
                     {kitchenPosts.map((p) => (
                       <option key={p} value={p}>
                         👨‍🍳 {p}
@@ -683,7 +683,7 @@ function ProductModal({
                   </select>
                   <div style={{ fontSize: 11, color: 'var(--adm-text-sec)', marginTop: 4 }}>
                     Produktu honen lerroa zein postutara bidaltzen den. Aldaerek edo gehigarriek
-                    post ezberdinera bideratu dezakete.
+                    postu ezberdinera bideratu dezakete.
                   </div>
                 </div>
               )}

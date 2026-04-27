@@ -679,8 +679,8 @@ function KitchenTab({ slug }: { slug: string | null }) {
       <div>
         <FormLabel>Sukaldeko postuak</FormLabel>
         <FormHint>
-          Post bakoitzeko lan-estazio bat. Boluntarioak PIN sartzean bere postua aukeratzen du eta
-          soilik post horretako tiketak ikusten ditu KDS-ean.
+          Postu bakoitzeko lan-estazio bat. Boluntarioak PIN sartzean bere postua aukeratzen du eta
+          soilik postu horretako tiketak ikusten ditu KDS-ean.
         </FormHint>
       </div>
 
@@ -757,7 +757,7 @@ function KitchenTab({ slug }: { slug: string | null }) {
           value={newPost}
           onChange={(e) => setNewPost(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addPost()}
-          placeholder="Post berria (adib.: parrilla)"
+          placeholder="Postu berria (adib.: parrilla)"
           style={{
             flex: 1,
             padding: '10px 12px',
