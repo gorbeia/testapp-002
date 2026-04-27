@@ -238,7 +238,7 @@ Each txosna is independently configurable:
 | Display order            | Within its category                                                         |
 | Ingredients list         | Simple text reference for volunteers; not used for inventory                |
 | Preparation instructions | Markdown with embedded images; general method                               |
-| VAT type (IVA)           | Optional unless TicketBAI is enabled; defaults to IVA Reducido (10%)        |
+| VAT type (BEZ)           | Optional unless TicketBAI is enabled; defaults to BEZ Murriztua (10%)       |
 
 ### Variant groups
 
@@ -291,23 +291,23 @@ base price (or override) + sum of variant deltas + sum of modifier prices
 
 ---
 
-## 11. Association Configuration — VAT / IVA
+## 11. Association Configuration — VAT / BEZ
 
 ### VAT Type Management
 
 - Each association defines its own set of **VAT types** (label + percentage)
 - **Spain defaults** are pre-populated on association creation:
-  - IVA General: 21%
-  - IVA Reducido: 10%
-  - IVA Superreducido: 4%
-  - Exento de IVA: 0%
-- **Admin interface** for adding, editing, deleting VAT types (Settings → IVA tab)
+  - BEZ Orokorra: 21%
+  - BEZ Murriztua: 10%
+  - BEZ Superurriztua: 4%
+  - BEZtik salbuetsia: 0%
+- **Admin interface** for adding, editing, deleting VAT types (Settings → BEZ tab)
 - Cannot delete a VAT type if products are assigned to it (409 conflict)
 
 ### Product VAT Assignment
 
 - Each product carries an optional **VAT type** reference
-- **Defaults** to IVA Reducido (10%) when creating a new product
+- **Defaults** to BEZ Murriztua (10%) when creating a new product
 - Can be **overridden per product** in the product edit form
 - When **TicketBAI is enabled** on the association:
   - VAT type becomes **mandatory** on all products
@@ -315,7 +315,7 @@ base price (or override) + sum of variant deltas + sum of modifier prices
 
 ### TicketBAI Integration
 
-- Association admin can **toggle TicketBAI enabled** in Settings → IVA tab
+- Association admin can **toggle TicketBAI enabled** in Settings → BEZ tab
 - When enabled:
   - All products must have a VAT type assigned
   - API rejects product create/update without `vatTypeId`
@@ -323,7 +323,7 @@ base price (or override) + sum of variant deltas + sum of modifier prices
 
 ### VAT Types Screen
 
-**Location:** Settings → IVA tab
+**Location:** Settings → BEZ tab
 
 **Features:**
 

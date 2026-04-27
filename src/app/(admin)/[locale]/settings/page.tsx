@@ -4,7 +4,7 @@ import { MaskedInput } from '@/components/ui/masked-input';
 import { Dialog } from '@base-ui/react/dialog';
 import { X, Plus, CreditCard, Building2, Power, Trash2, Edit2, Check } from 'lucide-react';
 
-const TABS = ['Elkartea', 'Ordainketa', 'IVA'];
+const TABS = ['Elkartea', 'Ordainketa', 'BEZ'];
 
 // ── Dialog Component ─────────────────────────────────────────────────────────
 function ProviderDialog({
@@ -1222,7 +1222,7 @@ function VatTab() {
     <div style={{ maxWidth: 520, display: 'flex', flexDirection: 'column', gap: 20 }}>
       <ToggleRow
         label="TicketBAI gaitu"
-        hint="Produktuak IVA mota dute obligatorioa"
+        hint="Produktuak BEZ mota dute obligatorioa"
         checked={ticketBaiEnabled}
         onChange={handleToggleTicketBai}
       />
@@ -1260,7 +1260,7 @@ function VatTab() {
             }}
           >
             <Plus size={18} />
-            Gehitu IVA mota
+            Gehitu BEZ mota
           </button>
         </>
       )}
@@ -1268,7 +1268,7 @@ function VatTab() {
       <ProviderDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editingVat ? 'IVA mota editatu' : 'IVA mota gehitu'}
+        title={editingVat ? 'BEZ mota editatu' : 'BEZ mota gehitu'}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
@@ -1277,7 +1277,7 @@ function VatTab() {
               type="text"
               value={formLabel}
               onChange={(e) => setFormLabel(e.target.value)}
-              placeholder="e.g. IVA Reducido"
+              placeholder="e.g. BEZ Murriztua"
               style={{
                 width: '100%',
                 padding: '10px 12px',

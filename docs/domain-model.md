@@ -94,11 +94,11 @@ _Session 17 — April 2026_
 
 ### VatType
 
-| Attribute   | Type        | Notes               |
-| ----------- | ----------- | ------------------- |
-| label       | text        | e.g. "IVA Reducido" |
-| percentage  | decimal     | e.g. 10.00          |
-| association | Association | Owner               |
+| Attribute   | Type        | Notes                |
+| ----------- | ----------- | -------------------- |
+| label       | text        | e.g. "BEZ Murriztua" |
+| percentage  | decimal     | e.g. 10.00           |
+| association | Association | Owner                |
 
 ---
 
