@@ -321,6 +321,8 @@ Sukaldeko langileek 📦 Stocka botoia erabiliz produktuak agortuta marka ditzak
 
 Koordinatzailearen ikuspegi orokorra, sukaldeko post guztiak estaltzen dituena. Postuak dituzten txosnentzako diseinatuta dago.
 
+![Sukalde Kudeaketa — koordinatzaile ikuspegi orokorra](../screenshots/34-kitchen-manager.png)
+
 **Goiburua:**
 
 - Txosna-izena eta egoera-zenbatzaileak:
@@ -415,16 +417,21 @@ Produktu bat editatzeko, editatu nahi den elementuaren ondoko ✏️ ikonoa saka
 
 Fitxa honetan produktuaren oinarrizko datuak konfiguratzen dira:
 
-| Eremua                | Deskribapena                         | Adibidea                         |
-| --------------------- | ------------------------------------ | -------------------------------- |
-| **Izena**             | Produktuaren izena                   | "Gazta Burgerra"                 |
-| **Deskribapena**      | Bezeroarentzako azalpena             | "Etxeko burgerra gaztarekin..."  |
-| **Prezio lehenetsia** | Oinarrizko prezioa                   | 9.50 €                           |
-| **Kategoria**         | Janaria edo Edariak                  | Janaria                          |
-| **Prestatu behar da** | Sukaldean prestatzen den ala ez      | ✓ Bai (burgerra) / ✗ Ez (edaria) |
-| **Banatu daiteke**    | Hainbat pertsonatan banatu daitekeen | ✓ Bai (pintxo-sorta)             |
-| **Adin-muga**         | +18 adina behar duen produktua       | ✓ Bai (alkoholdun edariak)       |
-| **Osagaiak**          | Barruan dituen osagaien zerrenda     | Haragia, ogia, tomatea...        |
+| Eremua                | Deskribapena                                                      | Adibidea                            |
+| --------------------- | ----------------------------------------------------------------- | ----------------------------------- |
+| **Izena**             | Produktuaren izena                                                | "Gazta Burgerra"                    |
+| **Deskribapena**      | Bezeroarentzako azalpena                                          | "Etxeko burgerra gaztarekin..."     |
+| **Prezio lehenetsia** | Oinarrizko prezioa                                                | 9.50 €                              |
+| **Kategoria**         | Janaria edo Edariak                                               | Janaria                             |
+| **Sukaldeko postua**  | Zein postura bideratzen den produktu hau (txosnak postuak baditu) | "griddle", "assembly"… edo Orokorra |
+| **Prestatu behar da** | Sukaldean prestatzen den ala ez                                   | ✓ Bai (burgerra) / ✗ Ez (edaria)    |
+| **Banatu daiteke**    | Hainbat pertsonatan banatu daitekeen                              | ✓ Bai (pintxo-sorta)                |
+| **Adin-muga**         | +18 adina behar duen produktua                                    | ✓ Bai (alkoholdun edariak)          |
+| **Osagaiak**          | Barruan dituen osagaien zerrenda                                  | Haragia, ogia, tomatea...           |
+
+> **Sukaldeko postua**: hautatzailea soilik agertzen da txosnak postuak konfiguratuta dituenean (Sukaldea fitxan). "Orokorra" hautatuz gero, produktuaren tiketak post guztietara bidaliko dira.
+
+![Produktuaren oinarrizko fitxa — sukaldeko postua](../screenshots/36-menu-product-kitchenpost.png)
 
 **Alergenoak** (14 europar alergeno):
 🌾 Glutena · 🥛 Laktosa · 🥚 Arrautzak · 🥜 Kakahueteak · 🌰 Fruitu lehorrak · 🦐 Moluskuak · 🐟 Arrainak · 🐚 Zizka-mizka · 🍺 Sesamoa · 🌿 Zesamoa · 🍎 Sulfuroak · 🦆 Apioa · 🐑 Mostaza · 🍇 Lupinua
@@ -442,12 +449,17 @@ Fitxa honetan produktuaren oinarrizko datuak konfiguratzen dira:
 
 Produktuak tamaina edo aukera desberdinak baditu:
 
-| Eremua             | Deskribapena                     | Adibidea                                       |
-| ------------------ | -------------------------------- | ---------------------------------------------- |
-| **Aldaera taldea** | Aldaera motaren izena            | "Albokoak"                                     |
-| **Aukerak**        | Aukera bakoitza eta bere prezioa | "Patata frijituak" (+0€), "Entsalada" (+0.50€) |
+| Eremua                        | Deskribapena                                          | Adibidea                                        |
+| ----------------------------- | ----------------------------------------------------- | ----------------------------------------------- |
+| **Aldaera taldea**            | Aldaera motaren izena                                 | "Albokoak"                                      |
+| **Aukerak**                   | Aukera bakoitza eta bere prezioa                      | "Patata frijituak" (+0€), "Entsalada" (+0.50€)  |
+| **Aukera — sukaldeko postua** | Aukera hori hautatuz gero zein postura bideratzen den | "assembly", "fryer"… edo produktuarena heredatu |
 
 Produktu batek hainbat aldaera talde izan ditzake (adib: "Tamaina" + "Albokoak").
+
+![Aldaerak fitxa — aukera bakoitzeko sukaldeko postua](../screenshots/37-menu-variant-kitchenpost.png)
+
+> Aukera baten postua ezartzeak produktuaren postua gainidazten du lerro horretan. Eskaera batek postu bat baino gehiago ukitzen baditu (adib. produktua _griddle_, aukera _assembly_), bi tiketetan agertuko da lerro hori — bata post bakoitzean.
 
 ##### 3. Gehigarriak fitxa
 
@@ -489,7 +501,7 @@ Bi motatako gehigarriak:
 
 #### Txosna Konfigurazioa
 
-Txosna bakoitzak konfigurazio propioa du, 4 fitxatan antolatuta:
+Txosna bakoitzak konfigurazio propioa du, 5 fitxatan antolatuta:
 
 ##### 1. Orokorra fitxa
 
@@ -500,7 +512,6 @@ Txosna bakoitzak konfigurazio propioa du, 4 fitxatan antolatuta:
 - **Egoera**: Irekita / Geldituta / Itxita
 - **Itxaron denbora**: Zenbat minututan prest egongo den eskaerak
 - **Boluntario PIN**: Sukaldera sartzeko beharrezko PIN kodea
-- **Sukaldeko postuak**: Lan-postu izendatuak sukaldean, koma banandurik (adib. "parrilla, muntaia, freidora"). Hutsik bada, sukaldea estazio bakarrekoa da eta KDS-ak tiketa guztiak erakusten ditu.
 
 ##### 2. Ordainketa fitxa
 
@@ -540,7 +551,25 @@ Txosna bakoitzak konfigurazio propioa du, 4 fitxatan antolatuta:
 | **Ordainketa zain denbora-muga**  | Zenbat minututan bertan behera uzten den ordainketa osatu gabeko eskaera | 15 minutu (1-120 minutu artean) |
 | **Sukaldeko txartelak inprimatu** | Eskaerak sukaldera bidaltzean txartelak automatikoki inprimatu           | Desgaituta                      |
 
-##### 4. QR kodea fitxa
+##### 4. Sukaldea fitxa
+
+![Txosna konfigurazioa - Sukaldea](../screenshots/35-txosna-settings-kitchen-posts.png)
+
+**Sukaldeko postuak kudeatzeko CRUD interfazea:**
+
+- **Zerrenda**: Konfiguratutako post guztiak ikusgai, bakoitzak ✏️ (aldatu izena) eta ✕ (ezabatu) botoiekin
+- **Aldatu izena**: ✏️ botoiak lerro horretan testu-eremu bat irekitzen du; Enter edo ✓ sakatu baieztatzeko, Escape uzteko
+- **Post berria**: Beheko testu-eremuan idatzi eta "+ Gehitu" sakatu (Enter ere funtzionatzen du)
+- **Gorde**: PATCH bidez gordetzen da zerrendak
+
+Postuak hutsik utziz gero, sukaldea estazio bakarrekoa da (tiketa bakarra eskaera guztientzat). Postuak gehituz gero:
+
+- PIN sarreran post-hautaketa pantaila agertzen zaie boluntarioei
+- Eskaeren janari-lerroak postu egokiei bideratzen zaizkie automatikoki
+- KDS-ak post horretako tiketak bakarrik erakusten ditu
+- Menu editorean produktu eta aldaera bakoitzari postu bat esleitu daiteke
+
+##### 5. QR kodea fitxa
 
 ![Txosna konfigurazioa - QR kodea](../screenshots/25-txosna-settings-qr.png)
 
