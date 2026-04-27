@@ -28,6 +28,7 @@ Given(
       enabledPaymentMethods: ['CASH'] as const,
       pendingPaymentTimeout: 15,
       printingEnabled: false,
+      kitchenPosts: [] as string[],
       // Links to the seeded mock association so catalog queries find products
       associationId: 'assoc-1',
       createdAt: new Date(),
@@ -103,6 +104,7 @@ Given(
       removableIngredients: [],
       preparationInstructions: null,
       displayOrder: 99,
+      kitchenPost: null,
       variantGroups: [],
       modifiers: [],
     });
@@ -142,6 +144,7 @@ Given(
       removableIngredients: [],
       preparationInstructions: null,
       displayOrder: 99,
+      kitchenPost: null,
       variantGroups: [],
       modifiers: [],
     });

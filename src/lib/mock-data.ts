@@ -19,6 +19,7 @@ export interface MockVariantOption {
   id: string;
   name: string;
   priceDelta: number;
+  kitchenPost?: string | null;
 }
 
 export interface MockVariantGroup {
@@ -31,6 +32,7 @@ export interface MockModifier {
   id: string;
   name: string;
   price: number;
+  kitchenPost?: string | null;
 }
 
 export interface MockProduct {
@@ -52,6 +54,7 @@ export interface MockProduct {
   splitAllowed: boolean;
   splitMaxWays: number; // 1 = splitting not allowed
   preparationInstructions: string | null;
+  kitchenPost?: string | null;
 }
 
 export interface MockOrderLine {
@@ -100,6 +103,7 @@ export interface MockTxosna {
   name: string;
   status: TxosnaStatus;
   counterSetup: 'SINGLE' | 'SEPARATE';
+  kitchenPosts?: string[];
   waitMinutes: number | null;
   pin: string;
   eventName: string;
@@ -159,6 +163,7 @@ export const MOCK_ASSOCIATION: MockAssociation = {
       name: 'Aste Nagusia 2026',
       status: 'OPEN',
       counterSetup: 'SEPARATE',
+      kitchenPosts: ['griddle', 'assembly'],
       waitMinutes: 8,
       pin: '1234',
       eventName: 'Aste Nagusia 2026',
@@ -214,12 +219,13 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     requiresPreparation: true,
     available: true,
     soldOut: false,
+    kitchenPost: 'griddle',
     variantGroups: [
       {
         id: 'vg-1',
         name: 'Albokoa',
         options: [
-          { id: 'vo-1', name: 'Patata frijituak', priceDelta: 0 },
+          { id: 'vo-1', name: 'Patata frijituak', priceDelta: 0, kitchenPost: 'assembly' },
           { id: 'vo-2', name: 'Entsalada', priceDelta: 0 },
         ],
       },

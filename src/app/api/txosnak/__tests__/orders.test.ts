@@ -181,6 +181,100 @@ describe('POST /api/txosnak/[slug]/orders', () => {
       expect.objectContaining({ customerName: 'Gorka' })
     );
   });
+
+  // ── Kitchen post routing ─────────────────────────────────────────────────────
+
+  it('txosna without kitchenPosts: one FOOD ticket with kitchenPost=null', async () => {
+    // demo-edariak has no kitchenPosts and is PAUSED; use demo-janaria which has kitchenPosts
+    // but prod-1b (Gazta Burgerra) has kitchenPost=null and belongs to assoc-1 (aste-nagusia-2026)
+    // aste-nagusia-2026 has kitchenPosts=['griddle','assembly'], so let's use demo-edariak food products
+    // Instead, test via a txosna we know has no posts — txosna-2 (pintxo-txokoa, SINGLE, no kitchenPosts)
+    const res = await ordersPost(
+      makePost({
+        ...VALID_ORDER,
+        lines: [
+          {
+            productId: 'prod-1',
+            quantity: 1,
+            selectedVariantOptionId: null,
+            selectedModifierIds: [],
+            splitInstructions: null,
+          },
+        ],
+      }),
+      slugParams('pintxo-txokoa')
+    );
+    expect(res.status).toBe(201);
+    const { id } = await res.json();
+    const tickets = await ticketRepo.listByOrder(id);
+    const foodTickets = tickets.filter((t) => t.counterType === 'FOOD');
+    expect(foodTickets).toHaveLength(1);
+    expect(foodTickets[0].kitchenPost).toBeNull();
+  });
+
+  it('txosna with kitchenPosts: FOOD line with product kitchenPost creates a post ticket', async () => {
+    // prod-1 (Burgerra) has kitchenPost='griddle', no variant selected → only griddle post
+    const res = await ordersPost(makePost(VALID_ORDER), slugParams());
+    expect(res.status).toBe(201);
+    const { id } = await res.json();
+    const tickets = await ticketRepo.listByOrder(id);
+    const foodTickets = tickets.filter((t) => t.counterType === 'FOOD');
+    expect(foodTickets).toHaveLength(1);
+    expect(foodTickets[0].kitchenPost).toBe('griddle');
+  });
+
+  it('txosna with kitchenPosts: variant with kitchenPost adds a second post ticket', async () => {
+    // prod-1 (kitchenPost='griddle') + vo-1 (Patata frijituak, kitchenPost='assembly')
+    // → posts = {griddle, assembly} → 2 FOOD tickets
+    const res = await ordersPost(
+      makePost({
+        ...VALID_ORDER,
+        lines: [
+          {
+            productId: 'prod-1',
+            quantity: 1,
+            selectedVariantOptionId: 'vo-1',
+            selectedModifierIds: [],
+            splitInstructions: null,
+          },
+        ],
+      }),
+      slugParams()
+    );
+    expect(res.status).toBe(201);
+    const { id } = await res.json();
+    const tickets = await ticketRepo.listByOrder(id);
+    const foodTickets = tickets.filter((t) => t.counterType === 'FOOD');
+    expect(foodTickets).toHaveLength(2);
+    const posts = new Set(foodTickets.map((t) => t.kitchenPost));
+    expect(posts.has('griddle')).toBe(true);
+    expect(posts.has('assembly')).toBe(true);
+  });
+
+  it('txosna with kitchenPosts: FOOD line with no post values creates general ticket (kitchenPost=null)', async () => {
+    // prod-1b (Gazta Burgerra) has no kitchenPost → goes to general ticket
+    const res = await ordersPost(
+      makePost({
+        ...VALID_ORDER,
+        lines: [
+          {
+            productId: 'prod-1b',
+            quantity: 1,
+            selectedVariantOptionId: null,
+            selectedModifierIds: [],
+            splitInstructions: null,
+          },
+        ],
+      }),
+      slugParams()
+    );
+    expect(res.status).toBe(201);
+    const { id } = await res.json();
+    const tickets = await ticketRepo.listByOrder(id);
+    const foodTickets = tickets.filter((t) => t.counterType === 'FOOD');
+    expect(foodTickets).toHaveLength(1);
+    expect(foodTickets[0].kitchenPost).toBeNull();
+  });
 });
 
 // ── GET /api/txosnak/[slug]/orders ────────────────────────────────────────────

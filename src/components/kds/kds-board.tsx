@@ -101,25 +101,33 @@ export default function KdsBoard() {
   const isTablet = width >= 640 && width < 1024;
 
   const [slug, setSlug] = useState<string | null>(null);
+  const [kitchenPost, setKitchenPost] = useState<string | null>(null);
   const [txosnaName, setTxosnaName] = useState('Txosna · Sukaldea');
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
 
-  // Load slug from sessionStorage and fetch initial tickets
+  // Load slug and kitchenPost from sessionStorage and fetch initial tickets
   useEffect(() => {
     const storedSlug = typeof window !== 'undefined' ? sessionStorage.getItem('txosna_slug') : null;
     if (!storedSlug) return;
+    const storedPost =
+      typeof window !== 'undefined' ? sessionStorage.getItem('kitchen_post') : null;
     setSlug(storedSlug);
+    setKitchenPost(storedPost);
 
     fetch(`/api/txosnak/${storedSlug}`)
       .then((r) => r.json())
       .then((d) => {
-        if (d.name) setTxosnaName(d.name + ' · Sukaldea');
+        if (d.name) {
+          const postLabel = storedPost ? ` · ${storedPost}` : ' · Sukaldea';
+          setTxosnaName(d.name + postLabel);
+        }
       })
       .catch(() => {});
 
+    const postParam = storedPost ? `&kitchenPost=${encodeURIComponent(storedPost)}` : '';
     fetch(
-      `/api/txosnak/${storedSlug}/tickets?counterType=FOOD&status=RECEIVED,IN_PREPARATION,READY`
+      `/api/txosnak/${storedSlug}/tickets?counterType=FOOD&status=RECEIVED,IN_PREPARATION,READY${postParam}`
     )
       .then((r) => r.json())
       .then((data: { tickets: Parameters<typeof toKdsTicket>[0][] }) => {
@@ -132,7 +140,10 @@ export default function KdsBoard() {
   useSSE(slug, {
     'order:confirmed': () => {
       if (!slug) return;
-      fetch(`/api/txosnak/${slug}/tickets?counterType=FOOD&status=RECEIVED,IN_PREPARATION,READY`)
+      const postParam = kitchenPost ? `&kitchenPost=${encodeURIComponent(kitchenPost)}` : '';
+      fetch(
+        `/api/txosnak/${slug}/tickets?counterType=FOOD&status=RECEIVED,IN_PREPARATION,READY${postParam}`
+      )
         .then((r) => r.json())
         .then((data: { tickets: Parameters<typeof toKdsTicket>[0][] }) => {
           setTickets(data.tickets.map(toKdsTicket));

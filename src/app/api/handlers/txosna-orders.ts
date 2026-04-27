@@ -70,6 +70,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   type ResolvedLine = CreateOrderLineInput & {
     counterType: CounterType;
     requiresPreparation: boolean;
+    linePosts: string[]; // de-duplicated kitchen posts for this line (FOOD only)
   };
   const resolved: ResolvedLine[] = [];
 
@@ -84,12 +85,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 
     let variantName: string | null = null;
     let variantDelta = 0;
+    let variantKitchenPost: string | null = null;
     if (line.selectedVariantOptionId) {
       for (const vg of view.variantGroups) {
         const opt = vg.options.find((o) => o.id === line.selectedVariantOptionId);
         if (opt) {
           variantName = opt.name;
           variantDelta = opt.priceDelta;
+          variantKitchenPost = opt.kitchenPost ?? null;
           break;
         }
       }
@@ -97,17 +100,27 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 
     let modifierTotal = 0;
     const modifierNames: string[] = [];
+    const modifierKitchenPosts: string[] = [];
     for (const modId of line.selectedModifierIds ?? []) {
       const mod = view.modifiers.find((m) => m.id === modId);
       if (mod) {
         modifierTotal += mod.price;
         modifierNames.push(mod.name);
+        if (mod.kitchenPost) modifierKitchenPosts.push(mod.kitchenPost);
       }
     }
 
     const unitPrice = view.effectivePrice + variantDelta + modifierTotal;
     const cat = categoryMap.get(view.categoryId);
     const counterType: CounterType = cat?.type === 'DRINKS' ? 'DRINKS' : 'FOOD';
+
+    // Collect and de-duplicate kitchen posts for this line (FOOD only)
+    const postSet = new Set<string>();
+    if (counterType === 'FOOD') {
+      if (view.kitchenPost) postSet.add(view.kitchenPost);
+      if (variantKitchenPost) postSet.add(variantKitchenPost);
+      for (const p of modifierKitchenPosts) postSet.add(p);
+    }
 
     resolved.push({
       productId: view.id,
@@ -119,24 +132,56 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       splitInstructions: line.splitInstructions ?? null,
       counterType,
       requiresPreparation: view.requiresPreparation,
+      linePosts: [...postSet],
     });
   }
 
-  const ticketMap = new Map<CounterType, ResolvedLine[]>();
+  // DRINKS lines → always one ticket, kitchenPost = null
+  // FOOD lines → one ticket per distinct kitchen post when txosna has posts configured;
+  //              lines with no post values go into a general ticket (kitchenPost = null)
+  const hasKitchenPosts = (txosna.kitchenPosts ?? []).length > 0;
+
+  // Map key: `DRINKS` or `FOOD:${post}` (post is '' for the general food ticket)
+  const ticketMap = new Map<
+    string,
+    { counterType: CounterType; kitchenPost: string | null; lines: ResolvedLine[] }
+  >();
+
   for (const line of resolved) {
-    const group = ticketMap.get(line.counterType) ?? [];
-    group.push(line);
-    ticketMap.set(line.counterType, group);
+    if (line.counterType !== 'DRINKS' && hasKitchenPosts && line.linePosts.length > 0) {
+      // One copy of the line per distinct post it belongs to
+      for (const post of line.linePosts) {
+        const postKey = `FOOD:${post}`;
+        const bucket = ticketMap.get(postKey) ?? {
+          counterType: 'FOOD' as CounterType,
+          kitchenPost: post,
+          lines: [],
+        };
+        bucket.lines.push(line);
+        ticketMap.set(postKey, bucket);
+      }
+      continue;
+    }
+
+    const key = line.counterType === 'DRINKS' || !hasKitchenPosts ? line.counterType : 'FOOD:';
+    const bucket = ticketMap.get(key) ?? {
+      counterType: line.counterType,
+      kitchenPost: null,
+      lines: [],
+    };
+    bucket.lines.push(line);
+    ticketMap.set(key, bucket);
   }
 
   const tickets: CreateTicketInput[] = [];
-  for (const [counterType, lines] of ticketMap) {
+  for (const { counterType, kitchenPost, lines } of ticketMap.values()) {
     const requiresPreparation = lines.some((l) => l.requiresPreparation);
     tickets.push({
       counterType,
+      kitchenPost,
       requiresPreparation,
       notes: body.notes ?? null,
-      lines: lines.map(({ counterType: _ct, requiresPreparation: _rp, ...l }) => l),
+      lines: lines.map(({ counterType: _ct, requiresPreparation: _rp, linePosts: _lp, ...l }) => l),
     });
   }
 

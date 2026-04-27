@@ -33,6 +33,7 @@ export interface StoredTxosna {
   name: string;
   status: TxosnaStatus;
   counterSetup: CounterSetup;
+  kitchenPosts: string[];
   waitMinutes: number | null;
   /** Plain PIN in dev/test seed; bcrypt hash in production. */
   pinHash: string;
@@ -59,6 +60,7 @@ export interface StoredVariantOption {
   priceDelta: number;
   allergens: string[];
   displayOrder: number;
+  kitchenPost: string | null;
 }
 
 export interface StoredVariantGroup {
@@ -74,6 +76,7 @@ export interface StoredModifier {
   price: number;
   allergens: string[];
   displayOrder: number;
+  kitchenPost: string | null;
 }
 
 export interface StoredProduct {
@@ -94,6 +97,7 @@ export interface StoredProduct {
   removableIngredients: string[];
   preparationInstructions: string | null;
   displayOrder: number;
+  kitchenPost: string | null;
   variantGroups: StoredVariantGroup[];
   modifiers: StoredModifier[];
 }
