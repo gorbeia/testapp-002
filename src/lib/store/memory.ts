@@ -204,7 +204,7 @@ function seed() {
       orderId: mt.orderId,
       txosnaId: 'txosna-1',
       counterType: mt.counterType,
-      kitchenPost: null,
+      kitchenPost: mt.kitchenPost ?? null,
       status: mt.status,
       requiresPreparation: mt.lines.some((l) => {
         const p = products.get(l.productId);
