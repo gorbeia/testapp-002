@@ -369,7 +369,7 @@ function VatTypeSelect({ value, onChange }: { value: string; onChange: (id: stri
       style={{ ...inputStyle, background: 'var(--adm-surface)' }}
       disabled={loading}
     >
-      <option value="">Aukeratu IVA</option>
+      <option value="">Aukeratu BEZ</option>
       {vatTypes.map((vat) => (
         <option key={vat.id} value={vat.id}>
           {vat.label} ({vat.percentage}%)
@@ -657,7 +657,7 @@ function ProductModal({
               </div>
 
               <div>
-                <div style={sectionLabel}>IVA Mota</div>
+                <div style={sectionLabel}>BEZ Mota</div>
                 <VatTypeSelect
                   value={form.vatTypeId}
                   onChange={(id) => setForm((f) => ({ ...f, vatTypeId: id }))}
