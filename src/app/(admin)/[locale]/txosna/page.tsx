@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 
-const TABS = ['Orokorra', 'Ordainketa', 'Eskaerak', 'QR kodea'];
+const TABS = ['Orokorra', 'Ordainketa', 'Eskaerak', 'Sukaldea', 'QR kodea'];
 
 // ── Shared form helpers ───────────────────────────────────────────────────────
 function FormLabel({ children }: { children: React.ReactNode }) {
@@ -598,13 +598,157 @@ function QrTab() {
   );
 }
 
+// ── Tab 4: Kitchen Posts ──────────────────────────────────────────────────────
+function KitchenTab({ slug }: { slug: string | null }) {
+  const [posts, setPosts] = React.useState<string[]>([]);
+  const [newPost, setNewPost] = React.useState('');
+  const [saved, setSaved] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!slug) return;
+    fetch(`/api/txosnak/${slug}/settings`)
+      .then((r) => r.json())
+      .then((s: { kitchenPosts?: string[] }) => {
+        if (s.kitchenPosts) setPosts(s.kitchenPosts);
+      })
+      .catch(() => {});
+  }, [slug]);
+
+  const addPost = () => {
+    const trimmed = newPost.trim();
+    if (!trimmed || posts.includes(trimmed)) return;
+    setPosts((prev) => [...prev, trimmed]);
+    setNewPost('');
+  };
+
+  const removePost = (i: number) => setPosts((prev) => prev.filter((_, j) => j !== i));
+
+  const handleSave = () => {
+    if (!slug) return;
+    fetch(`/api/txosnak/${slug}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kitchenPosts: posts }),
+    }).catch(() => {});
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div style={{ maxWidth: 520, display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <FormLabel>Sukaldeko postuak</FormLabel>
+        <FormHint>
+          Post bakoitzeko lan-estazio bat. Boluntarioak PIN sartzean bere postua aukeratzen du eta
+          soilik post horretako tiketak ikusten ditu KDS-ean.
+        </FormHint>
+      </div>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {posts.length === 0 && (
+          <div style={{ fontSize: 13, color: 'var(--adm-text-sec)', fontStyle: 'italic' }}>
+            Ez dago posturik — sukaldea estazio bakarrekoa da.
+          </div>
+        )}
+        {posts.map((p, i) => (
+          <div
+            key={p}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px 6px 14px',
+              background: 'var(--adm-surface)',
+              border: '1px solid var(--adm-border)',
+              borderRadius: 99,
+              fontSize: 13,
+              fontWeight: 600,
+              color: 'var(--adm-text-pri)',
+            }}
+          >
+            <span>👨‍🍳 {p}</span>
+            <button
+              onClick={() => removePost(i)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--adm-text-sec)',
+                fontSize: 15,
+                padding: '0 2px',
+                lineHeight: 1,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          type="text"
+          value={newPost}
+          onChange={(e) => setNewPost(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addPost()}
+          placeholder="Post berria (adib.: parrilla)"
+          style={{
+            flex: 1,
+            padding: '10px 12px',
+            borderRadius: 8,
+            border: '1px solid var(--adm-border)',
+            background: 'var(--adm-surface)',
+            color: 'var(--adm-text-pri)',
+            fontSize: 14,
+            outline: 'none',
+          }}
+        />
+        <button
+          onClick={addPost}
+          style={{
+            padding: '10px 16px',
+            borderRadius: 8,
+            border: '1px solid var(--adm-border)',
+            background: 'var(--adm-surface-hi)',
+            color: 'var(--adm-text-pri)',
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          + Gehitu
+        </button>
+      </div>
+
+      {posts.length > 0 && (
+        <div
+          style={{
+            padding: '12px 16px',
+            background: 'var(--adm-surface-hi)',
+            borderRadius: 10,
+            border: '1px solid var(--adm-border)',
+            fontSize: 12,
+            color: 'var(--adm-text-sec)',
+            lineHeight: 1.6,
+          }}
+        >
+          💡 <strong>Postuak aktibatuta:</strong> boluntarioak PIN sartzean bere postua hautatuko
+          du. Menuko produktu eta aldaeren &ldquo;Sukaldeko postua&rdquo; eremua erabiliz esleitu
+          zein postura bideratzen den lerro bakoitza.
+        </div>
+      )}
+
+      <SaveButton saved={saved} onClick={handleSave} />
+    </div>
+  );
+}
+
 export default function TxosnaConfigPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [slug, setSlug] = useState<string | null>(null);
   const [status, setStatus] = useState<'OPEN' | 'PAUSED' | 'CLOSED'>('OPEN');
   const [waitMin, setWaitMin] = useState(10);
   const [pin, setPin] = useState('');
-  const [kitchenPosts, setKitchenPosts] = useState('');
 
   useEffect(() => {
     fetch('/api/admin/txosnak')
@@ -624,9 +768,8 @@ export default function TxosnaConfigPage() {
           setWaitMin(first.waitMinutes ?? 10);
           fetch(`/api/txosnak/${first.slug}/settings`)
             .then((r) => r.json())
-            .then((s: { pin?: string; kitchenPosts?: string[] }) => {
+            .then((s: { pin?: string }) => {
               if (s.pin) setPin(s.pin);
-              if (s.kitchenPosts) setKitchenPosts(s.kitchenPosts.join(', '));
             })
             .catch(() => {});
         }
@@ -640,14 +783,7 @@ export default function TxosnaConfigPage() {
     fetch(`/api/txosnak/${slug}/settings`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        status,
-        waitMinutes: waitMin,
-        kitchenPosts: kitchenPosts
-          .split(',')
-          .map((p) => p.trim())
-          .filter(Boolean),
-      }),
+      body: JSON.stringify({ status, waitMinutes: waitMin }),
     }).catch(() => {});
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -788,38 +924,6 @@ export default function TxosnaConfigPage() {
               }}
             />
           </div>
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--adm-text-pri)',
-                marginBottom: 6,
-              }}
-            >
-              Sukaldeko postuak
-            </label>
-            <input
-              type="text"
-              value={kitchenPosts}
-              onChange={(e) => setKitchenPosts(e.target.value)}
-              placeholder="parrilla, muntaia, freidora"
-              style={{
-                width: 320,
-                padding: '10px 12px',
-                borderRadius: 8,
-                border: '1px solid var(--adm-border)',
-                background: 'var(--adm-surface)',
-                color: 'var(--adm-text-pri)',
-                fontSize: 14,
-                outline: 'none',
-              }}
-            />
-            <div style={{ fontSize: 11, color: 'var(--adm-text-sec)', marginTop: 4 }}>
-              Koma banandurik. Hutsik bada, sukaldea estazio bakarrekoa da.
-            </div>
-          </div>
           <button
             onClick={handleSave}
             style={{
@@ -842,7 +946,8 @@ export default function TxosnaConfigPage() {
 
       {activeTab === 1 && <PaymentTab />}
       {activeTab === 2 && <OrdersTab />}
-      {activeTab === 3 && <QrTab />}
+      {activeTab === 3 && <KitchenTab slug={slug} />}
+      {activeTab === 4 && <QrTab />}
     </div>
   );
 }

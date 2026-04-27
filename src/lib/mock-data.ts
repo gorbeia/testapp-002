@@ -254,12 +254,13 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     requiresPreparation: true,
     available: true,
     soldOut: false,
+    kitchenPost: 'griddle',
     variantGroups: [
       {
         id: 'vg-1b',
         name: 'Albokoa',
         options: [
-          { id: 'vo-1b', name: 'Patata frijituak', priceDelta: 0 },
+          { id: 'vo-1b', name: 'Patata frijituak', priceDelta: 0, kitchenPost: 'assembly' },
           { id: 'vo-2b', name: 'Entsalada', priceDelta: 0 },
         ],
       },
@@ -283,12 +284,13 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     requiresPreparation: true,
     available: true,
     soldOut: false,
+    kitchenPost: 'griddle',
     variantGroups: [
       {
         id: 'vg-1c',
         name: 'Albokoa',
         options: [
-          { id: 'vo-1c', name: 'Patata frijituak', priceDelta: 0 },
+          { id: 'vo-1c', name: 'Patata frijituak', priceDelta: 0, kitchenPost: 'assembly' },
           { id: 'vo-2c', name: 'Entsalada', priceDelta: 0 },
         ],
       },
@@ -315,6 +317,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     requiresPreparation: true,
     available: true,
     soldOut: false,
+    kitchenPost: 'griddle',
     variantGroups: [],
     modifiers: [],
     removableIngredients: [],
@@ -335,6 +338,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     requiresPreparation: true,
     available: true,
     soldOut: false,
+    kitchenPost: 'assembly',
     variantGroups: [],
     modifiers: [],
     removableIngredients: [],
@@ -355,6 +359,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     requiresPreparation: true,
     available: true,
     soldOut: false,
+    kitchenPost: 'assembly',
     variantGroups: [],
     modifiers: [],
     removableIngredients: [],
