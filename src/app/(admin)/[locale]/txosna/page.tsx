@@ -604,6 +604,7 @@ export default function TxosnaConfigPage() {
   const [status, setStatus] = useState<'OPEN' | 'PAUSED' | 'CLOSED'>('OPEN');
   const [waitMin, setWaitMin] = useState(10);
   const [pin, setPin] = useState('');
+  const [kitchenPosts, setKitchenPosts] = useState('');
 
   useEffect(() => {
     fetch('/api/admin/txosnak')
@@ -623,8 +624,9 @@ export default function TxosnaConfigPage() {
           setWaitMin(first.waitMinutes ?? 10);
           fetch(`/api/txosnak/${first.slug}/settings`)
             .then((r) => r.json())
-            .then((s: { pin?: string }) => {
+            .then((s: { pin?: string; kitchenPosts?: string[] }) => {
               if (s.pin) setPin(s.pin);
+              if (s.kitchenPosts) setKitchenPosts(s.kitchenPosts.join(', '));
             })
             .catch(() => {});
         }
@@ -638,7 +640,14 @@ export default function TxosnaConfigPage() {
     fetch(`/api/txosnak/${slug}/settings`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, waitMinutes: waitMin }),
+      body: JSON.stringify({
+        status,
+        waitMinutes: waitMin,
+        kitchenPosts: kitchenPosts
+          .split(',')
+          .map((p) => p.trim())
+          .filter(Boolean),
+      }),
     }).catch(() => {});
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -778,6 +787,38 @@ export default function TxosnaConfigPage() {
                 fontFamily: 'var(--font-mono, monospace)',
               }}
             />
+          </div>
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: 13,
+                fontWeight: 600,
+                color: 'var(--adm-text-pri)',
+                marginBottom: 6,
+              }}
+            >
+              Sukaldeko postuak
+            </label>
+            <input
+              type="text"
+              value={kitchenPosts}
+              onChange={(e) => setKitchenPosts(e.target.value)}
+              placeholder="parrilla, muntaia, freidora"
+              style={{
+                width: 320,
+                padding: '10px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--adm-border)',
+                background: 'var(--adm-surface)',
+                color: 'var(--adm-text-pri)',
+                fontSize: 14,
+                outline: 'none',
+              }}
+            />
+            <div style={{ fontSize: 11, color: 'var(--adm-text-sec)', marginTop: 4 }}>
+              Koma banandurik. Hutsik bada, sukaldea estazio bakarrekoa da.
+            </div>
           </div>
           <button
             onClick={handleSave}
