@@ -88,7 +88,7 @@ export default function KitchenManagerPage() {
       `/api/txosnak/${storedSlug}/tickets?counterType=FOOD&status=RECEIVED,IN_PREPARATION,READY`
     )
       .then((r) => r.json())
-      .then((data: { tickets: RawTicket[] }) => setRawTickets(data.tickets))
+      .then((data: { tickets?: RawTicket[] }) => setRawTickets(data.tickets ?? []))
       .catch(() => {});
   }
 
