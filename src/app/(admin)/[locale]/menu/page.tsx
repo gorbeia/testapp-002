@@ -7,6 +7,7 @@ interface VariantOption {
   id: string;
   name: string;
   priceDelta: number;
+  kitchenPost?: string | null;
 }
 interface VariantGroup {
   id: string;
@@ -17,6 +18,7 @@ interface Modifier {
   id: string;
   name: string;
   price: number;
+  kitchenPost?: string | null;
 }
 interface RemovableIngredient {
   id: string;
@@ -40,6 +42,7 @@ interface Product {
   preparationInstructions: string | null;
   variantGroups: VariantGroup[];
   modifiers: Modifier[];
+  kitchenPost?: string | null;
 }
 
 interface Category {
@@ -71,6 +74,7 @@ interface ProductForm {
   removableIngredients: RemovableIngredient[];
   preparationInstructions: string;
   vatTypeId: string;
+  kitchenPost: string | null;
 }
 
 interface CategoryModalState {
@@ -119,6 +123,7 @@ function emptyForm(categoryId: string, defaultVatTypeId?: string): ProductForm {
     removableIngredients: [],
     preparationInstructions: '',
     vatTypeId: defaultVatTypeId ?? '',
+    kitchenPost: null,
   };
 }
 
@@ -144,6 +149,7 @@ function fromProduct(p: Product): ProductForm {
       .map((name, i) => ({ id: 'ri-' + i, name: name.trim() })),
     preparationInstructions: p.preparationInstructions ?? '',
     vatTypeId: (p as any).vatTypeId ?? '',
+    kitchenPost: p.kitchenPost ?? null,
   };
 }
 
@@ -164,6 +170,7 @@ function formToPayload(data: ProductForm) {
     variantGroups: data.variantGroups,
     modifiers: data.modifiers,
     vatTypeId: data.vatTypeId || null,
+    kitchenPost: data.kitchenPost || null,
   };
 }
 
@@ -378,12 +385,14 @@ function ProductModal({
   initial,
   isEdit,
   categories,
+  kitchenPosts,
   onSave,
   onClose,
 }: {
   initial: ProductForm;
   isEdit: boolean;
   categories: Category[];
+  kitchenPosts: string[];
   onSave: (f: ProductForm) => void;
   onClose: () => void;
 }) {
@@ -438,7 +447,12 @@ function ProductModal({
       ),
     }));
 
-  const updateOption = (vgIdx: number, oIdx: number, key: 'name' | 'priceDelta', val: string) =>
+  const updateOption = (
+    vgIdx: number,
+    oIdx: number,
+    key: 'name' | 'priceDelta' | 'kitchenPost',
+    val: string
+  ) =>
     setForm((f) => ({
       ...f,
       variantGroups: f.variantGroups.map((vg, i) =>
@@ -446,7 +460,17 @@ function ProductModal({
           ? {
               ...vg,
               options: vg.options.map((o, j) =>
-                j === oIdx ? { ...o, [key]: key === 'priceDelta' ? parseFloat(val) || 0 : val } : o
+                j === oIdx
+                  ? {
+                      ...o,
+                      [key]:
+                        key === 'priceDelta'
+                          ? parseFloat(val) || 0
+                          : key === 'kitchenPost'
+                            ? val || null
+                            : val,
+                    }
+                  : o
               ),
             }
           : vg
@@ -467,11 +491,17 @@ function ProductModal({
       modifiers: [...f.modifiers, { id: 'mod-' + Date.now(), name: '', price: 0 }],
     }));
 
-  const updateModifier = (idx: number, key: 'name' | 'price', val: string) =>
+  const updateModifier = (idx: number, key: 'name' | 'price' | 'kitchenPost', val: string) =>
     setForm((f) => ({
       ...f,
       modifiers: f.modifiers.map((m, i) =>
-        i === idx ? { ...m, [key]: key === 'price' ? parseFloat(val) || 0 : val } : m
+        i === idx
+          ? {
+              ...m,
+              [key]:
+                key === 'price' ? parseFloat(val) || 0 : key === 'kitchenPost' ? val || null : val,
+            }
+          : m
       ),
     }));
 
@@ -634,6 +664,30 @@ function ProductModal({
                 />
               </div>
 
+              {kitchenPosts.length > 0 && (
+                <div>
+                  <div style={sectionLabel}>Sukaldeko postua</div>
+                  <select
+                    value={form.kitchenPost ?? ''}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, kitchenPost: e.target.value || null }))
+                    }
+                    style={{ ...inputStyle, background: 'var(--adm-surface)' }}
+                  >
+                    <option value="">— Orokorra (post guztiak) —</option>
+                    {kitchenPosts.map((p) => (
+                      <option key={p} value={p}>
+                        👨‍🍳 {p}
+                      </option>
+                    ))}
+                  </select>
+                  <div style={{ fontSize: 11, color: 'var(--adm-text-sec)', marginTop: 4 }}>
+                    Produktu honen lerroa zein postutara bidaltzen den. Aldaerek edo gehigarriek
+                    post ezberdinera bideratu dezakete.
+                  </div>
+                </div>
+              )}
+
               {/* Toggles */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
@@ -758,35 +812,65 @@ function ProductModal({
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {vg.options.map((opt, oIdx) => (
-                      <div key={opt.id} style={{ display: 'flex', gap: 6 }}>
-                        <input
-                          value={opt.name}
-                          onChange={(e) => updateOption(vgIdx, oIdx, 'name', e.target.value)}
-                          placeholder="Aukeraren izena"
-                          style={{ ...inputStyle, flex: 2 }}
-                        />
-                        <input
-                          type="number"
-                          value={opt.priceDelta || ''}
-                          onChange={(e) => updateOption(vgIdx, oIdx, 'priceDelta', e.target.value)}
-                          placeholder="+0.00"
-                          step="0.01"
-                          style={{ ...inputStyle, width: 90, flex: 'none' }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeOption(vgIdx, oIdx)}
-                          style={{
-                            padding: '8px 10px',
-                            border: '1px solid var(--adm-border)',
-                            borderRadius: 8,
-                            background: 'transparent',
-                            color: 'var(--adm-text-sec)',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          ✕
-                        </button>
+                      <div
+                        key={opt.id}
+                        style={{ display: 'flex', flexDirection: 'column', gap: 4 }}
+                      >
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <input
+                            value={opt.name}
+                            onChange={(e) => updateOption(vgIdx, oIdx, 'name', e.target.value)}
+                            placeholder="Aukeraren izena"
+                            style={{ ...inputStyle, flex: 2 }}
+                          />
+                          <input
+                            type="number"
+                            value={opt.priceDelta || ''}
+                            onChange={(e) =>
+                              updateOption(vgIdx, oIdx, 'priceDelta', e.target.value)
+                            }
+                            placeholder="+0.00"
+                            step="0.01"
+                            style={{ ...inputStyle, width: 90, flex: 'none' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeOption(vgIdx, oIdx)}
+                            style={{
+                              padding: '8px 10px',
+                              border: '1px solid var(--adm-border)',
+                              borderRadius: 8,
+                              background: 'transparent',
+                              color: 'var(--adm-text-sec)',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        {kitchenPosts.length > 0 && (
+                          <select
+                            value={opt.kitchenPost ?? ''}
+                            onChange={(e) =>
+                              updateOption(vgIdx, oIdx, 'kitchenPost', e.target.value)
+                            }
+                            style={{
+                              ...inputStyle,
+                              fontSize: 12,
+                              background: 'var(--adm-surface)',
+                              color: opt.kitchenPost
+                                ? 'var(--adm-text-pri)'
+                                : 'var(--adm-text-sec)',
+                            }}
+                          >
+                            <option value="">— Produktuaren postua heredatu —</option>
+                            {kitchenPosts.map((p) => (
+                              <option key={p} value={p}>
+                                👨‍🍳 {p}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                       </div>
                     ))}
                     <button
@@ -837,35 +921,56 @@ function ProductModal({
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {form.modifiers.map((mod, idx) => (
-                    <div key={mod.id} style={{ display: 'flex', gap: 6 }}>
-                      <input
-                        value={mod.name}
-                        onChange={(e) => updateModifier(idx, 'name', e.target.value)}
-                        placeholder="Adib.: Saltsa gehigarria"
-                        style={{ ...inputStyle, flex: 2 }}
-                      />
-                      <input
-                        type="number"
-                        value={mod.price || ''}
-                        onChange={(e) => updateModifier(idx, 'price', e.target.value)}
-                        placeholder="+0.00"
-                        step="0.01"
-                        style={{ ...inputStyle, width: 90, flex: 'none' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeModifier(idx)}
-                        style={{
-                          padding: '8px 10px',
-                          border: '1px solid var(--adm-border)',
-                          borderRadius: 8,
-                          background: 'transparent',
-                          color: 'var(--adm-text-sec)',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        ✕
-                      </button>
+                    <div key={mod.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <input
+                          value={mod.name}
+                          onChange={(e) => updateModifier(idx, 'name', e.target.value)}
+                          placeholder="Adib.: Saltsa gehigarria"
+                          style={{ ...inputStyle, flex: 2 }}
+                        />
+                        <input
+                          type="number"
+                          value={mod.price || ''}
+                          onChange={(e) => updateModifier(idx, 'price', e.target.value)}
+                          placeholder="+0.00"
+                          step="0.01"
+                          style={{ ...inputStyle, width: 90, flex: 'none' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeModifier(idx)}
+                          style={{
+                            padding: '8px 10px',
+                            border: '1px solid var(--adm-border)',
+                            borderRadius: 8,
+                            background: 'transparent',
+                            color: 'var(--adm-text-sec)',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      {kitchenPosts.length > 0 && (
+                        <select
+                          value={mod.kitchenPost ?? ''}
+                          onChange={(e) => updateModifier(idx, 'kitchenPost', e.target.value)}
+                          style={{
+                            ...inputStyle,
+                            fontSize: 12,
+                            background: 'var(--adm-surface)',
+                            color: mod.kitchenPost ? 'var(--adm-text-pri)' : 'var(--adm-text-sec)',
+                          }}
+                        >
+                          <option value="">— Produktuaren postua heredatu —</option>
+                          {kitchenPosts.map((p) => (
+                            <option key={p} value={p}>
+                              👨‍🍳 {p}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                   ))}
                   <button
@@ -1065,6 +1170,22 @@ export default function MenuPage() {
   } | null>(null);
   const [saving, setSaving] = useState(false);
   const [categoryModal, setCategoryModal] = useState<CategoryModalState | null>(null);
+  const [availableKitchenPosts, setAvailableKitchenPosts] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch('/api/admin/txosnak')
+      .then((r) => r.json())
+      .then((d: { txosnak?: { slug: string }[] }) => {
+        const slug = d.txosnak?.[0]?.slug;
+        if (!slug) return;
+        return fetch(`/api/txosnak/${slug}/settings`)
+          .then((r) => r.json())
+          .then((s: { kitchenPosts?: string[] }) => {
+            if (s.kitchenPosts?.length) setAvailableKitchenPosts(s.kitchenPosts);
+          });
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch('/api/categories')
@@ -1607,6 +1728,7 @@ export default function MenuPage() {
           initial={modal.form}
           isEdit={!!modal.editId}
           categories={categories}
+          kitchenPosts={availableKitchenPosts}
           onSave={handleSave}
           onClose={() => setModal(null)}
         />

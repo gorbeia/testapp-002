@@ -389,19 +389,43 @@ Produktu-katalogoa sortu, editatu eta antolatzeko pantaila.
 **Produktu-editoreak barne hartzen ditu:**
 
 - Oinarrizko datuak (izena, prezioa, deskribapena, argazkia)
-- Aukera-taldeak (adib. Patata frijituak / Entsalada)
-- Gehigarriak (prezio gehigarriarekin)
+- **Sukaldeko postua** (txosnak postuak konfiguratuta baditu): produktua postu jakin bati esleitzeko hautatzailea
+- Aukera-taldeak (adib. Patata frijituak / Entsalada) — aukera bakoitzak ere badu bere sukaldeko postua
+- Gehigarriak (prezio gehigarriarekin) — gehigarri bakoitzak ere badu bere sukaldeko postua
 - Osagaiak kentzeko aukera (prezio-aldaketarik gabe)
 - 14 EU alergenoak (ikur eta etiketarekin)
 - Dietako banderak: V · VG · GF · HL
 - Prestatze-argibideak (markdown formatuan)
 - Zatitu arauak (gehienez N zatitan)
 
+**Produktuaren sukaldeko postua ezartzea:**
+
+![Produktu-editorearen oinarrizko fitxa — sukaldeko postua](../screenshots/36-menu-product-kitchenpost.png)
+
+Txosnak sukaldeko postuak konfiguratuta dituenean, produktu-editorean "Sukaldeko postua" hautatzaile bat agertzen da. Produktu bat postu jakin bati esleitzen zaionean, produktu horren tiketak beti postu horretara joaten dira.
+
+**Aukera-taldeen per-aukera sukaldeko postua:**
+
+![Produktu-editorearen aldaerak fitxa — per-aukera sukaldeko postua](../screenshots/37-menu-variant-kitchenpost.png)
+
+Aukera-taldeko aukera bakoitzak bere sukaldeko postua dauka. Honek aukera ematen du produktu bat orokorrean postu bati esleitzea, baina aukera berezi bat beste postu batera bidaltzea (adib. _griddle_ postuko burgerra baina _fryer_ postu batera bidaltzeko "patata frijituak" aukera).
+
+**Post-esleipen logika:**
+
+Eskaera bat sortzen denean, sistemak janari-lerro bakoitzeko sukaldeko postuak biltzen ditu:
+
+- Produktuaren postua
+- Hautatutako aukeraren postua
+- Hautatutako gehigarrien postuak
+
+Lerro batek post bat baino gehiago ukitzen badu, lerroaren kopia bat bidaltzen da post bakoitzeko tiketan. Posturik gabeko lerroak tiketa orokor baten bidaltzen dira.
+
 **Onurak:**
 
 - Menua aldatzen duten aldioro boluntarioak ez du paperik eguneratu behar
 - Alergenoen informazioa beti eguneratuta eta ikusteko errazean
 - Prestatze-argibideak KDS-ean agertzen dira: sukaldekoak beti jakin dezake nola egin
+- Post per-aukera ezartzeak zehazki kontrolatzen du zein postura joaten den eskaeraren zein zati
 
 ---
 
@@ -430,17 +454,23 @@ Boluntario-erregistroa eta rolen kudeaketa.
 
 **URL:** `/eu/txosna`
 
-Txosna bakoitzaren parametroak ezartzeko pantaila. Lau fitxa ditu.
+Txosna bakoitzaren parametroak ezartzeko pantaila. Bost fitxa ditu.
 
-**Orokorra fitxa (erakusten duena):**
-
-![Txosna ezarpenak — Sukaldeko postuak](../screenshots/35-txosna-settings-kitchen-posts.png)
+**Orokorra fitxa:**
 
 - Egoera hautatzailea: **Irekita** · Geldituta · Itxita
 - Itxaron denbora (minutuak): **8**
 - Boluntario PIN: **1 2 3 4**
-- **Sukaldeko postuak**: testu-eremu bat koma banandurik (adib. `parrilla, muntaia`) — hutsik bada, estazio bakarreko sukaldea; postuak konfiguratuz gero, eskaeren janari-lerroak postu egokiei bideratzen zaizkie automatikoki
 - Gorde botoia
+
+**Sukaldea fitxa (berria):**
+
+![Txosna ezarpenak — Sukaldea fitxa (sukaldeko postuak)](../screenshots/35-txosna-settings-kitchen-posts.png)
+
+- Sukaldeko postuak txip-zerrendan: adib. **griddle** · **assembly** (bakoitza ✕ botoiarekin ezaba daiteke)
+- "Postu berria" testu-eremua eta **Gehitu** botoia
+- Oharra: "Postuak hutsik → tiketa bakar bat; postuak gehituta → boluntarioak bere postua hautatzen du PIN sarreran"
+- **Gorde** botoia
 
 Postuak hutsik utziz gero, sukaldea estazio bakarrekoa da (tiketa bakarra eskaera guztientzat). Postuak gehituz gero, PIN sarreran post-hautaketa pantaila agertzen da boluntarioei eta eskaeren janari-lerroak postu egokiei bideratzen zaizkie automatikoki.
 
@@ -456,6 +486,7 @@ Postuak hutsik utziz gero, sukaldea estazio bakarrekoa da (tiketa bakarra eskaer
 - Ordainketa-metodoak malguki aktibatu/desaktibatu daitezke
 - QR kodea jarri testu-mezu edo sare sozialetan eta bezeroak zuzenean menura irits daitezke
 - Sukaldeko postuak konfiguratzeak sukaldeko lan-banaketa eta koordinazioa ahalbidetzen du: parrilla, muntaia, freidora…
+- Post bakoitza produktuaren eta aukeraren mailan esleitzen da menu-editoretik
 
 ---
 
