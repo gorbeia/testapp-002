@@ -41,8 +41,10 @@ Txosnabai txosnak kudeatzeko sistema digital bat da: bezeroen autozerbitzu-eskae
 ┌──────────────────────────────────────────────────────────┐
 │                  BOLUNTARIOAREN IBILBIDEA                 │
 │                                                           │
-│  PIN Sarbidea ──► Janaria Mostradore ──► Sukaldea (KDS)  │
-│                └──► Edariak Mostradore                    │
+│  PIN Sarbidea ──► Janaria Mostradore                      │
+│               ├──► Edariak Mostradore                     │
+│               ├──► Post hautaketa ──► Sukaldea (KDS)     │
+│               └──► Sukalde Kudeaketa (koordinatzailea)   │
 └──────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────┐
@@ -173,18 +175,27 @@ Edozein boluntariok sartzen den lehen pantaila. Autentifikazio sinplea PIN zenba
 **Pantailak erakusten duena:**
 
 - Txosna-izena goiburuan: **Aste Nagusia 2026**
-- Hiru modu-botoi:
+- Lau modu-botoi:
   - 🍽 **Janaria** (orangeaz nabarmenduta)
   - 🍺 **Edariak**
   - 👨‍🍳 **Sukaldea**
+  - 📋 **Kudeaketa**
 - 4 digituko PIN-teklatu
 - Behean: "Sartu — Janaria" botoiа
+
+**Sukaldeko post hautaketa:**
+
+PIN onartzen denean eta **Sukaldea** modua hautatuta dagoenean, txosnak postuak konfiguratuta baditu (adib. "Parrilla" eta "Muntaia"), post-hautaketa pantaila agertzen da:
+
+- Post bakoitzeko botoi bat — boluntarioa bere lan-postuan jartzen da eta post horretako tiketak bakarrik ikusten ditu KDS-ean
+- **Kudeaketa (guztiak)** aukera — koordinatzaileak post guztien ikuspegi orokorra ikusten du
 
 **Onurak:**
 
 - Boluntarioak ez du pasahitz konpliaturik gogoratu behar
 - Modu-hautaketak boluntarioa zuzenean dagokion pantailara bidaltzen du
 - PIN bakarra txosna guztiarentzat: erraztasun operatiboa
+- Post hautaketak sukaldeko lan-fluxua banatzen du: parrillako boluntarioak bere tiketak bakarrik ikusten ditu, nahastasunik gabe
 
 ---
 
@@ -235,7 +246,7 @@ Edariak mostradorearen pantaila: zerrendako eskaerak eta eskaera berrien sortzai
 
 **URL:** `/eu/kitchen`
 
-Sukaldeko pantaila nagusia. Hiru zutabe dauzka egoeraren arabera.
+Sukaldeko pantaila nagusia. Hiru zutabe dauzka egoeraren arabera. Txosnak sukaldeko postuak konfiguratuta baditu eta boluntarioak post bat hautatu badu PIN sarbidean, KDS-ak post horretako tiketak bakarrik erakusten ditu — goiburuan ageri da zein postutan dagoen (adib. **Aste Nagusia 2026 · parrilla**).
 
 **Pantailak erakusten duena:**
 
@@ -261,7 +272,32 @@ Sukaldeko pantaila nagusia. Hiru zutabe dauzka egoeraren arabera.
 
 ---
 
-## 10. Egoera Ikuspegi (Overview)
+## 10. Sukalde Kudeaketa
+
+**URL:** `/eu/kitchen-manager`
+
+Koordinatzailearen ikuspegi orokorra: sukaldeko post guztietako tiketak eskaera bakoitzean taldekaturik erakusten ditu. Boluntario nagusiak edo txosna-arduradunak erabiltzen du.
+
+**Pantailak erakusten duena:**
+
+- Goiburua: txosna-izena + 🍳 **Sukaldean N** · ✅ **Jasotzeko N** zenbagailuak + 📦 Stock botoia
+- Eskaera-txartelak ordenatuta (prest daudenak lehenago, gero zaharrenetik berrienera):
+  - Eskaera-zenbakia **#42** eta bezeroaren izena
+  - Post bakoitzeko errenkada bat: **parrilla · PRESTATZEN** / **muntaia · PREST ✓**
+  - Progresio-barra: PREST diren post-tiketen ehunekoa (anbarra → berdea)
+  - Txartel berdea: post guztiak PREST — eskaera biltzeko prest
+- Denbora errealean eguneratzen da SSE bidez
+
+**Onurak:**
+
+- Koordinatzaileak begirada bakarrean ikusten du eskaera bakoitzaren egoera post guztietan
+- Txartel berdeak argi adierazten du zein eskaerei bilketa-deia egin behar zaien
+- Irakurtzeko bakarrik: ez du egoera-aldaketa botoirik — sukaldekoek egoera aldatzen dute beren KDS-tik
+- Stock kudeaketa pantaila berberean sartzen da (📦 botoiaren bidez)
+
+---
+
+## 11. Egoera Ikuspegi (Overview)
 
 **URL:** `/eu/overview`
 
@@ -290,7 +326,7 @@ Txosna osoaren egoera-laburpena denbora errealean. Zuzendariarentzat edo bolunta
 
 # III. ADMINISTRATZAILEAREN PANTAILAK
 
-## 11. Admin Panel — Nabigazio-alboko barra
+## 12. Admin Panel — Nabigazio-alboko barra
 
 Pantaila guztietan agertzen da ezkerrean (mahai gainekoan) edo menu gisa (mugikorrean).
 
@@ -309,7 +345,7 @@ Pantaila guztietan agertzen da ezkerrean (mahai gainekoan) edo menu gisa (mugiko
 
 ---
 
-## 12. Menu Kudeaketa
+## 13. Menu Kudeaketa
 
 **URL:** `/eu/menu`
 
@@ -340,7 +376,7 @@ Produktu-katalogoa sortu, editatu eta antolatzeko pantaila.
 
 ---
 
-## 13. Boluntarioak
+## 14. Boluntarioak
 
 **URL:** `/eu/volunteers`
 
@@ -361,7 +397,7 @@ Boluntario-erregistroa eta rolen kudeaketa.
 
 ---
 
-## 14. Txosna Konfigurazioa
+## 15. Txosna Konfigurazioa
 
 **URL:** `/eu/txosna`
 
@@ -372,6 +408,7 @@ Txosna bakoitzaren parametroak ezartzeko pantaila. Lau fitxa ditu.
 - Egoera hautatzailea: **Irekita** · Geldituta · Itxita
 - Itxaron denbora (minutuak): **8**
 - Boluntario PIN: **1 2 3 4**
+- Sukaldeko postuak: **parrilla, muntaia** (koma banandurik; hutsik bada, estazio bakarreko sukaldea)
 - Gorde botoia
 
 **Gainerako fitxak:**
@@ -388,7 +425,7 @@ Txosna bakoitzaren parametroak ezartzeko pantaila. Lau fitxa ditu.
 
 ---
 
-## 15. Txostenak
+## 16. Txostenak
 
 **URL:** `/eu/reports`
 
@@ -424,22 +461,24 @@ Salmenten eta eragiketen laburpena.
 
 ## Boluntarioen eraginkortasuna
 
-| Arazo ohikoa                | Soluzio berria                                  |
-| --------------------------- | ----------------------------------------------- |
-| Txartelak paperean galdu    | KDS digitalean eskaera guztiak ikusgai          |
-| "Osagaiak kentzeko" ahaztu  | KDS-ean ❌ ikurrez nabarmendu                   |
-| Ordainketa-trukea kalkulatu | Mostradoreak trukea automatikoki kalkulatzen du |
-| Edariak eta janaria nahastu | Mostradore bereiziak, ilara independenteekin    |
-| Sukaldea non dagoen eskaera | `→ Hasi` ukitu bakarrarekin egoera aldatu       |
+| Arazo ohikoa                | Soluzio berria                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| Txartelak paperean galdu    | KDS digitalean eskaera guztiak ikusgai                                            |
+| "Osagaiak kentzeko" ahaztu  | KDS-ean ❌ ikurrez nabarmendu                                                     |
+| Ordainketa-trukea kalkulatu | Mostradoreak trukea automatikoki kalkulatzen du                                   |
+| Edariak eta janaria nahastu | Mostradore bereiziak, ilara independenteekin                                      |
+| Sukaldea non dagoen eskaera | `→ Hasi` ukitu bakarrarekin egoera aldatu                                         |
+| Sukaldeko postuak nahastu   | Post hautaketak boluntarioa bere postura bideratzen du — beste postuak ikusezinak |
 
 ## Kudeaketaren ikusgarritasuna
 
-| Arazo ohikoa                                | Soluzio berria                                     |
-| ------------------------------------------- | -------------------------------------------------- |
-| "Ez dakit zenbat saldu dugun"               | Txostenak denbora errealean                        |
-| Boluntarioak non dauden jakin ez            | Overview-k aktibo/guztira erakusten du             |
-| Menu aldaketak paper/pizarrabean            | Admin panelean editatu → berehala eguneratuta      |
-| Alergenoen informazioa eguneratuta mantendu | Menu-editorean 14 EU alergenoak, betidanik ikusgai |
+| Arazo ohikoa                                | Soluzio berria                                                            |
+| ------------------------------------------- | ------------------------------------------------------------------------- |
+| "Ez dakit zenbat saldu dugun"               | Txostenak denbora errealean                                               |
+| Boluntarioak non dauden jakin ez            | Overview-k aktibo/guztira erakusten du                                    |
+| Menu aldaketak paper/pizarrabean            | Admin panelean editatu → berehala eguneratuta                             |
+| Alergenoen informazioa eguneratuta mantendu | Menu-editorean 14 EU alergenoak, betidanik ikusgai                        |
+| Post guztien egoera aldi berean ikusi ezin  | Sukalde Kudeaketa pantailak post guztiak agertzen ditu eskaera bakoitzean |
 
 ---
 
