@@ -28,6 +28,7 @@ Given(
       enabledPaymentMethods: ['CASH'] as const,
       pendingPaymentTimeout: 15,
       printingEnabled: false,
+      kitchenPosts: [] as string[],
       // Links to the seeded mock association so catalog queries find products
       associationId: 'assoc-1',
       createdAt: new Date(),

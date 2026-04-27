@@ -139,7 +139,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   // DRINKS lines → always one ticket, kitchenPost = null
   // FOOD lines → one ticket per distinct kitchen post when txosna has posts configured;
   //              lines with no post values go into a general ticket (kitchenPost = null)
-  const hasKitchenPosts = txosna.kitchenPosts.length > 0;
+  const hasKitchenPosts = (txosna.kitchenPosts ?? []).length > 0;
 
   // Map key: `DRINKS` or `FOOD:${post}` (post is '' for the general food ticket)
   const ticketMap = new Map<
