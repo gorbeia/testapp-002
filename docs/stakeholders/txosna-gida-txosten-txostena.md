@@ -154,6 +154,27 @@ Bezeroak bere eskaeraren egoera ikusten du:
 
 ### 2.2 Boluntarioen Pantailak
 
+#### PIN Sarbidea
+
+**URL:** `/eu/pin`
+
+Boluntarioak sartzen diren lehenengo pantaila. PIN sinple bat erabiliz autentifikatzen dira eta dagokien pantailara bideratzen dira.
+
+**Lau modu:**
+
+| Modua         | Ikurra | Helmuga                                      |
+| ------------- | ------ | -------------------------------------------- |
+| **Janaria**   | 🍽     | Janari Mostradorea                           |
+| **Edariak**   | 🍺     | Edari Mostradorea                            |
+| **Sukaldea**  | 👨‍🍳     | KDS (post hautaketarekin edo zuzenean)       |
+| **Kudeaketa** | 📋     | Sukalde Kudeaketa (koordinatzaile ikuspegia) |
+
+**Sukaldeko post hautaketa:**
+
+Txosnak sukaldeko postuak konfiguratuta baditu, **Sukaldea** modua aukeratzean eta PINa sartu ondoren, post-hautaketa pantaila agertzen da. Boluntarioak bere lan-postua hautatzen du (adib. "Parrilla" edo "Muntaia") eta KDS-ak post horretako tiketak bakarrik erakusten dizkio. "Kudeaketa (guztiak)" aukeratzean Sukalde Kudeaketa pantailara bideratzen da.
+
+---
+
 #### Sukaldea (KDS - Kitchen Display System)
 
 ![KDS sukaldea](../screenshots/11-kds-desktop.png)
@@ -165,7 +186,7 @@ Sukaldeko langileentzako pantaila nagusia. Bertan ikusten dira denbora errealean
 **Ezkerrean:**
 
 - **Gertaera hautatzailea**: "Aste Nagusia 2026 ▾" - Txosnak aukeratzeko menua
-- **Eremua eta mota**: "Janaria · Sukaldea · ⚠ 1 motel" - Zein txosna eta zein sukalde motatan ari den lanean
+- **Eremua eta mota**: "Janaria · Sukaldea · ⚠ 1 motel" - Zein txosna eta zein sukalde motatan ari den lanean; postuak badaude eta post bat hautatuta badago, post-izena erakusten du (adib. "Janaria · parrilla")
 
 **Eskuinean - Kudeaketa botoiak:**
 | Ikonoa | Izena | Funtzioa |
@@ -291,6 +312,46 @@ Sukaldeko langileek 📦 Stocka botoia erabiliz produktuak agortuta marka ditzak
 - Sukaldea normaltasunera itzultzen du
 - Eskaera berriak berriro onartzen ditu
 - Denbora errealean eguneratzen da
+
+---
+
+#### Sukalde Kudeaketa (Kitchen Manager)
+
+**URL:** `/eu/kitchen-manager`
+
+Koordinatzailearen ikuspegi orokorra, sukaldeko post guztiak estaltzen dituena. Postuak dituzten txosnentzako diseinatuta dago.
+
+**Goiburua:**
+
+- Txosna-izena eta egoera-zenbatzaileak:
+  - 🍳 **Sukaldean**: oraindik prest ez dauden eskaerak
+  - ✅ **Jasotzeko**: post guztiak PREST dituzten eskaerak
+- 📦 **Stock** botoia: produktuak agortzeko/aktibatzeko
+
+**Eskaera Txartelak:**
+
+Txartel bakoitzak ordena bat irudikatzen du:
+
+| Elementua           | Deskribapena                                                   |
+| ------------------- | -------------------------------------------------------------- |
+| **#42 Miren**       | Ordena zenbakia eta bezeroaren izena                           |
+| **Progresio-barra** | Post kopuruaren arabera PREST ehunekoa (anbarra → berdea)      |
+| **Post errenkadak** | Post bakoitzeko egoera-etiketa (Jasota / Prestatzen / Prest ✓) |
+| **Txartel berdea**  | Post guztiak PREST — bilketa-deia egiteko prest                |
+
+**Ordenaketa:**
+
+1. Prest dauden eskaerak lehenago (jasotzeko deia egin behar zaienak)
+2. Zaharrenetik berrienera gainerakoak
+
+**Onurak:**
+
+- Koordinatzaileak ikustarazten du zein post gelditzen diren eskaera bakoitzeko
+- Txartel berdeak argi adierazten du bezeroari deia egiteko unea
+- Irakurtzeko bakarrik: egoera aldaketak sukaldekoek egiten dituzte beren KDS-tik
+- Denbora errealean eguneratzen da SSE bidez — orria freskatu gabe
+
+---
 
 #### Mostradorea
 
@@ -439,6 +500,7 @@ Txosna bakoitzak konfigurazio propioa du, 4 fitxatan antolatuta:
 - **Egoera**: Irekita / Geldituta / Itxita
 - **Itxaron denbora**: Zenbat minututan prest egongo den eskaerak
 - **Boluntario PIN**: Sukaldera sartzeko beharrezko PIN kodea
+- **Sukaldeko postuak**: Lan-postu izendatuak sukaldean, koma banandurik (adib. "parrilla, muntaia, freidora"). Hutsik bada, sukaldea estazio bakarrekoa da eta KDS-ak tiketa guztiak erakusten ditu.
 
 ##### 2. Ordainketa fitxa
 
