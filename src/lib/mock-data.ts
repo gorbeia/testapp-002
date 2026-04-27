@@ -254,7 +254,6 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     requiresPreparation: true,
     available: true,
     soldOut: false,
-    kitchenPost: 'griddle',
     variantGroups: [
       {
         id: 'vg-1b',
