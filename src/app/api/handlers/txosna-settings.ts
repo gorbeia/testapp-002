@@ -41,6 +41,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     status: txosna.status,
     waitMinutes: txosna.waitMinutes,
     counterSetup: txosna.counterSetup,
+    kitchenPosts: txosna.kitchenPosts,
     enabledChannels: txosna.enabledChannels,
     enabledPaymentMethods: txosna.enabledPaymentMethods,
     printingEnabled: txosna.printingEnabled,
@@ -88,6 +89,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ sl
     'status',
     'waitMinutes',
     'counterSetup',
+    'kitchenPosts',
     'enabledChannels',
     'enabledPaymentMethods',
     'printingEnabled',
@@ -111,6 +113,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ sl
     }
   }
 
+  if (patch.kitchenPosts !== undefined) {
+    if (
+      !Array.isArray(patch.kitchenPosts) ||
+      (patch.kitchenPosts as unknown[]).some((p) => typeof p !== 'string')
+    ) {
+      return new Response(JSON.stringify({ error: 'kitchenPosts must be an array of strings' }), {
+        status: 422,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   try {
     const updated = await txosnaRepo.update(txosna.id, patch);
 
@@ -122,6 +136,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ sl
       status: updated.status,
       waitMinutes: updated.waitMinutes,
       counterSetup: updated.counterSetup,
+      kitchenPosts: updated.kitchenPosts,
       enabledChannels: updated.enabledChannels,
       enabledPaymentMethods: updated.enabledPaymentMethods,
       printingEnabled: updated.printingEnabled,

@@ -319,6 +319,47 @@ describe('Txosna Settings API', () => {
       expect(res.status).toBe(403);
     });
 
+    it('GET includes kitchenPosts in response', async () => {
+      mockSession('ADMIN', 'assoc-1');
+
+      const res = await resolveParams(settingsGet, makeGetSettings('aste-nagusia-2026'), {
+        slug: 'aste-nagusia-2026',
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body).toHaveProperty('kitchenPosts');
+      expect(Array.isArray(body.kitchenPosts)).toBe(true);
+    });
+
+    it('updates kitchenPosts', async () => {
+      mockSession('ADMIN', 'assoc-1');
+
+      const res = await resolveParams(
+        settingsPatch,
+        makePatchSettings('aste-nagusia-2026', { kitchenPosts: ['fryer', 'grill'] }),
+        { slug: 'aste-nagusia-2026' }
+      );
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.kitchenPosts).toEqual(['fryer', 'grill']);
+      const updated = await txosnaRepo.findBySlug('aste-nagusia-2026');
+      expect(updated?.kitchenPosts).toEqual(['fryer', 'grill']);
+    });
+
+    it('rejects kitchenPosts that is not an array with 422', async () => {
+      mockSession('ADMIN', 'assoc-1');
+
+      const res = await resolveParams(
+        settingsPatch,
+        makePatchSettings('aste-nagusia-2026', { kitchenPosts: 'not-an-array' }),
+        { slug: 'aste-nagusia-2026' }
+      );
+
+      expect(res.status).toBe(422);
+    });
+
     it('preserves unmentioned fields', async () => {
       mockSession('ADMIN', 'assoc-1');
       const original = await txosnaRepo.findBySlug('aste-nagusia-2026');

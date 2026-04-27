@@ -103,6 +103,7 @@ Given(
       removableIngredients: [],
       preparationInstructions: null,
       displayOrder: 99,
+      kitchenPost: null,
       variantGroups: [],
       modifiers: [],
     });
@@ -142,6 +143,7 @@ Given(
       removableIngredients: [],
       preparationInstructions: null,
       displayOrder: 99,
+      kitchenPost: null,
       variantGroups: [],
       modifiers: [],
     });

@@ -101,6 +101,7 @@ function seed() {
       name: mt.name,
       status: mt.status,
       counterSetup: mt.counterSetup,
+      kitchenPosts: mt.kitchenPosts ?? [],
       waitMinutes: mt.waitMinutes,
       pinHash: mt.pin, // plain PIN; bcrypt added in Phase 6 / Phase 10
       enabledChannels: ['COUNTER', 'PHONE_TO_COUNTER', 'SELF_SERVICE'],
@@ -143,6 +144,7 @@ function seed() {
       removableIngredients: mp.removableIngredients,
       preparationInstructions: mp.preparationInstructions,
       displayOrder: MOCK_PRODUCTS.indexOf(mp),
+      kitchenPost: mp.kitchenPost ?? null,
       variantGroups: mp.variantGroups.map((vg, vgi) => ({
         id: vg.id,
         name: vg.name,
@@ -153,6 +155,7 @@ function seed() {
           priceDelta: o.priceDelta,
           allergens: [],
           displayOrder: oi,
+          kitchenPost: o.kitchenPost ?? null,
         })),
       })),
       modifiers: mp.modifiers.map((mod, modi) => ({
@@ -161,6 +164,7 @@ function seed() {
         price: mod.price,
         allergens: [],
         displayOrder: modi,
+        kitchenPost: mod.kitchenPost ?? null,
       })),
     });
   }
@@ -270,6 +274,7 @@ export const txosnaRepo: TxosnaRepository = {
       name: data.name,
       status: 'OPEN',
       counterSetup: 'SINGLE',
+      kitchenPosts: [],
       waitMinutes: null,
       pinHash: data.pinHash ?? '0000',
       enabledChannels: ['COUNTER', 'SELF_SERVICE'],
@@ -627,6 +632,7 @@ function seedDemoAssociation() {
       name: dt.name,
       status: dt.status,
       counterSetup: dt.counterSetup,
+      kitchenPosts: dt.kitchenPosts ?? [],
       waitMinutes: dt.waitMinutes,
       pinHash: DEMO_PIN,
       enabledChannels: ['COUNTER', 'PHONE_TO_COUNTER', 'SELF_SERVICE'],
@@ -667,6 +673,7 @@ function seedDemoAssociation() {
       removableIngredients: dp.removableIngredients,
       preparationInstructions: dp.preparationInstructions,
       displayOrder: i,
+      kitchenPost: dp.kitchenPost ?? null,
       variantGroups: dp.variantGroups.map((vg, vgi) => ({
         id: vg.id,
         name: vg.name,
@@ -677,6 +684,7 @@ function seedDemoAssociation() {
           priceDelta: o.priceDelta,
           allergens: [],
           displayOrder: oi,
+          kitchenPost: o.kitchenPost ?? null,
         })),
       })),
       modifiers: dp.modifiers.map((mod, modi) => ({
@@ -685,6 +693,7 @@ function seedDemoAssociation() {
         price: mod.price,
         allergens: [],
         displayOrder: modi,
+        kitchenPost: mod.kitchenPost ?? null,
       })),
     });
   }
