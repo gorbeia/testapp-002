@@ -2,8 +2,11 @@
 import assert from 'assert';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { NextRequest } from 'next/server';
-import { POST as volunteersPost } from '../../../src/app/api/associations/[associationId]/volunteers/route';
-import { DELETE as volunteerDelete } from '../../../src/app/api/volunteers/[volunteerId]/route';
+import { POST as volunteersPost } from '../../../src/app/api/handlers/assoc-volunteers';
+import {
+  DELETE as volunteerDelete,
+  PATCH as volunteerPatch,
+} from '../../../src/app/api/handlers/volunteer';
 import { POST as pinPost } from '../../../src/app/api/auth/pin/route';
 import { volunteerRepo, _test_insertTxosna } from '../../../src/test/store-setup';
 import type { IntegrationWorld } from './world';
@@ -170,3 +173,67 @@ Then('the body contains valid: false', function (this: IntegrationWorld) {
   const body = this.lastBody as { valid: boolean };
   assert.equal(body.valid, false, 'response body should contain valid: false');
 });
+
+When(
+  'I PATCH volunteer {string} with name {string}',
+  async function (this: IntegrationWorld, volunteerId: string, name: string): Promise<void> {
+    const req = new NextRequest(`http://localhost/api/volunteers/${volunteerId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    this.lastResponse = await volunteerPatch(req, volunteerParams(volunteerId));
+    this.lastBody = await this.lastResponse
+      .clone()
+      .json()
+      .catch(() => null);
+  }
+);
+
+When(
+  'I PATCH volunteer {string} with active false',
+  async function (this: IntegrationWorld, volunteerId: string): Promise<void> {
+    const req = new NextRequest(`http://localhost/api/volunteers/${volunteerId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active: false }),
+    });
+    this.lastResponse = await volunteerPatch(req, volunteerParams(volunteerId));
+    this.lastBody = await this.lastResponse
+      .clone()
+      .json()
+      .catch(() => null);
+  }
+);
+
+When(
+  'I PATCH volunteer {string} with role {string}',
+  async function (this: IntegrationWorld, volunteerId: string, role: string): Promise<void> {
+    const req = new NextRequest(`http://localhost/api/volunteers/${volunteerId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role }),
+    });
+    this.lastResponse = await volunteerPatch(req, volunteerParams(volunteerId));
+    this.lastBody = await this.lastResponse
+      .clone()
+      .json()
+      .catch(() => null);
+  }
+);
+
+Then(
+  'the returned volunteer has name {string}',
+  function (this: IntegrationWorld, expectedName: string): void {
+    const body = this.lastBody as { name: string };
+    assert.equal(body.name, expectedName);
+  }
+);
+
+Then(
+  'the returned volunteer has role {string}',
+  function (this: IntegrationWorld, expectedRole: string): void {
+    const body = this.lastBody as { role: string };
+    assert.equal(body.role, expectedRole);
+  }
+);

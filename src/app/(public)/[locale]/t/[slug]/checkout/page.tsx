@@ -14,7 +14,12 @@ export default async function CheckoutPage({
 
   return (
     <CheckoutClient
-      txosna={{ name: txosna.name, status: txosna.status, waitMinutes: txosna.waitMinutes }}
+      txosna={{
+        name: txosna.name,
+        status: txosna.status,
+        waitMinutes: txosna.waitMinutes,
+        enabledPaymentMethods: txosna.enabledPaymentMethods,
+      }}
     />
   );
 }

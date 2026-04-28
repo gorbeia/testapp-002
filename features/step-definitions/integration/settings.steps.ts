@@ -2,8 +2,8 @@
 import assert from 'assert';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { NextRequest } from 'next/server';
-import { PATCH as settingsPATCH } from '../../../src/app/api/txosnak/[slug]/settings/route';
-import { GET as txosnaGET } from '../../../src/app/api/txosnak/[slug]/route';
+import { PATCH as settingsPATCH } from '../../../src/app/api/handlers/txosna-settings';
+import { GET as txosnaGET } from '../../../src/app/api/handlers/txosna';
 import { _test_insertTxosna } from '../../../src/test/store-setup';
 import type { IntegrationWorld } from './world';
 

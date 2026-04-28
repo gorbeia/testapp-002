@@ -5,11 +5,10 @@ import type { StoredOrder } from '@/lib/store/types';
 export class StripePaymentProvider implements IPaymentProvider {
   private stripe: Stripe;
 
-  constructor() {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error('STRIPE_SECRET_KEY is required');
-    }
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  constructor(secretKey?: string) {
+    const key = secretKey ?? process.env.STRIPE_SECRET_KEY;
+    if (!key) throw new Error('STRIPE_SECRET_KEY is required');
+    this.stripe = new Stripe(key);
   }
 
   async validate(): Promise<{ ok: boolean; error?: string }> {

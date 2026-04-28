@@ -64,6 +64,10 @@ When('I select association {string}', async function (this: E2eWorld, name: stri
 
 Then('I am redirected to the txosna dashboard', async function (this: E2eWorld) {
   const url = this.page.url();
+  if (url.includes('/api/auth/error')) {
+    const body = await this.page.evaluate(() => document.body.innerText);
+    assert.fail(`Auth error page: ${url}\nBody: ${body.slice(0, 400)}`);
+  }
   assert.ok(
     url.includes('/txosnak') || url.includes('/dashboard'),
     `Expected txosna dashboard URL, got: ${url}`

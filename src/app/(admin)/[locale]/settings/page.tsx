@@ -4,7 +4,7 @@ import { MaskedInput } from '@/components/ui/masked-input';
 import { Dialog } from '@base-ui/react/dialog';
 import { X, Plus, CreditCard, Building2, Power, Trash2, Edit2, Check } from 'lucide-react';
 
-const TABS = ['Elkartea', 'Ordainketa', 'IVA'];
+const TABS = ['Elkartea', 'Ordainketa', 'BEZ'];
 
 // ── Dialog Component ─────────────────────────────────────────────────────────
 function ProviderDialog({
@@ -350,12 +350,25 @@ function ProviderCard({
   onToggle,
   onEdit,
   onDelete,
+  onTest,
 }: {
   provider: PaymentProvider;
   onToggle: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onTest: () => Promise<{ ok: boolean; error?: string }>;
 }) {
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; error?: string } | null>(null);
+
+  async function handleTest() {
+    setTesting(true);
+    setTestResult(null);
+    const result = await onTest();
+    setTestResult(result);
+    setTesting(false);
+  }
+
   const config = PROVIDER_CONFIG[provider.type];
   const Icon = config.icon;
 
@@ -417,9 +430,42 @@ function ProviderCard({
         <div style={{ fontSize: 12, color: 'var(--adm-text-sec)', marginTop: 2 }}>
           {provider.enabled ? 'Gaituta' : 'Desgaituta'} · {config.hint}
         </div>
+        {testResult && (
+          <div
+            style={{
+              fontSize: 11,
+              marginTop: 4,
+              color: testResult.ok ? '#22c55e' : '#ef4444',
+              fontWeight: 500,
+            }}
+          >
+            {testResult.ok ? '✓ Konexioa egiaztatu da' : `✗ ${testResult.error ?? 'Errorea'}`}
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: 6 }}>
+        <button
+          onClick={handleTest}
+          disabled={testing}
+          title="Konexioa probatu"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            border: 'none',
+            background: 'var(--adm-surface-hi)',
+            color: testing ? 'var(--adm-text-dim, #6b7280)' : 'var(--adm-text-sec)',
+            cursor: testing ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 14,
+            transition: 'all 0.15s',
+          }}
+        >
+          {testing ? '⏳' : '⚡'}
+        </button>
         <button
           onClick={onToggle}
           title={provider.enabled ? 'Desgaitu' : 'Gaitu'}
@@ -493,6 +539,8 @@ function ProviderForm({
   onSave: (provider: Omit<PaymentProvider, 'id'>) => void;
   onCancel: () => void;
 }) {
+  const [origin, setOrigin] = useState('');
+  useEffect(() => setOrigin(window.location.origin), []);
   const [providerType, setProviderType] = useState<ProviderType>(initialData?.type || 'stripe');
   const [displayName, setDisplayName] = useState(initialData?.displayName || '');
   const [testMode, setTestMode] = useState(initialData?.testMode ?? true);
@@ -681,7 +729,7 @@ function ProviderForm({
                 fontSize: 11,
               }}
             >
-              https://txosna.app/api/webhooks/stripe
+              {origin}/api/payments/webhook/stripe
             </code>
           </div>
         </div>
@@ -780,7 +828,7 @@ function ProviderForm({
                 fontSize: 11,
               }}
             >
-              https://txosna.app/api/webhooks/redsys
+              {origin}/api/payments/webhook/redsys
             </code>
           </div>
         </div>
@@ -827,62 +875,226 @@ function ProviderForm({
   );
 }
 
+function credentialsToApi(type: ProviderType, creds: PaymentCredentials): Record<string, string> {
+  if (type === 'stripe') {
+    return {
+      publishableKey: creds.stripePublic ?? '',
+      secretKey: creds.stripeSecret ?? '',
+      webhookSecret: creds.stripeWebhook ?? '',
+    };
+  }
+  return {
+    merchantCode: creds.redsysMerchant ?? '',
+    secretKey: creds.redsysKey ?? '',
+    terminal: creds.redsysTerminal ?? '1',
+  };
+}
+
 function PaymentProvidersTab() {
-  const [providers, setProviders] = useState<PaymentProvider[]>([
-    {
-      id: 'prov-1',
-      type: 'stripe',
-      displayName: 'Stripe (test)',
-      enabled: true,
-      testMode: true,
-      credentials: {},
-    },
-  ]);
+  const [providers, setProviders] = useState<PaymentProvider[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProvider, setEditingProvider] = useState<PaymentProvider | null>(null);
+  const [associationId, setAssociationId] = useState('');
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const sessionRes = await fetch('/api/auth/session');
+        const session = await sessionRes.json();
+        const assocId: string = session?.user?.associationId ?? '';
+        setAssociationId(assocId);
+        if (!assocId) return;
+        const res = await fetch(`/api/associations/${assocId}/payment-providers`);
+        if (!res.ok) throw new Error('Ezin izan dira hornitzaileak kargatu');
+        const data: Array<{
+          id: string;
+          providerType: string;
+          displayName: string | null;
+          enabled: boolean;
+          testMode: boolean;
+        }> = await res.json();
+        setProviders(
+          data.map((p) => ({
+            id: p.id,
+            type: p.providerType.toLowerCase() as ProviderType,
+            displayName: p.displayName ?? '',
+            enabled: p.enabled,
+            testMode: p.testMode,
+            credentials: {},
+          }))
+        );
+      } catch (err) {
+        setApiError(err instanceof Error ? err.message : 'Errorea gertatu da');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   const handleAddProvider = useCallback(
-    (data: Omit<PaymentProvider, 'id'>) => {
-      const newProvider: PaymentProvider = {
-        ...data,
-        id: `prov-${Date.now()}`,
-      };
-      setProviders([...providers, newProvider]);
-      setIsAddModalOpen(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+    async (data: Omit<PaymentProvider, 'id'>) => {
+      try {
+        const res = await fetch(`/api/associations/${associationId}/payment-providers`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            providerType: data.type.toUpperCase(),
+            displayName: data.displayName || null,
+            testMode: data.testMode,
+            credentials: credentialsToApi(data.type, data.credentials),
+            bizumEnabled: false,
+          }),
+        });
+        if (!res.ok) throw new Error(`Errorea (${res.status})`);
+        const created: {
+          id: string;
+          providerType: string;
+          displayName: string | null;
+          enabled: boolean;
+          testMode: boolean;
+        } = await res.json();
+        setProviders((prev) => [
+          ...prev,
+          {
+            id: created.id,
+            type: created.providerType.toLowerCase() as ProviderType,
+            displayName: created.displayName ?? '',
+            enabled: created.enabled,
+            testMode: created.testMode,
+            credentials: {},
+          },
+        ]);
+        setIsAddModalOpen(false);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } catch (err) {
+        setApiError(err instanceof Error ? err.message : 'Errorea gertatu da');
+      }
     },
-    [providers]
+    [associationId]
   );
 
   const handleUpdateProvider = useCallback(
-    (data: Omit<PaymentProvider, 'id'>) => {
+    async (data: Omit<PaymentProvider, 'id'>) => {
       if (!editingProvider) return;
-      setProviders(providers.map((p) => (p.id === editingProvider.id ? { ...data, id: p.id } : p)));
-      setEditingProvider(null);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      try {
+        const patch: Record<string, unknown> = {
+          displayName: data.displayName || null,
+          testMode: data.testMode,
+          enabled: data.enabled,
+        };
+        const hasNewCreds = Object.values(data.credentials).some(Boolean);
+        if (hasNewCreds) patch.credentials = credentialsToApi(data.type, data.credentials);
+        const res = await fetch(
+          `/api/associations/${associationId}/payment-providers/${editingProvider.id}`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patch),
+          }
+        );
+        if (!res.ok) throw new Error(`Errorea (${res.status})`);
+        setProviders((prev) =>
+          prev.map((p) =>
+            p.id === editingProvider.id
+              ? {
+                  ...p,
+                  displayName: data.displayName,
+                  testMode: data.testMode,
+                  enabled: data.enabled,
+                }
+              : p
+          )
+        );
+        setEditingProvider(null);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } catch (err) {
+        setApiError(err instanceof Error ? err.message : 'Errorea gertatu da');
+      }
     },
-    [providers, editingProvider]
+    [associationId, editingProvider]
   );
 
-  const handleToggleProvider = useCallback((id: string) => {
-    setProviders((prev) => prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)));
-  }, []);
+  const handleToggleProvider = useCallback(
+    async (id: string) => {
+      const provider = providers.find((p) => p.id === id);
+      if (!provider) return;
+      try {
+        const res = await fetch(`/api/associations/${associationId}/payment-providers/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: !provider.enabled }),
+        });
+        if (!res.ok) throw new Error(`Errorea (${res.status})`);
+        setProviders((prev) => prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)));
+      } catch (err) {
+        setApiError(err instanceof Error ? err.message : 'Errorea gertatu da');
+      }
+    },
+    [associationId, providers]
+  );
 
-  const handleDeleteProvider = useCallback((id: string) => {
-    setProviders((prev) => prev.filter((p) => p.id !== id));
-  }, []);
+  const handleDeleteProvider = useCallback(
+    async (id: string) => {
+      if (!confirm('Hornitzailea ezabatu nahi duzu?')) return;
+      try {
+        const res = await fetch(`/api/associations/${associationId}/payment-providers/${id}`, {
+          method: 'DELETE',
+        });
+        if (!res.ok) throw new Error(`Errorea (${res.status})`);
+        setProviders((prev) => prev.filter((p) => p.id !== id));
+      } catch (err) {
+        setApiError(err instanceof Error ? err.message : 'Errorea gertatu da');
+      }
+    },
+    [associationId]
+  );
+
+  const handleTestProvider = useCallback(
+    async (id: string) => {
+      try {
+        const res = await fetch(
+          `/api/associations/${associationId}/payment-providers/${id}/validate`,
+          { method: 'POST' }
+        );
+        const data: { ok: boolean; error?: string } = await res.json();
+        return data;
+      } catch {
+        return { ok: false, error: 'Konexio errorea' };
+      }
+    },
+    [associationId]
+  );
 
   return (
     <div style={{ maxWidth: 680, display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {apiError && (
+        <div
+          style={{
+            padding: '10px 14px',
+            background: 'rgba(239,68,68,0.1)',
+            border: '1px solid #ef4444',
+            borderRadius: 8,
+            fontSize: 13,
+            color: '#ef4444',
+          }}
+        >
+          {apiError}
+        </div>
+      )}
       {/* Header with add button */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <FormLabel style={{ marginBottom: 4 }}>Konfiguratutako hornitzaileak</FormLabel>
           <div style={{ fontSize: 13, color: 'var(--adm-text-sec)' }}>
-            {providers.length} hornitzaile · {providers.filter((p) => p.enabled).length} gaituta
+            {loading
+              ? 'Kargatzen...'
+              : `${providers.length} hornitzaile · ${providers.filter((p) => p.enabled).length} gaituta`}
           </div>
         </div>
         <button
@@ -916,6 +1128,7 @@ function PaymentProvidersTab() {
             onToggle={() => handleToggleProvider(provider.id)}
             onEdit={() => setEditingProvider(provider)}
             onDelete={() => handleDeleteProvider(provider.id)}
+            onTest={() => handleTestProvider(provider.id)}
           />
         ))}
 
@@ -1222,7 +1435,7 @@ function VatTab() {
     <div style={{ maxWidth: 520, display: 'flex', flexDirection: 'column', gap: 20 }}>
       <ToggleRow
         label="TicketBAI gaitu"
-        hint="Produktuak IVA mota dute obligatorioa"
+        hint="Produktuak BEZ mota dute obligatorioa"
         checked={ticketBaiEnabled}
         onChange={handleToggleTicketBai}
       />
@@ -1260,7 +1473,7 @@ function VatTab() {
             }}
           >
             <Plus size={18} />
-            Gehitu IVA mota
+            Gehitu BEZ mota
           </button>
         </>
       )}
@@ -1268,7 +1481,7 @@ function VatTab() {
       <ProviderDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editingVat ? 'IVA mota editatu' : 'IVA mota gehitu'}
+        title={editingVat ? 'BEZ mota editatu' : 'BEZ mota gehitu'}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
@@ -1277,7 +1490,7 @@ function VatTab() {
               type="text"
               value={formLabel}
               onChange={(e) => setFormLabel(e.target.value)}
-              placeholder="e.g. IVA Reducido"
+              placeholder="e.g. BEZ Murriztua"
               style={{
                 width: '100%',
                 padding: '10px 12px',

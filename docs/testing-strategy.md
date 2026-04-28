@@ -302,6 +302,33 @@ Feature: Counter order creation
     And one ticket has counterType "DRINKS"
 
   @integration-only
+  Scenario: Food lines split into kitchen post tickets when posts are configured
+    Given the txosna "aste-nagusia" has kitchen posts "griddle" and "fryer"
+    And product "prod-burger" has kitchenPost "griddle"
+    And variant option "opt-fries" has kitchenPost "fryer"
+    And variant option "opt-salad" has kitchenPost null
+    When I submit a COUNTER order for "prod-burger" with variant "opt-fries"
+    Then the order has 2 FOOD tickets
+    And one ticket has kitchenPost "griddle"
+    And one ticket has kitchenPost "fryer"
+
+  @integration-only
+  Scenario: Variant with null kitchenPost does not add an extra ticket
+    Given the txosna "aste-nagusia" has kitchen posts "griddle" and "fryer"
+    And product "prod-burger" has kitchenPost "griddle"
+    And variant option "opt-salad" has kitchenPost null
+    When I submit a COUNTER order for "prod-burger" with variant "opt-salad"
+    Then the order has 1 FOOD ticket
+    And that ticket has kitchenPost "griddle"
+
+  @integration-only
+  Scenario: Food order without post tags produces a single general ticket
+    Given the txosna "aste-nagusia" has no kitchen posts configured
+    When I submit a COUNTER order with two food products
+    Then the order has 1 FOOD ticket
+    And that ticket has kitchenPost null
+
+  @integration-only
   Scenario: Order numbers are sequential and unique per txosna
     When I submit 2 COUNTER orders for "aste-nagusia"
     Then the second order has an order number greater than the first
@@ -345,6 +372,22 @@ Feature: KDS ticket lifecycle
     Given there are FOOD tickets in "RECEIVED" and DRINKS tickets in "IN_PREPARATION"
     When I request tickets for "aste-nagusia" with counterType "FOOD" and status "RECEIVED"
     Then only FOOD tickets in RECEIVED status are returned
+
+  @integration-only
+  Scenario: KDS filters by kitchen post
+    Given the txosna "aste-nagusia" has kitchen posts "griddle" and "assembly"
+    And a confirmed order exists with a "griddle" post ticket and an "assembly" post ticket
+    When I request tickets for "aste-nagusia" with counterType "FOOD" and kitchenPost "griddle"
+    Then only the griddle post ticket is returned
+
+  @integration-only
+  Scenario: order:ready fires only when all post-tickets are READY
+    Given the txosna "aste-nagusia" has kitchen posts "griddle" and "assembly"
+    And a confirmed order exists with a "griddle" post ticket and an "assembly" post ticket both in "RECEIVED"
+    When I advance the "griddle" post ticket to "READY"
+    Then no "order:ready" SSE event is broadcast
+    When I advance the "assembly" post ticket to "READY"
+    Then a "order:ready" SSE event is broadcast to "aste-nagusia"
 ```
 
 ---

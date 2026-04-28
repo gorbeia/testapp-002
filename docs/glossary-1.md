@@ -20,17 +20,17 @@ _Session 17 — April 2026_
 
 ## Access & Accounts
 
-| Term              | English           | Definition                                                                                           |
-| ----------------- | ----------------- | ---------------------------------------------------------------------------------------------------- |
-| Association admin | Association admin | A volunteer with full access to configuration and management; can also perform all operational tasks |
-| Volunteer         | Volunteer         | A person with an account; access to all txosnak and operational screens                              |
-| Role              | Role              | Level of access: Admin or Volunteer                                                                  |
-| Device login      | Device login      | Step 1 — authenticates with personal email and password                                              |
-| Session PIN       | Session PIN       | Step 2 — selects food counter, drinks counter, or kitchen mode for the session                       |
-| Self-registration | Self-registration | Association signs up and creates first admin account without assistance                              |
-| Volunteer account | Volunteer account | Personal account created by admin with own email and password                                        |
-| Password reset    | Password reset    | Email-based flow allowing a volunteer to set a new password via a short-lived link                   |
-| Onboarding guide  | Onboarding guide  | Checklist-style setup walkthrough shown to new admins after registration; skippable and resumable    |
+| Term              | English           | Definition                                                                                                                     |
+| ----------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Association admin | Association admin | A volunteer with full access to configuration and management; can also perform all operational tasks                           |
+| Volunteer         | Volunteer         | A person with an account; access to all txosnak and operational screens                                                        |
+| Role              | Role              | Level of access: Admin or Volunteer                                                                                            |
+| Device login      | Device login      | Step 1 — authenticates with personal email and password                                                                        |
+| Session PIN       | Session PIN       | Step 2 — selects food counter, drinks counter, kitchen (with optional post selection), or kitchen manager mode for the session |
+| Self-registration | Self-registration | Association signs up and creates first admin account without assistance                                                        |
+| Volunteer account | Volunteer account | Personal account created by admin with own email and password                                                                  |
+| Password reset    | Password reset    | Email-based flow allowing a volunteer to set a new password via a short-lived link                                             |
+| Onboarding guide  | Onboarding guide  | Checklist-style setup walkthrough shown to new admins after registration; skippable and resumable                              |
 
 ---
 
@@ -95,15 +95,19 @@ _Session 17 — April 2026_
 
 ## Counters
 
-| Term                 | English              | Definition                                                                                 |
-| -------------------- | -------------------- | ------------------------------------------------------------------------------------------ |
-| Counter type         | Counter type         | FOOD or DRINKS — the type of serving point                                                 |
-| Food counter         | Food counter         | Serving point for all food items; always uses full preparation lifecycle                   |
-| Drinks counter       | Drinks counter       | Serving point for all drink items; full lifecycle if any item requires preparation         |
-| Separate counters    | Separate counters    | Food and drinks at independent serving points; customers pick up separately                |
-| Single counter       | Single counter       | Food and drinks at the same serving point                                                  |
-| Counter mode         | Counter mode         | Default view after PIN entry — a view filter, not an access restriction                    |
-| Cross-counter access | Cross-counter access | Ability to view and act on the other counter's tickets; always available but not prominent |
+| Term                        | English                     | Definition                                                                                                                                                                      |
+| --------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Counter type                | Counter type                | FOOD or DRINKS — the type of serving point                                                                                                                                      |
+| Food counter                | Food counter                | Serving point for all food items; always uses full preparation lifecycle                                                                                                        |
+| Drinks counter              | Drinks counter              | Serving point for all drink items; full lifecycle if any item requires preparation                                                                                              |
+| Separate counters           | Separate counters           | Food and drinks at independent serving points; customers pick up separately                                                                                                     |
+| Single counter              | Single counter              | Food and drinks at the same serving point                                                                                                                                       |
+| Counter mode                | Counter mode                | Default view after PIN entry — a view filter, not an access restriction                                                                                                         |
+| Cross-counter access        | Cross-counter access        | Ability to view and act on the other counter's tickets; always available but not prominent                                                                                      |
+| Kitchen post                | Kitchen post                | A named preparation workstation within the food kitchen (e.g. griddle, fryer); optional per txosna; assignable on products, variant options, and modifiers                      |
+| Kitchen Manager mode        | Kitchen Manager mode        | Session PIN mode giving a coordinator view across all kitchen posts; selectable by any volunteer                                                                                |
+| Kitchen routing preview     | Kitchen routing preview     | Live card in the product editor showing which posts are triggered per variant combination; computed from kitchen_post fields on the product, its variant options, and modifiers |
+| Pipeline progress indicator | Pipeline progress indicator | Visual bar on each kitchen manager order card showing how many posts have reached READY; completes when all posts are done                                                      |
 
 ---
 
@@ -168,21 +172,22 @@ _Session 17 — April 2026_
 
 ## Kitchen & Fulfillment
 
-| Term                         | English                      | Definition                                                                        |
-| ---------------------------- | ---------------------------- | --------------------------------------------------------------------------------- |
-| Sukaldea                     | Kitchen                      | The area where food is prepared                                                   |
-| Kitchen Display System (KDS) | Kitchen Display System (KDS) | Browser-based screen showing order tickets; runs on any device                    |
-| Kitchen ticket               | Kitchen ticket               | Optional printed slip per ticket for associations with a printer                  |
-| Prestatu                     | Prepare / fulfill            | The act of making the food or drink ready                                         |
-| Jasotzen                     | Pick up                      | When the customer collects their ready ticket                                     |
-| Flagged order                | Flagged order                | Paid order with a sold out product; requires manual resolution                    |
-| Kitchen pause                | Kitchen pause                | Temporarily stops accepting new orders                                            |
-| Counter pause                | Counter pause                | Temporarily stops accepting new orders                                            |
-| Slow order                   | Slow order                   | Ticket in preparation significantly longer than the session average               |
-| Average preparation time     | Average preparation time     | Rolling average IN_PREPARATION time from completed tickets in the current session |
-| Order changed alert          | Order changed alert          | Visual alert when a volunteer edits an IN_PREPARATION ticket                      |
-| End of service               | End of service               | Txosna closes; all open orders and tickets cancelled                              |
-| Connectivity indicator       | Connectivity indicator       | Visible signal showing device connection status                                   |
+| Term                         | English                      | Definition                                                                                                          |
+| ---------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Sukaldea                     | Kitchen                      | The area where food is prepared                                                                                     |
+| Kitchen Display System (KDS) | Kitchen Display System (KDS) | Browser-based screen showing order tickets; runs on any device; filtered to a single post when posts are configured |
+| Kitchen ticket               | Kitchen ticket               | Optional printed slip per ticket for associations with a printer                                                    |
+| Coordinator view             | Coordinator view             | The Kitchen Manager screen layout: one card per order, showing status of each post-ticket side by side              |
+| Prestatu                     | Prepare / fulfill            | The act of making the food or drink ready                                                                           |
+| Jasotzen                     | Pick up                      | When the customer collects their ready ticket                                                                       |
+| Flagged order                | Flagged order                | Paid order with a sold out product; requires manual resolution                                                      |
+| Kitchen pause                | Kitchen pause                | Temporarily stops accepting new orders                                                                              |
+| Counter pause                | Counter pause                | Temporarily stops accepting new orders                                                                              |
+| Slow order                   | Slow order                   | Ticket in preparation significantly longer than the session average                                                 |
+| Average preparation time     | Average preparation time     | Rolling average IN_PREPARATION time from completed tickets in the current session                                   |
+| Order changed alert          | Order changed alert          | Visual alert when a volunteer edits an IN_PREPARATION ticket                                                        |
+| End of service               | End of service               | Txosna closes; all open orders and tickets cancelled                                                                |
+| Connectivity indicator       | Connectivity indicator       | Visible signal showing device connection status                                                                     |
 
 ---
 

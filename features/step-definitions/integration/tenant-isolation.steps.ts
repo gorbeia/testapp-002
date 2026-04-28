@@ -1,4 +1,5 @@
 import { Given, When, Then } from '@cucumber/cucumber';
+import type { IntegrationWorld } from './world';
 
 // Store for test data
 const associations: Map<string, any> = new Map();
@@ -62,7 +63,12 @@ Given('Association {word} has orders with tickets:', function (assocName: string
 Given('Association {word} has orders:', function (assocName: string, dataTable) {
   const rows = dataTable.hashes();
   rows.forEach((row: any) => {
-    orders.set(row.orderId, { id: row.orderId, txosnaId: row.txosnaId, status: row.status });
+    orders.set(row.orderId, {
+      id: row.orderId,
+      txosnaId: row.txosnaId,
+      status: row.status,
+      verificationCode: row.verificationCode,
+    });
   });
 });
 
@@ -109,54 +115,81 @@ When(
   }
 );
 
-When('{word} requests GET {word}', function (name: string, path: string) {
+When('{word} requests GET {word}', function (this: IntegrationWorld, name: string, path: string) {
   if (!currentVolunteer) throw new Error('No volunteer logged in');
-  // Simulate a GET request with tenant isolation check
-  simulateRequest('GET', path, null);
+  simulateRequest(this, 'GET', path, null);
 });
 
 When(
   '{word} requests PATCH {word} with status {word}',
-  function (name: string, path: string, status: string) {
+  function (this: IntegrationWorld, name: string, path: string, status: string) {
     if (!currentVolunteer) throw new Error('No volunteer logged in');
-    simulateRequest('PATCH', path, { status });
+    simulateRequest(this, 'PATCH', path, { status });
   }
 );
 
-When('{word} requests POST {word}', function (name: string, path: string) {
+When('{word} requests POST {word}', function (this: IntegrationWorld, name: string, path: string) {
   if (!currentVolunteer) throw new Error('No volunteer logged in');
-  simulateRequest('POST', path, {});
-});
-
-When('{word} requests POST {word} with:', function (name: string, path: string, dataTable) {
-  if (!currentVolunteer) throw new Error('No volunteer logged in');
-  const data = dataTable.rowsHash();
-  simulateRequest('POST', path, data);
+  simulateRequest(this, 'POST', path, {});
 });
 
 When(
-  '{word} requests PATCH {word} with percentage {int}',
-  function (name: string, path: string, percentage: number) {
+  '{word} requests POST {word} with:',
+  function (this: IntegrationWorld, name: string, path: string, dataTable) {
     if (!currentVolunteer) throw new Error('No volunteer logged in');
-    simulateRequest('PATCH', path, { percentage });
+    const data = dataTable.rowsHash();
+    simulateRequest(this, 'POST', path, data);
   }
 );
 
-When('{word} requests DELETE {word}', function (name: string, path: string) {
-  if (!currentVolunteer) throw new Error('No volunteer logged in');
-  simulateRequest('DELETE', path, null);
-});
+When(
+  '{word} requests PATCH {word} with percentage {int}',
+  function (this: IntegrationWorld, name: string, path: string, percentage: number) {
+    if (!currentVolunteer) throw new Error('No volunteer logged in');
+    simulateRequest(this, 'PATCH', path, { percentage });
+  }
+);
 
-When('an unauthenticated customer requests GET {word}', function (path: string) {
-  currentVolunteer = null; // Clear auth
-  simulateRequest('GET', path, null);
-});
+When(
+  '{word} requests DELETE {word}',
+  function (this: IntegrationWorld, name: string, path: string) {
+    if (!currentVolunteer) throw new Error('No volunteer logged in');
+    simulateRequest(this, 'DELETE', path, null);
+  }
+);
+
+When(
+  '{word} requests POST {word} with reason {word}',
+  function (this: IntegrationWorld, name: string, path: string, reason: string) {
+    if (!currentVolunteer) throw new Error('No volunteer logged in');
+    simulateRequest(this, 'POST', path, { reason });
+  }
+);
+
+When(
+  'an unauthenticated customer requests GET {word}',
+  function (this: IntegrationWorld, path: string) {
+    currentVolunteer = null;
+    simulateRequest(this, 'GET', path, null);
+  }
+);
 
 Then('the response status is {int} {word}', function (status: number, _statusName: string) {
   if (!lastResponse || lastResponse.status !== status) {
     throw new Error(`Expected status ${status}, got ${lastResponse?.status || 'no response'}`);
   }
 });
+
+Then(
+  'the response status is {int} Forbidden or {int} Not Found',
+  function (status1: number, status2: number) {
+    if (!lastResponse || (lastResponse.status !== status1 && lastResponse.status !== status2)) {
+      throw new Error(
+        `Expected status ${status1} or ${status2}, got ${lastResponse?.status || 'no response'}`
+      );
+    }
+  }
+);
 
 Then('the response includes {word}', function (entityId: string) {
   // Simple check: the entity ID appears in response
@@ -167,10 +200,10 @@ Then('the response includes {word}', function (entityId: string) {
   if (!found) throw new Error(`Entity ${entityId} not found in response`);
 });
 
-Then('{word} status remains {word}', function (orderId: string, status: string) {
-  const order = orders.get(orderId);
-  if (!order || order.status !== status) {
-    throw new Error(`Order ${orderId} status is not ${status}`);
+Then('{word} status remains {word}', function (entityId: string, status: string) {
+  const entity = orders.get(entityId) ?? tickets.get(entityId);
+  if (!entity || entity.status !== status) {
+    throw new Error(`Entity ${entityId} status is not ${status}`);
   }
 });
 
@@ -200,27 +233,28 @@ Then('the response includes {word} details', function (orderId: string) {
 });
 
 // Helper function to simulate request
-function simulateRequest(method: string, path: string, body: any) {
-  // Extract resource and ID from path
+function simulateRequest(world: IntegrationWorld, method: string, path: string, body: any) {
+  // Split path and strip query strings from each segment
   const parts = path.split('/').filter(Boolean);
+  const cleanParts = parts.map((p) => p.split('?')[0]);
 
   // Check tenant isolation
   let resourceAssocId: string | null = null;
 
   if (path.includes('/txosnak/')) {
-    const slug = parts[parts.indexOf('txosnak') + 1];
+    const slug = cleanParts[cleanParts.indexOf('txosnak') + 1];
     const txosna = Array.from(txosnak.values()).find((t: any) => t.slug === slug);
     resourceAssocId = txosna?.associationId || null;
   } else if (path.includes('/tickets/')) {
-    const ticketId = parts[parts.indexOf('tickets') + 1];
+    const ticketId = cleanParts[cleanParts.indexOf('tickets') + 1];
     const ticket = tickets.get(ticketId);
     resourceAssocId = ticket?.associationId || txosnak.get(ticket?.txosnaId)?.associationId || null;
   } else if (path.includes('/orders/')) {
-    const orderId = parts[parts.indexOf('orders') + 1];
+    const orderId = cleanParts[cleanParts.indexOf('orders') + 1];
     const order = orders.get(orderId);
     resourceAssocId = txosnak.get(order?.txosnaId)?.associationId || null;
   } else if (path.includes('/vat-types/')) {
-    const vatTypeId = parts[parts.indexOf('vat-types') + 1];
+    const vatTypeId = cleanParts[cleanParts.indexOf('vat-types') + 1];
     const vat = vatTypes.get(vatTypeId);
     resourceAssocId = vat?.associationId || null;
   }
@@ -228,6 +262,7 @@ function simulateRequest(method: string, path: string, body: any) {
   // Simulate tenant isolation check
   if (currentVolunteer && resourceAssocId && resourceAssocId !== currentVolunteer.associationId) {
     lastResponse = { status: 403 };
+    world.lastResponse = new Response(null, { status: 403 });
   } else if (
     !currentVolunteer &&
     [
@@ -239,12 +274,38 @@ function simulateRequest(method: string, path: string, body: any) {
     ].some((p) => path.includes(p))
   ) {
     lastResponse = { status: 401 };
+    world.lastResponse = new Response(null, { status: 401 });
+  } else if (!currentVolunteer && path.includes('/api/orders/') && method === 'GET') {
+    // Unauthenticated order access: verify the verification code
+    const orderPart = parts[parts.indexOf('orders') + 1] || '';
+    const [orderId, qs] = orderPart.split('?');
+    const verificationCode = new URLSearchParams(qs || '').get('verificationCode');
+    const order = orders.get(orderId);
+    if (!order || order.verificationCode !== verificationCode) {
+      lastResponse = { status: 403 };
+      world.lastResponse = new Response(null, { status: 403 });
+      return;
+    }
+    const data = order;
+    lastResponse = { status: 200, data };
+    world.lastResponse = new Response(JSON.stringify(data), { status: 200 });
   } else {
     // Success case
-    lastResponse = { status: 200, data: { id: parts[parts.length - 1] } };
+    let data: any;
+    if (path.includes('/txosnak/') && cleanParts[cleanParts.length - 1] === 'tickets') {
+      const slug = cleanParts[cleanParts.indexOf('txosnak') + 1];
+      const txosna = Array.from(txosnak.values()).find((t: any) => t.slug === slug);
+      data = txosna
+        ? Array.from(tickets.values()).filter((t: any) => t.txosnaId === txosna.id)
+        : [];
+    } else {
+      data = { id: cleanParts[cleanParts.length - 1] };
+    }
+    lastResponse = { status: 200, data };
+    world.lastResponse = new Response(JSON.stringify(data), { status: 200 });
     // Update state based on request
     if (method === 'PATCH' && body?.status) {
-      const ticketId = parts[parts.length - 1];
+      const ticketId = cleanParts[cleanParts.length - 1];
       if (tickets.has(ticketId)) {
         tickets.get(ticketId)!.status = body.status;
       }

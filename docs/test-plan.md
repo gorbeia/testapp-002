@@ -80,6 +80,10 @@ The boolean predicate `available AND NOT sold_out AND txosna.status = OPEN AND N
 - DRINKS category type → drinks ticket
 - SINGLE counter → one ticket with all lines
 - SEPARATE counters → two tickets, lines split by category type
+- Txosna with kitchen posts: posts collected per order line from `product.kitchenPost` + selected `variantOption.kitchenPost` + selected `modifier.kitchenPost`; one ticket per distinct post across the order; lines with empty post set → general food ticket (`kitchenPost = null`)
+- "Burger + fries" (fries variant has `kitchenPost = "fryer"`, product has `kitchenPost = "griddle"`) → two FOOD tickets: one griddle, one fryer; both contain the full order line
+- "Burger + salad" (salad variant has `kitchenPost = null`) → one FOOD ticket: griddle only
+- Txosna without kitchen posts: single FOOD ticket with `kitchenPost = null` (unchanged behaviour)
 
 ### Multitenancy Filtering
 
@@ -129,6 +133,7 @@ Integration tests verify that components work correctly together, with a real da
 
 - Confirming a PENDING_PAYMENT order transitions it to CONFIRMED
 - Tickets created with correct counter_type routing
+- When kitchen posts configured: food lines routed to correct post-tickets; `kitchenPost` set correctly on each ticket
 - Confirming a PENDING_PAYMENT order that has a sold-out product: order flagged, not confirmed
 - Confirming an already-confirmed order is idempotent (no duplicate tickets)
 - Confirming an expired order is rejected
@@ -140,6 +145,8 @@ Integration tests verify that components work correctly together, with a real da
 - `completed_at` set when transitioning to COMPLETED
 - Invalid transition returns 4xx
 - Transitioning food ticket does not affect drinks ticket state (and vice versa)
+- Transitioning one kitchen post-ticket does not affect other post-tickets for the same order
+- `order:ready` fires only when all post-tickets (and drinks ticket if present) are READY; advancing one post to READY while another is still IN_PREPARATION does not trigger it
 
 ### Sold Out Propagation
 
@@ -262,7 +269,9 @@ E2E tests run a real browser against a running instance. Use Playwright. Test th
 
 ### Volunteer — Kitchen (KDS)
 
-1. PIN entry selects kitchen mode
+**Single kitchen (no posts configured):**
+
+1. PIN entry selects kitchen mode — no post selection shown
 2. Tickets appear in RECEIVED column on order confirmation
 3. "→ Start" button transitions to IN_PREPARATION
 4. "→ Ready" transitions to READY; customer notified
@@ -271,6 +280,24 @@ E2E tests run a real browser against a running instance. Use Playwright. Test th
 7. Preparation instructions: book icon opens full-screen overlay; dismisses on tap
 8. Sold out management: one tap marks product sold out; propagates to order screen immediately
 9. Closing the txosna: confirmation required; all open tickets cancelled
+
+**Kitchen with posts configured:**
+
+1. PIN entry selects kitchen mode; a post selector is shown (e.g. Griddle / Assembly)
+2. Header shows the selected post name prominently
+3. Only tickets for that post appear on the board
+4. Ticket cards show only lines belonging to this post
+5. Advancing a post-ticket to READY does not trigger order-ready notification if other post-tickets are still in preparation
+6. All post-tickets READY → customer notified
+
+**Kitchen Manager mode:**
+
+1. PIN entry selects kitchen manager mode
+2. Coordinator view shows one card per active order with a status row per post-ticket
+3. Orders where all posts are READY are highlighted and sorted to the top
+4. Stock panel accessible from the header
+5. Slow orders and flagged orders surface prominently
+6. Pause and close controls available
 
 **Layout:**
 

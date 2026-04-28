@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { CustomerHeader } from '@/components/layout/customer-header';
@@ -13,6 +13,7 @@ interface OrderWithTickets {
   customerName: string | null;
   total: number;
   channel: string;
+  paymentMethod: string | null;
   notes: string | null;
   createdAt: string;
   expiresAt?: string | null;
@@ -187,7 +188,34 @@ export default function OrderStatusPage() {
   }
 
   const isPending = order.status === 'PENDING_PAYMENT';
+  const isOnlinePending = isPending && order.paymentMethod === 'ONLINE';
   const isCancelled = order.status === 'CANCELLED';
+
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+
+  const handleCompletePayment = useCallback(async () => {
+    setPaying(true);
+    setPayError(null);
+    try {
+      const locale = Array.isArray(params.locale) ? params.locale[0] : (params.locale ?? '');
+      const returnUrl = `${window.location.origin}/${locale}/order/${orderId}`;
+      const res = await fetch('/api/payments/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, returnUrl }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? `Errorea (${res.status})`);
+      }
+      const session = await res.json();
+      window.location.href = session.url;
+    } catch (err) {
+      setPayError(err instanceof Error ? err.message : 'Errorea gertatu da');
+      setPaying(false);
+    }
+  }, [orderId, params.locale]);
 
   // Derive current step from ticket statuses
   const ticketStatuses = order.tickets?.map((t) => t.status) ?? [];
@@ -263,7 +291,7 @@ export default function OrderStatusPage() {
         </div>
 
         {/* Status info */}
-        {isPending && (
+        {isPending && !isOnlinePending && (
           <div
             style={{
               background: 'var(--cust-surface, #fff)',
@@ -285,6 +313,55 @@ export default function OrderStatusPage() {
               )}
               zain egongo da.
             </div>
+          </div>
+        )}
+
+        {isOnlinePending && (
+          <div
+            style={{
+              background: 'var(--cust-surface, #fff)',
+              borderRadius: 14,
+              border: '1px solid var(--cust-border, #e5e7eb)',
+              padding: '16px',
+              marginBottom: 20,
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: 13, color: 'var(--cust-text-sec, #6b7280)', marginBottom: 12 }}>
+              Ordainketa osatu gabe dago. Jarraitu ordainketak egiteko.
+            </div>
+            {payError && (
+              <div
+                style={{
+                  fontSize: 12,
+                  color: '#ef4444',
+                  marginBottom: 10,
+                  background: 'rgba(239,68,68,0.08)',
+                  borderRadius: 8,
+                  padding: '8px 12px',
+                }}
+              >
+                {payError}
+              </div>
+            )}
+            <button
+              onClick={handleCompletePayment}
+              disabled={paying}
+              style={{
+                background: 'var(--cust-primary, #e85d2f)',
+                border: 'none',
+                borderRadius: 10,
+                padding: '12px 24px',
+                color: '#fff',
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: paying ? 'not-allowed' : 'pointer',
+                opacity: paying ? 0.7 : 1,
+                width: '100%',
+              }}
+            >
+              {paying ? 'Kargatzen...' : '💳 Ordainketa osatu'}
+            </button>
           </div>
         )}
 

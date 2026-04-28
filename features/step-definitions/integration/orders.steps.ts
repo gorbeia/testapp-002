@@ -1,6 +1,6 @@
 import assert from 'assert';
 import { Given, When, Then } from '@cucumber/cucumber';
-import { POST as ordersPOST } from '../../../src/app/api/txosnak/[slug]/orders/route';
+import { POST as ordersPOST } from '../../../src/app/api/handlers/txosna-orders';
 import { ticketRepo, _test_insertProduct, _test_insertTxosna } from '../../../src/test/store-setup';
 import type { StoredOrder } from '../../../src/lib/store/types';
 import type { IntegrationWorld } from './world';
@@ -163,33 +163,48 @@ When(
 When(
   'I submit a COUNTER order with one food product and one drinks product',
   async function (this: IntegrationWorld): Promise<void> {
-    // Skip this scenario for now due to category setup limitations
-    // The integration test environment doesn't easily support creating new categories
-    // This scenario validates that the route handler splits tickets by category type,
-    // which is covered by the route handler unit tests
-    this.currentOrder = {
-      id: 'test-order-split',
-      orderNumber: 1,
-      txosnaId: this.currentTxosna?.id || 'test',
-      status: 'CONFIRMED',
+    assert.ok(this.currentTxosna, 'currentTxosna must be set');
+
+    // prod-1 is FOOD (cat-1), prod-5 is DRINKS (cat-2) — both seeded in assoc-1
+    const body = {
       channel: 'COUNTER',
-      paymentMethod: 'CASH',
       customerName: null,
       notes: null,
-      total: 16,
-      verificationCode: 'TEST-1',
-      registeredById: null,
-      cancellationReason: null,
-      paymentSessionId: null,
-      confirmedAt: null,
-      expiresAt: null,
-      pendingLines: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      paymentMethod: 'CASH',
+      lines: [
+        {
+          productId: 'prod-1',
+          quantity: 1,
+          selectedVariantOptionId: null,
+          selectedModifierIds: [],
+          splitInstructions: null,
+        },
+        {
+          productId: 'prod-5',
+          quantity: 1,
+          selectedVariantOptionId: null,
+          selectedModifierIds: [],
+          splitInstructions: null,
+        },
+      ],
     };
-    this.lastResponse = new Response(JSON.stringify(this.currentOrder), { status: 201 });
-    this.lastBody = this.currentOrder;
-    this.savedOrders.push(this.currentOrder!);
+
+    const req = new Request(`http://localhost/api/txosnak/${this.currentTxosna.slug}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    this.lastResponse = await ordersPOST(req, params(this.currentTxosna.slug));
+    this.lastBody = await this.lastResponse
+      .clone()
+      .json()
+      .catch(() => null);
+
+    if (this.lastResponse.status === 201) {
+      this.currentOrder = this.lastBody as StoredOrder;
+      this.savedOrders.push(this.currentOrder);
+    }
   }
 );
 

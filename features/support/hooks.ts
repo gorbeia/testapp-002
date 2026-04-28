@@ -20,6 +20,7 @@ Before({ tags: 'not @e2e-only' }, async function (this: IntegrationWorld) {
   this.currentTicket = null;
   this.savedOrders = [];
   this.namedOrders = new Map();
+  this.namedTickets = new Map();
   global.broadcastCalls = [];
   global.__TEST_ROLE__ = 'ADMIN';
   global.__TEST_ASSOCIATION_ID__ = 'assoc-1';

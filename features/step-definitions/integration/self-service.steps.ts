@@ -1,8 +1,8 @@
 import assert from 'assert';
 import { Given, When, Then } from '@cucumber/cucumber';
-import { POST as ordersPOST } from '../../../src/app/api/txosnak/[slug]/orders/route';
-import { POST as confirmPOST } from '../../../src/app/api/orders/[orderId]/confirm/route';
-import { POST as cancelPOST } from '../../../src/app/api/orders/[orderId]/cancel/route';
+import { POST as ordersPOST } from '../../../src/app/api/handlers/txosna-orders';
+import { POST as confirmPOST } from '../../../src/app/api/handlers/order-confirm';
+import { POST as cancelPOST } from '../../../src/app/api/handlers/order-cancel';
 import { orderRepo, ticketRepo } from '../../../src/test/store-setup';
 import type { StoredOrder } from '../../../src/lib/store/types';
 import type { IntegrationWorld } from './world';

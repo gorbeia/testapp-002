@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
       valid: true,
       txosnaId: txosna.id,
       counterSetup: txosna.counterSetup,
+      kitchenPosts: txosna.kitchenPosts,
     });
   } catch {
     return NextResponse.json({ valid: false }, { status: 200 });

@@ -36,6 +36,7 @@ export const DEMO_TXOSNAK: MockTxosna[] = [
     name: 'Demo Janaria',
     status: 'OPEN',
     counterSetup: 'SEPARATE',
+    kitchenPosts: ['plantxa', 'muntaia'],
     waitMinutes: 12,
     pin: '0000',
     eventName: 'Demo Gertaera',
@@ -82,12 +83,13 @@ export const DEMO_PRODUCTS: MockProduct[] = [
     requiresPreparation: true,
     available: true,
     soldOut: false,
+    kitchenPost: 'plantxa',
     variantGroups: [
       {
         id: 'demo-vg-1',
         name: 'Albokoa',
         options: [
-          { id: 'demo-vo-1', name: 'Patata frijituak', priceDelta: 0 },
+          { id: 'demo-vo-1', name: 'Patata frijituak', priceDelta: 0, kitchenPost: 'muntaia' },
           { id: 'demo-vo-2', name: 'Entsalada', priceDelta: 0 },
         ],
       },
@@ -135,6 +137,7 @@ export const DEMO_PRODUCTS: MockProduct[] = [
     requiresPreparation: true,
     available: true,
     soldOut: false,
+    kitchenPost: 'muntaia',
     variantGroups: [],
     modifiers: [],
     removableIngredients: [],

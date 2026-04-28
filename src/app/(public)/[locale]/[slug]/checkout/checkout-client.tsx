@@ -10,7 +10,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import type { StoredTxosna } from '@/lib/store/types';
 
 interface CheckoutClientProps {
-  txosna: Pick<StoredTxosna, 'name' | 'status' | 'waitMinutes'>;
+  txosna: Pick<StoredTxosna, 'name' | 'status' | 'waitMinutes' | 'enabledPaymentMethods'>;
 }
 
 export function CheckoutClient({ txosna }: CheckoutClientProps) {
@@ -22,6 +22,11 @@ export function CheckoutClient({ txosna }: CheckoutClientProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+  const hasCash = txosna.enabledPaymentMethods.includes('CASH');
+  const hasOnline = txosna.enabledPaymentMethods.includes('ONLINE');
+  const defaultMethod = hasCash ? 'CASH' : 'ONLINE';
+  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'ONLINE'>(defaultMethod);
 
   const canSubmit = name.trim().length > 0 && !submitting;
 
@@ -43,7 +48,7 @@ export function CheckoutClient({ txosna }: CheckoutClientProps) {
           channel: 'SELF_SERVICE',
           customerName: name.trim(),
           notes: notes.trim() || null,
-          paymentMethod: 'CASH',
+          paymentMethod,
           lines: items.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
@@ -61,9 +66,27 @@ export function CheckoutClient({ txosna }: CheckoutClientProps) {
 
       const order = await response.json();
 
-      // Store orderId and slug for order status page
       localStorage.setItem('txosna_order_id', order.id);
       localStorage.setItem('txosna_slug', slug);
+
+      if (paymentMethod === 'ONLINE') {
+        const returnUrl = `${window.location.origin}/${locale}/order/${order.id}`;
+        const sessionRes = await fetch('/api/payments/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: order.id, returnUrl }),
+        });
+
+        if (!sessionRes.ok) {
+          const sessionErr = await sessionRes.json().catch(() => ({}));
+          throw new Error(sessionErr.error ?? `Payment session failed (${sessionRes.status})`);
+        }
+
+        const session = await sessionRes.json();
+        clear();
+        window.location.href = session.url;
+        return;
+      }
 
       clear();
       router.push(`/${locale}/order/${order.id}`);
@@ -384,6 +407,67 @@ export function CheckoutClient({ txosna }: CheckoutClientProps) {
               }}
             />
           </div>
+
+          {/* Payment method selector — only shown when both methods are available */}
+          {hasCash && hasOnline && (
+            <div>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: 'var(--cust-text-sec, #6b7280)',
+                  marginBottom: 8,
+                }}
+              >
+                Ordainketa modua
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {(
+                  [
+                    { value: 'CASH', label: 'Dirutan', icon: '💵' },
+                    { value: 'ONLINE', label: 'Online — Txartela', icon: '💳' },
+                  ] as const
+                ).map(({ value, label, icon }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setPaymentMethod(value)}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: 10,
+                      border: `2px solid ${paymentMethod === value ? 'var(--cust-primary, #e85d2f)' : 'var(--cust-border, #e5e7eb)'}`,
+                      background:
+                        paymentMethod === value
+                          ? 'rgba(232,93,47,0.06)'
+                          : 'var(--cust-surface, #fff)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 6,
+                      transition: 'border-color 0.15s, background 0.15s',
+                    }}
+                  >
+                    <span style={{ fontSize: 22 }}>{icon}</span>
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color:
+                          paymentMethod === value
+                            ? 'var(--cust-primary, #e85d2f)'
+                            : 'var(--cust-text-pri, #111)',
+                      }}
+                    >
+                      {label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={submitting || !canSubmit}
@@ -400,7 +484,13 @@ export function CheckoutClient({ txosna }: CheckoutClientProps) {
               minHeight: 52,
             }}
           >
-            {submitting ? 'Bidaltzen...' : `Eskatu — ${total.toFixed(2)} €`}
+            {submitting
+              ? paymentMethod === 'ONLINE'
+                ? 'Ordainketara bidaltzen...'
+                : 'Bidaltzen...'
+              : paymentMethod === 'ONLINE'
+                ? `Ordaindu online — ${total.toFixed(2)} €`
+                : `Eskatu — ${total.toFixed(2)} €`}
           </button>
           <Link
             href={`/eu/${params.slug}`}

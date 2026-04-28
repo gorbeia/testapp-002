@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { Given, When, Then } from '@cucumber/cucumber';
-import { GET as txosnaGET } from '@/app/api/txosnak/[slug]/route';
-import { GET as catalogGET } from '@/app/api/txosnak/[slug]/catalog/route';
+import { GET as txosnaGET } from '../../../src/app/api/handlers/txosna';
+import { GET as catalogGET } from '../../../src/app/api/handlers/catalog';
 import {
   _test_insertTxosna,
   _test_insertProduct,
@@ -28,6 +28,7 @@ Given(
       enabledPaymentMethods: ['CASH'] as const,
       pendingPaymentTimeout: 15,
       printingEnabled: false,
+      kitchenPosts: [] as string[],
       // Links to the seeded mock association so catalog queries find products
       associationId: 'assoc-1',
       createdAt: new Date(),
@@ -103,6 +104,7 @@ Given(
       removableIngredients: [],
       preparationInstructions: null,
       displayOrder: 99,
+      kitchenPost: null,
       variantGroups: [],
       modifiers: [],
     });
@@ -142,6 +144,7 @@ Given(
       removableIngredients: [],
       preparationInstructions: null,
       displayOrder: 99,
+      kitchenPost: null,
       variantGroups: [],
       modifiers: [],
     });

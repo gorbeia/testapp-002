@@ -1,0 +1,71 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build standalone bundle
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm prisma generate
+
+      - name: Build
+        run: pnpm build
+        env:
+          # Only NEXT_PUBLIC_* vars are baked into the client bundle at build time.
+          # All other vars (DATABASE_URL, NEXTAUTH_SECRET, etc.) are runtime-only
+          # and must be present in .env.production on the server.
+          NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+          # Syntactically valid placeholder so Prisma client initialises without
+          # a real DB during static analysis. No actual connection is made.
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+
+      - name: Assemble bundle
+        run: |
+          # Copy static assets into standalone so it is fully self-contained
+          cp -r .next/static   .next/standalone/.next/static
+          cp -r public         .next/standalone/public
+
+          # Include Prisma schema + migrations so the server can run migrate deploy
+          mkdir -p .next/standalone/prisma
+          cp -r prisma/schema.prisma .next/standalone/prisma/
+          cp -r prisma/migrations    .next/standalone/prisma/ 2>/dev/null || true
+
+          # Name the bundle after the tag or the short commit SHA
+          VERSION="${GITHUB_REF_NAME:-$(git rev-parse --short HEAD)}"
+          tar -czf "txosnabai-${VERSION}.tar.gz" -C .next/standalone .
+          echo "BUNDLE=txosnabai-${VERSION}.tar.gz" >> "$GITHUB_ENV"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: txosnabai-bundle
+          path: '*.tar.gz'
+          retention-days: 30
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: '*.tar.gz'
+          generate_release_notes: true
