@@ -220,18 +220,123 @@ PIN onartzen denean eta **Sukaldea** modua hautatuta dagoenean, txosnak postuak 
 
 Janari-mostradoreko kudeaketa-pantaila nagusia.
 
+### 7a. Ikuspegi orokorra
+
+![Janaria Mostradore — ikuspegi orokorra](../screenshots/12b-counter-main.png)
+
 **Pantailak erakusten duena:**
 
 - Goiburua: **Aste Nagusia 2026 · Janaria · Mostradore** + Gelditu / Ikuspegi botoiak
-- **ORDAINKETARIK GABE (2)** atalа (gorria): #45 Miren (duela 5 min) · #44 Ane (duela 12 min) — ordainketa zain
-- **+ Eskaera berria** botoi nagusi orangea
-- **SUKALDEAN (4)** atala: #42 Josu, #38 Miren, #29, #36 Leire — bakoitzak `→ Prest` botoia
+- **ORDAINKETARIK GABE** atala (gorria): telefono edo autozerbitzu bidezko eskaera ordaindu gabeak, denbora-markarekin
+- **+ Eskaera berria** botoi nagusi orangea — mostradorean bertan hartu eskaera
+- **SUKALDEAN** atala: sukaldean prestatzen ari diren eskaera guztiak, `→ Prest` botoi batekin bakoitza
+- **PREST JASOTZEKO** atala (berdea): jasotzeko zain dauden eskaera amaituta daudenak, `✓ Jasota` botoi batekin
 
 **Onurak:**
 
-- Ordainketarik gabeko eskaera guztiak ikusten dira goialdean, denbora-marka barne
-- Boluntarioak presaka dauden kasuak identifikatu ditzake berehala (duela 12 min)
-- `→ Prest` botoiak eskaera prest markatzen du eta bezeroaren telefonora jakinarazpena bidaltzen da
+- Ordainketarik gabeko eskaera guztiak ikusten dira goialdean, denbora-marka barne — boluntarioak presaka dauden kasuak berehala identifikatzen ditu
+- Hiru sekzioek eskaera-egoera argi bereizten dute: zein ordaindu, zein sukaldean, zein biltzeko prest
+
+---
+
+### 7b. Ordainketa jasotzea (ORDAINKETARIK GABE)
+
+![Ordainketa-elkarrizketa — #45 Miren, 17.00 €](../screenshots/12-counter-food-pending-payment.png)
+
+Ordaindu gabeko eskaera baten gainean klik eginda, ordainketa-elkarrizketa irekitzen da:
+
+- Eskaera-zenbakia eta bezero-izena goialdean
+- Produktu-zerrenda prezio-unitarioekin eta **Guztira** batura
+- **ORDAINDUTAKOA (TRUKERAKO)** eremu bat: boluntarioak bezerotik jasotako kopurua sartzen du
+- Trukea automatikoki kalkulatzen da
+- **✓ Ordaindu · Sukaldera bidali** botoiak ordainketа erregistratzen du eta eskaera sukaldera bidaltzen du
+
+**Onurak:**
+
+- Trukearen kalkulu automatikoak akatsak saihesten ditu
+- Botoi bakar batek ordainketa erregistratzen du eta sukaldera bidaltzen — urrats gutxiago
+
+---
+
+### 7c. Eskaera prest markatzea (SUKALDEAN → PREST)
+
+![→ Prest baieztapen-elkarrizketa — #42 Josu](../screenshots/12b-counter-mark-ready-dialog.png)
+
+Sukaldeko boluntarioak eskaera prest utzi ondoren, mostradoreko boluntarioak `→ Prest` klikatu eta baieztapen-elkarrizketa agertzen da:
+
+- Eskaera-zenbakia eta bezero-izena
+- Produktu-zerrenda
+- **✓ Bai, prest dago** botoiak eskaera PREST JASOTZEKO atalera mugitzen du eta bezeroaren telefonora jakinarazpena bidaltzen da
+- **Utzi** botoiak elkarrizketa ixten du aldaketarik gabe
+
+**Onurak:**
+
+- Baieztapen-pausoak nahi gabeko "prest" klikak saihesten ditu
+- Bezeroak telefonoan jakinarazpena jasotzen du berehala — ez da oihukatu behar
+
+---
+
+### 7d. Eskaera jasota markatzea (PREST JASOTZEKO → AMAITUTA)
+
+![PREST JASOTZEKO atala — ✓ Jasota botoiak](../screenshots/12b-counter-ready-section.png)
+
+Bezeroa mostradorera heltzean, `✓ Jasota` klikatu eta eskaera ixten da:
+
+- Sekzio berdeak eskaera prest daudela adierazten du
+- `✓ Jasota` bakoitzak eskaera zuzenean AMAITUTA egoerara pasatzen du
+- Pantailatik desagertzen da eta taulatik ere kentzen da
+
+---
+
+### 7e. Eskaera berria sortzea
+
+![Eskaera berria — produktu-hautagailua](../screenshots/12b-counter-new-order.png)
+
+`+ Eskaera berria` botoiak pantaila berri bat irekitzen du:
+
+- **Bezeroaren izena** eremu derrigorrezkoa (gorriz nabarmendu izenarik gabe)
+- **GEHITU PRODUKTUA** produktu-sareta: produktu bakoitzeko botoi bat izenarekin eta prezioarekin
+- Produktu bat ukituz gero, produktu-konfigurazio orria irekitzen da
+
+---
+
+### 7f. Produktu-konfigurazioa
+
+![Produktu-konfigurazio orria — Burgerra](../screenshots/12b-counter-product-config.png)
+
+Produktu bat hautatzen denean, konfigurazio-orri bat irekitzen da:
+
+- **Produktu-izena** eta **oinarrizko prezioa**
+- **ALBOKOA** (aukera-taldea): Patata frijituak / Entsalada — aukera bat hautatu behar
+- **KENDU** osagaiak: Letxuga, Tomatea, Tipula, Saltsa — boluntarioak bezeroaren eskakizunak ezabatu ditzake
+- **GEHIGARRIAK** (prezio gehigarriarekin): Gazta gehigarria, Saltsa gehigarria, Bacon gehigarria — checkboxekin
+- **OHARRAK** eremu librea: edozein ohar berezi
+- **Kantitatea** kontrola: − / + botoiak
+- **Gehitu — XX.XX €** botoiak produktua saskira gehitzen du, prezio eguneratuta
+
+**Onurak:**
+
+- Aukera guztiak pantaila bakarrean: ohiak, gehigarriak, osagaiak kentzeko — erroreak gutxiago
+- Prezio eguneratua denbora errealean erakusten da, ordaintzeko prest
+
+---
+
+### 7g. Eskaera saskia eta bidaltzea
+
+![Eskaera berria — produktua gehituta, bidaltzeko prest](../screenshots/12b-counter-new-order-with-item.png)
+
+Produktua gehituta eta izena sartu ondoren:
+
+- **PRODUKTUAK** atalean elementu bakoitza: kantitatea, izena, aukera hautatua eta prezioa
+- Editatu (✏️) eta kendu (✕) botoiak lerro bakoitzean
+- **Guztira** batura behean
+- **✓ Sortu eta bidali sukaldera — XX.XX €** botoi berdea: eskaera sortzen da, CASH ordaindu gabe eta sukaldera bidaltzen da
+- Botoia gris dagoela "Gehitu produktuak" edo "Sartu izena lehenik" mezuak izenaren edo produkturik eza adierazten du
+
+**Onurak:**
+
+- Eskaeraren laburpena ikustean, boluntarioak akatsak konpondu ditzake bidaltzea baino lehen
+- Botoi bakarreko bidalketa: eskaera sortu eta sukaldera bidali aldi berean
 
 ---
 
