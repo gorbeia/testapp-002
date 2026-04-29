@@ -42,3 +42,4 @@ Feature: Online payment via Stripe
     When I navigate to the menu and place an order with online payment
     Then I am redirected to the payment page
     And after payment the order status page shows "CONFIRMED"
+
