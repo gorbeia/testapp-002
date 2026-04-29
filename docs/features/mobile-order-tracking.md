@@ -63,7 +63,7 @@ All flows described in sections 5–8 are active.
 
 ## 5. Counter Screen — Code Handoff
 
-After a volunteer confirms a counter order, a **handoff card** appears at the top of the counter screen (food counter and drinks counter both).
+After a volunteer confirms a counter order, a **handoff card** appears on the counter screen (food counter and drinks counter both). The service can pause here — the volunteer shows the QR to the customer and waits for them to scan before dismissing.
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -72,20 +72,20 @@ After a volunteer confirms a counter order, a **handoff card** appears at the to
 │  Give this code to the customer:            │
 │                                             │
 │         ┌───────────────┐                   │
-│         │   H4-7K9      │   [QR]            │
+│         │   H4 - 7K9    │   [QR]            │
 │         └───────────────┘                   │
 │                                             │
-│  They can track their order at:             │
+│  Or they can type it later at:              │
 │  txosna.app/eu/demo-janaria/track           │
 │                                             │
 │                        [Dismiss]            │
 └─────────────────────────────────────────────┘
 ```
 
-- The code displayed is `Order.verificationCode` (already generated on order creation)
-- The QR encodes the full tracking URL: `/{locale}/{slug}/track/{code}`
-- The volunteer taps **Dismiss** to clear the card and return to the order queue
-- The card auto-dismisses after 30 seconds if not dismissed manually
+- The code displayed is `Order.verificationCode`, formatted with a dash in the middle for readability (`H4-7K9` not `H47K9`); monospaced font
+- The QR encodes the **full direct tracking URL**: `/{locale}/{slug}/track/{code}` — scanning takes the customer straight to their order status, no code entry required
+- The secondary text reminds the customer they can also visit the entry page and type the code later if they prefer
+- The volunteer taps **Dismiss** manually when done — there is no auto-dismiss; the queue does not continue until the volunteer is ready
 - If `printingEnabled` is also on, the code and QR are included on the printed slip (no change to printing logic needed — the field is already on the order)
 
 ### Verification code format
@@ -93,6 +93,35 @@ After a volunteer confirms a counter order, a **handoff card** appears at the to
 The `verificationCode` field is already populated on every order. If the existing format is not human-friendly (e.g. a UUID), it should be replaced with a **6-character alphanumeric code** (upper-case letters + digits, excluding ambiguous characters: 0, O, I, 1) generated at order creation time, unique within the txosna for the current day.
 
 > **Open question for implementation:** confirm whether the current `verificationCode` value is already short and human-readable, or whether it needs to be regenerated in a friendlier format. Check `src/lib/store/memory.ts` or the order creation handler.
+
+### Completed orders panel (food counter & drinks counter)
+
+When `mobileTrackingEnabled` is on, the counter screen gains a **"Bukatutako eskaerak"** (Completed orders) section. A customer who missed the handoff moment, or who wants to download their receipt later, can approach the counter and ask the volunteer to look up their order.
+
+The panel is collapsed by default and toggled open with a single tap — it does not compete with the active order queue.
+
+```
+┌─────────────────────────────────────────────────┐
+│  ▸ Bukatutako eskaerak  (3)          [Ireki ▾]  │
+└─────────────────────────────────────────────────┘
+
+When open:
+
+┌─────────────────────────────────────────────────┐
+│  ▾ Bukatutako eskaerak  (3)          [Itxi ▴]  │
+│                                                 │
+│  #42  Gorka      18:33   H4 - 7K9   [QR] [↗]   │
+│  #39  —          18:21   R2 - M3X   [QR] [↗]   │
+│  #37  Amaia      18:14   T9 - 6LP   [QR] [↗]   │
+│                                                 │
+│  (Shows last 20 completed orders this session)  │
+└─────────────────────────────────────────────────┘
+```
+
+- Each row shows: order number, customer name (or dash if not set), confirmation time, verification code, a small QR the customer can scan on the spot, and an external link icon `[↗]` that opens the tracking URL in a new tab (useful when the volunteer wants to show the customer on a shared screen)
+- QR expands to full-screen on tap for easy scanning
+- List is scoped to the current session (resets on PIN re-entry) and capped at the last 20 orders to keep the list short
+- Only orders routed to this counter's type are shown (food counter shows food orders, drinks counter shows drinks orders); if SINGLE setup, all orders are shown
 
 ---
 
