@@ -75,6 +75,7 @@ Module.prototype.require = function (id) {
     return {
       paymentProvider: global.fakePaymentProvider,
       getPaymentProvider: () => global.fakePaymentProvider,
+      createPaymentProvider: () => global.fakePaymentProvider,
     };
   }
   return originalRequire.apply(this, arguments);

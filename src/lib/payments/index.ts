@@ -1,6 +1,7 @@
 import type { IPaymentProvider } from './types';
 import type { StoredPaymentProvider } from '@/lib/store/types';
 import { StripePaymentProvider } from './stripe';
+import { RedsysPaymentProvider } from './redsys';
 
 let _provider: IPaymentProvider | undefined;
 
@@ -14,6 +15,13 @@ export function getPaymentProvider(): IPaymentProvider {
 export function createPaymentProvider(provider: StoredPaymentProvider): IPaymentProvider {
   if (provider.providerType === 'STRIPE') {
     return new StripePaymentProvider(provider.credentials.secretKey);
+  }
+  if (provider.providerType === 'REDSYS') {
+    return new RedsysPaymentProvider(
+      provider.credentials,
+      provider.bizumEnabled,
+      provider.testMode
+    );
   }
   throw new Error(`Provider type ${provider.providerType} is not implemented`);
 }
