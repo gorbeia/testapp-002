@@ -3,7 +3,16 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { OpsHeader } from '@/components/layout/ops-header';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { HandoffCard } from '@/components/counter/handoff-card';
+import { QrCode } from '@/components/qr-code';
 import { useSSE } from '@/hooks/useSSE';
+
+interface CompletedOrderEntry {
+  orderNumber: number;
+  verificationCode: string;
+  customerName: string | null;
+  confirmedAt: number;
+}
 
 interface DrinkProduct {
   id: string;
@@ -35,6 +44,14 @@ export default function DrinksPage() {
   const [txosnaName, setTxosnaName] = useState('Txosna');
   const [drinkProducts, setDrinkProducts] = useState<DrinkProduct[]>([]);
   const [queue, setQueue] = useState<DrinksQueueOrder[]>([]);
+  const [mobileTrackingEnabled, setMobileTrackingEnabled] = useState(false);
+  const [handoffOrder, setHandoffOrder] = useState<{
+    orderNumber: number;
+    verificationCode: string;
+  } | null>(null);
+  const [completedOrders, setCompletedOrders] = useState<CompletedOrderEntry[]>([]);
+  const [completedPanelOpen, setCompletedPanelOpen] = useState(false);
+  const [expandedQr, setExpandedQr] = useState<string | null>(null);
 
   useEffect(() => {
     const storedSlug = typeof window !== 'undefined' ? sessionStorage.getItem('txosna_slug') : null;
@@ -45,6 +62,13 @@ export default function DrinksPage() {
       .then((r) => r.json())
       .then((d) => {
         if (d?.name) setTxosnaName(d.name);
+      })
+      .catch(() => {});
+
+    fetch(`/api/txosnak/${storedSlug}/settings`)
+      .then((r) => r.json())
+      .then((s) => {
+        if (s.mobileTrackingEnabled) setMobileTrackingEnabled(true);
       })
       .catch(() => {});
 
@@ -174,19 +198,45 @@ export default function DrinksPage() {
 
   const confirmAddToQueue = () => {
     if (!queuePreview || !slug) return;
-    const lines = queuePreview.items.map((item) => {
+    const savedPreview = queuePreview;
+    const lines = savedPreview.items.map((item) => {
       const p = drinkProducts.find((dp) => dp.name === item.name);
       return { productId: p?.id ?? item.name, quantity: item.qty };
     });
     fetch(`/api/txosnak/${slug}/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lines, customerName: queuePreview.customerName, channel: 'COUNTER' }),
+      body: JSON.stringify({
+        lines,
+        customerName: savedPreview.customerName,
+        channel: 'COUNTER',
+        paymentMethod: 'CASH',
+        notes: null,
+      }),
     })
       .then((r) => r.json())
-      .then(() => {
-        fetchQueue(slug);
-      })
+      .then(
+        (order: { orderNumber: number; verificationCode: string; customerName: string | null }) => {
+          fetchQueue(slug);
+          if (mobileTrackingEnabled && order.verificationCode) {
+            setHandoffOrder({
+              orderNumber: order.orderNumber,
+              verificationCode: order.verificationCode,
+            });
+            setCompletedOrders((prev) =>
+              [
+                {
+                  orderNumber: order.orderNumber,
+                  verificationCode: order.verificationCode,
+                  customerName: order.customerName,
+                  confirmedAt: Date.now(),
+                },
+                ...prev,
+              ].slice(0, 20)
+            );
+          }
+        }
+      )
       .catch(() => {});
     setQueuePreview(null);
     setCart({});
@@ -958,179 +1008,305 @@ export default function DrinksPage() {
 
   // ── Main view ────────────────────────────────────────────────────────────
   return (
-    <div
-      className="ops-theme"
-      style={{ minHeight: '100vh', fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)' }}
-    >
-      <OpsHeader
-        title={txosnaName}
-        subtitle="Edariak · Mostradore"
-        statusColor="green"
-        right={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <ThemeToggle variant="ops" />
-            <Link
-              href="/eu/overview"
-              style={{ fontSize: 12, color: 'var(--ops-text-dim)', textDecoration: 'none' }}
-            >
-              Ikuspegi
-            </Link>
-          </div>
-        }
-      />
-
-      <div style={{ padding: '14px 14px 90px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        {/* Pending queue from phone orders */}
-        {queue.length > 0 && (
-          <div>
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: 'var(--ops-red)',
-                marginBottom: 10,
-              }}
-            >
-              ZAIN ({queue.length})
+    <>
+      <div
+        className="ops-theme"
+        style={{ minHeight: '100vh', fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)' }}
+      >
+        <OpsHeader
+          title={txosnaName}
+          subtitle="Edariak · Mostradore"
+          statusColor="green"
+          right={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <ThemeToggle variant="ops" />
+              <Link
+                href="/eu/overview"
+                style={{ fontSize: 12, color: 'var(--ops-text-dim)', textDecoration: 'none' }}
+              >
+                Ikuspegi
+              </Link>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {queue.map((o) => (
-                <div
-                  key={o.id}
-                  style={{
-                    background: 'var(--ops-surface)',
-                    border: '1px solid var(--ops-border)',
-                    borderRadius: 12,
-                    padding: '12px 14px',
-                  }}
-                >
+          }
+        />
+
+        <div
+          style={{ padding: '14px 14px 90px', display: 'flex', flexDirection: 'column', gap: 20 }}
+        >
+          {/* Pending queue from phone orders */}
+          {queue.length > 0 && (
+            <div>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: 'var(--ops-red)',
+                  marginBottom: 10,
+                }}
+              >
+                ZAIN ({queue.length})
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {queue.map((o) => (
                   <div
+                    key={o.id}
                     style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'baseline',
-                      marginBottom: 8,
+                      background: 'var(--ops-surface)',
+                      border: '1px solid var(--ops-border)',
+                      borderRadius: 12,
+                      padding: '12px 14px',
                     }}
                   >
-                    <span
+                    <div
                       style={{
-                        fontFamily: 'var(--font-mono, monospace)',
-                        fontSize: 18,
-                        fontWeight: 800,
-                        color: 'var(--ops-text-pri)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'baseline',
+                        marginBottom: 8,
                       }}
                     >
-                      #{o.number}
-                    </span>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      {o.customerName && (
-                        <span style={{ fontSize: 13, color: 'var(--ops-text-sec)' }}>
-                          {o.customerName}
-                        </span>
-                      )}
-                      <span style={{ fontSize: 11, color: 'var(--ops-text-dim)' }}>
-                        {formatElapsed(o.placedAt)}
-                      </span>
-                    </div>
-                  </div>
-                  <div style={{ marginBottom: 10 }}>
-                    {o.items.map((item, i) => (
-                      <div
-                        key={i}
+                      <span
                         style={{
-                          fontSize: 13,
-                          color: 'var(--ops-text-sec)',
-                          display: 'flex',
-                          gap: 6,
+                          fontFamily: 'var(--font-mono, monospace)',
+                          fontSize: 18,
+                          fontWeight: 800,
+                          color: 'var(--ops-text-pri)',
                         }}
                       >
-                        <span
-                          style={{
-                            fontFamily: 'var(--font-mono, monospace)',
-                            color: 'var(--ops-orange)',
-                            fontWeight: 700,
-                          }}
-                        >
-                          {item.qty}×
-                        </span>
-                        <span>{item.name}</span>
-                        <span style={{ marginLeft: 'auto', color: 'var(--ops-text-dim)' }}>
-                          {(item.qty * item.price).toFixed(2)} €
+                        #{o.number}
+                      </span>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        {o.customerName && (
+                          <span style={{ fontSize: 13, color: 'var(--ops-text-sec)' }}>
+                            {o.customerName}
+                          </span>
+                        )}
+                        <span style={{ fontSize: 11, color: 'var(--ops-text-dim)' }}>
+                          {formatElapsed(o.placedAt)}
                         </span>
                       </div>
-                    ))}
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <span
+                    </div>
+                    <div style={{ marginBottom: 10 }}>
+                      {o.items.map((item, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            fontSize: 13,
+                            color: 'var(--ops-text-sec)',
+                            display: 'flex',
+                            gap: 6,
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-mono, monospace)',
+                              color: 'var(--ops-orange)',
+                              fontWeight: 700,
+                            }}
+                          >
+                            {item.qty}×
+                          </span>
+                          <span>{item.name}</span>
+                          <span style={{ marginLeft: 'auto', color: 'var(--ops-text-dim)' }}>
+                            {(item.qty * item.price).toFixed(2)} €
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div
                       style={{
-                        fontFamily: 'var(--font-mono, monospace)',
-                        fontSize: 15,
-                        fontWeight: 800,
-                        color: 'var(--ops-orange)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
                       }}
                     >
-                      {o.total.toFixed(2)} €
-                    </span>
-                    <button
-                      onClick={() => requestServeFromQueue(o)}
-                      style={{
-                        background: 'var(--ops-green)',
-                        border: 'none',
-                        borderRadius: 8,
-                        padding: '8px 16px',
-                        color: '#0a0a0a',
-                        fontSize: 13,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      ✓ Entregatu
-                    </button>
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-mono, monospace)',
+                          fontSize: 15,
+                          fontWeight: 800,
+                          color: 'var(--ops-orange)',
+                        }}
+                      >
+                        {o.total.toFixed(2)} €
+                      </span>
+                      <button
+                        onClick={() => requestServeFromQueue(o)}
+                        style={{
+                          background: 'var(--ops-green)',
+                          border: 'none',
+                          borderRadius: 8,
+                          padding: '8px 16px',
+                          color: '#0a0a0a',
+                          fontSize: 13,
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ✓ Entregatu
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      {/* Fixed bottom CTA */}
-      <div
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          padding: '12px 14px 28px',
-          background: 'var(--ops-bg)',
-          borderTop: '1px solid var(--ops-border)',
-        }}
-      >
-        <button
-          onClick={() => setShowNewOrder(true)}
+        {/* Fixed bottom CTA */}
+        <div
           style={{
-            width: '100%',
-            background: 'var(--ops-orange)',
-            border: 'none',
-            borderRadius: 14,
-            padding: '18px',
-            color: '#fff',
-            fontSize: 17,
-            fontWeight: 700,
-            cursor: 'pointer',
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: '12px 14px 28px',
+            background: 'var(--ops-bg)',
+            borderTop: '1px solid var(--ops-border)',
           }}
         >
-          + Eskaera berria
-        </button>
+          <button
+            onClick={() => setShowNewOrder(true)}
+            style={{
+              width: '100%',
+              background: 'var(--ops-orange)',
+              border: 'none',
+              borderRadius: 14,
+              padding: '18px',
+              color: '#fff',
+              fontSize: 17,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            + Eskaera berria
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* Completed orders panel */}
+      {mobileTrackingEnabled && completedOrders.length > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: 'var(--ops-surface)',
+            borderTop: '2px solid var(--ops-border)',
+            zIndex: 200,
+          }}
+        >
+          <button
+            onClick={() => setCompletedPanelOpen((o) => !o)}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              background: 'none',
+              border: 'none',
+              color: 'var(--ops-text-pri)',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span>Bukatutako eskaerak ({completedOrders.length})</span>
+            <span>{completedPanelOpen ? '▴' : '▾'}</span>
+          </button>
+          {completedPanelOpen && (
+            <div style={{ maxHeight: 320, overflowY: 'auto', padding: '0 12px 12px' }}>
+              {completedOrders.map((o) => {
+                const trackUrl =
+                  typeof window !== 'undefined'
+                    ? `${window.location.origin}/eu/${slug}/track/${o.verificationCode}`
+                    : '';
+                return (
+                  <div
+                    key={o.orderNumber}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '10px 0',
+                      borderBottom: '1px solid var(--ops-border)',
+                    }}
+                  >
+                    <div style={{ flex: 1, fontSize: 13 }}>
+                      <span style={{ fontWeight: 700 }}>#{o.orderNumber}</span>
+                      {o.customerName && <span style={{ opacity: 0.7 }}> · {o.customerName}</span>}
+                      <br />
+                      <span style={{ fontFamily: 'monospace', fontSize: 15, fontWeight: 600 }}>
+                        {o.verificationCode}
+                      </span>
+                    </div>
+                    <div
+                      onClick={() =>
+                        setExpandedQr(expandedQr === o.verificationCode ? null : o.verificationCode)
+                      }
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <QrCode value={trackUrl} size={48} />
+                    </div>
+                    <a
+                      href={trackUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: 18, textDecoration: 'none' }}
+                    >
+                      ↗
+                    </a>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Expanded QR overlay */}
+      {expandedQr && slug && (
+        <div
+          onClick={() => setExpandedQr(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.85)',
+            zIndex: 900,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <QrCode
+            value={
+              typeof window !== 'undefined'
+                ? `${window.location.origin}/eu/${slug}/track/${expandedQr}`
+                : ''
+            }
+            size={280}
+          />
+        </div>
+      )}
+
+      {/* Handoff card */}
+      {handoffOrder && slug && (
+        <HandoffCard
+          orderNumber={handoffOrder.orderNumber}
+          verificationCode={handoffOrder.verificationCode}
+          trackingUrl={
+            typeof window !== 'undefined'
+              ? `${window.location.origin}/eu/${slug}/track/${handoffOrder.verificationCode}`
+              : ''
+          }
+          trackingEntryPath={`/${slug}/track`}
+          onDismiss={() => setHandoffOrder(null)}
+        />
+      )}
+    </>
   );
 }

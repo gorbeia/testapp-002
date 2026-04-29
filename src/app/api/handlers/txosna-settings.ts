@@ -45,6 +45,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     enabledChannels: txosna.enabledChannels,
     enabledPaymentMethods: txosna.enabledPaymentMethods,
     printingEnabled: txosna.printingEnabled,
+    mobileTrackingEnabled: txosna.mobileTrackingEnabled,
     pendingPaymentTimeout: txosna.pendingPaymentTimeout,
   };
 
@@ -93,6 +94,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ sl
     'enabledChannels',
     'enabledPaymentMethods',
     'printingEnabled',
+    'mobileTrackingEnabled',
     'pendingPaymentTimeout',
   ];
 
@@ -140,6 +142,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ sl
       enabledChannels: updated.enabledChannels,
       enabledPaymentMethods: updated.enabledPaymentMethods,
       printingEnabled: updated.printingEnabled,
+      mobileTrackingEnabled: updated.mobileTrackingEnabled,
       pendingPaymentTimeout: updated.pendingPaymentTimeout,
     };
 

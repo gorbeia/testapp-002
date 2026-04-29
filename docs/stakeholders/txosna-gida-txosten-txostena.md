@@ -163,6 +163,34 @@ Bezeroak bere eskaeraren egoera ikusten du:
 
 > **Oharra**: Bezeroak bere telefonoan frogagirria erakusten du, eta boluntarioak eskaera zenbakia edo QR kodea eskaneatzen du ordenatzeko.
 
+#### Eskaeraren Jarraipen Mugikorra
+
+**URL:** `/eu/[slug]/track`
+
+`mobileTrackingEnabled` gaituta dagoenean, bezeroak kode soil batekin euren eskaeraren egoera ikusi dezakete telefono edo ordenagailutik, konturik sortu gabe.
+
+**Sarrera orrialdea** (`/track`):
+
+- Kodea idazteko eremua (adib.: `AB-1234`)
+- "Bilatu" botoiarekin eskaera aurkitu
+
+**Egoera orrialdea** (`/track/[kode]`):
+
+- Eskaeraren egungo egoera denbora errealean (SSE bidez)
+- Janari eta Edarien tiketen egoera bereizita
+- "Prest!" abisua denak biltzeko moduan daudenean
+- "Deskargatu txartela" lotura frogagirri orrialdera
+
+**Frogagirri orrialdea** (`/track/[kode]/receipt`):
+
+- Txosna izena, data, eskaera zenbakia, bezeroaren izena
+- Lerro bakoitzeko produktua eta prezioa
+- Guztira
+- "Inprimatu" botoia (nabigatzailearen inprimatze-leihoa)
+- Ohar: "Ez da zerga-dokumentua"
+
+> **Oharra**: Bezero guztiek erabili dezakete — txartelez, eskudiruz edo online ordaindu. CONFIRMED egoerara iristen denetik aurrera frogagirria deskargatzeko aukera dago.
+
 #### Ordenatze Taula (Order Board)
 
 ![Ordenatze taula TVan](../screenshots/10-order-board-tv.png)
@@ -409,6 +437,23 @@ Mostradorean ordainketa zain dagoen eskaera bat kobratzeko:
 
 Boluntarioek mostradore edo sukalde bat hautatzen dute saioa hasteko.
 
+**Eskualdatze txartela (mobileTrackingEnabled gaituta):**
+
+Eskaera baieztatzen denean, pantaila osoko txartel bat agertzen da bezeroarentzat:
+
+- Eskaera kodea letra handiz (adib.: `AB-1234`)
+- QR kodea telefonoarekin eskaneatzeko (zuzenean eskaeraren egoera orrialdera doa)
+- URL testuan (`/[slug]/track`) geroago idazteko
+- "Itxi" botoia boluntarioak baztertzeko
+
+**Bukatutako eskaerak panela:**
+
+Pantailaren behean, tolestutako panel bat eskuragarri dago, bezeroak frogagiri URLa eskatzera itzultzen badira:
+
+- Saioko azken 20 eskaera erakusten ditu (eskaera zenbakia, izena, kodea, QR txikia)
+- QR txikian sakatzeak pantaila osoko ikuspegi handituarekin zabaltzen du
+- Kanpoko lotura ikonoak eskaeraren jarraipen orrialdea irekitzen du
+
 ---
 
 ### 2.3 Kudeaketa Panela (Admin)
@@ -607,6 +652,19 @@ Fitxa honek txosnara sartzeko esteka partekatzeko aukera ematen du. Bezeroek est
 Adibidez: `https://txosna.app/eu/aste-nagusia-2026`
 
 > **Oharra**: Esteka hau txosna bakoitzarentzat bakarra da eta bezeroak zuzeneko eskaerak egiteko aukera ematen du.
+
+**Jarraipen mugikorra:**
+
+| Ezarpena                | Azalpena                                                                                    | Balio lehenetsia |
+| ----------------------- | ------------------------------------------------------------------------------------------- | ---------------- |
+| **Jarraipen mugikorra** | Bezeroak kode baten bidez euren eskaeraren egoera ikusi eta frogagirria deskargatu dezakete | Desgaituta       |
+
+Gaituta dagoenean:
+
+- Mostradore pantailan eskaera baieztatzen denean eskualdatze-txartela agertzen da (kodea + QR)
+- `/[slug]/track` URL publikoa aktibo geratzen da
+- Bukatutako eskaerak panela mostradore pantailan ikusgai dago
+- Txartela deskargatzeko esteka: `https://txosna.app/eu/[slug]/track/[kode]/receipt`
 
 ##### Txosnako Produktuen Kudeaketa
 

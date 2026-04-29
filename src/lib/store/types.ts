@@ -41,6 +41,7 @@ export interface StoredTxosna {
   enabledPaymentMethods: PaymentMethod[];
   pendingPaymentTimeout: number; // minutes until PENDING_PAYMENT expires
   printingEnabled: boolean;
+  mobileTrackingEnabled: boolean;
   associationId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -311,6 +312,7 @@ export interface OrderRepository {
   findById(id: string): Promise<StoredOrder | null>;
   findByNumber(txosnaId: string, orderNumber: number): Promise<StoredOrder | null>;
   findByPaymentSessionId(sessionId: string): Promise<StoredOrder | null>;
+  findByVerificationCode(txosnaId: string, code: string): Promise<StoredOrder | null>;
   listByTxosna(txosnaId: string, filter?: OrderFilter): Promise<StoredOrder[]>;
   update(id: string, patch: Partial<Omit<StoredOrder, 'id'>>): Promise<StoredOrder>;
   nextOrderNumber(txosnaId: string): Promise<number>;

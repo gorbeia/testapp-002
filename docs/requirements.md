@@ -650,7 +650,7 @@ All tickets COMPLETED → receipt available for download
 | Order board              | Everyone                         | Any (best on large screen) | Live ticket status; accessible via public txosna URL                                                                                    |
 | Pickup proof             | Customer                         | Their phone                | Per ticket; QR if enabled; counter type shown; high contrast                                                                            |
 | Order status / receipt   | Customer                         | Their phone                | Current ticket statuses; receipt download from CONFIRMED; real-time via SSE                                                             |
-| Order tracking (code)    | Customer                         | Their phone                | Enter verification code at `/{slug}/track`; no account needed; only when mobile tracking enabled on txosna                             |
+| Order tracking (code)    | Customer                         | Their phone                | Enter verification code at `/{slug}/track`; no account needed; only when mobile tracking enabled on txosna                              |
 | Event report             | Admin                            | Any                        | Post-event summary; downloadable PDF                                                                                                    |
 
 ---

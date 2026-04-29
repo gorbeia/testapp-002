@@ -251,6 +251,7 @@ model Txosna {
   notificationModes     NotificationMode[]
   qrValidationEnabled   Boolean            @default(false)
   printingEnabled       Boolean            @default(false)
+  mobileTrackingEnabled Boolean            @default(false)
   status                TxosnaStatus       @default(OPEN)
   isDemo                Boolean            @default(false)
   pendingPaymentTimeout Int                @default(15) // minutes

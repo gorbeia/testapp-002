@@ -446,9 +446,37 @@ function OrdersTab() {
 }
 
 // ── Tab 3: QR code ────────────────────────────────────────────────────────────
-function QrTab() {
+function QrTab({ slug }: { slug: string | null }) {
   const [copied, setCopied] = React.useState(false);
+  const [mobileTracking, setMobileTracking] = React.useState(false);
+  const [trackingSaved, setTrackingSaved] = React.useState(false);
   const mockUrl = 'https://txosna.app/eu/aste-nagusia-2026';
+  const trackingUrl = slug ? `https://txosna.app/eu/${slug}/track` : '';
+
+  React.useEffect(() => {
+    if (!slug) return;
+    fetch(`/api/txosnak/${slug}/settings`)
+      .then((r) => r.json())
+      .then((s: { mobileTrackingEnabled?: boolean }) => {
+        if (s.mobileTrackingEnabled !== undefined) setMobileTracking(s.mobileTrackingEnabled);
+      })
+      .catch(() => {});
+  }, [slug]);
+
+  const saveMobileTracking = (val: boolean) => {
+    setMobileTracking(val);
+    if (!slug) return;
+    fetch(`/api/txosnak/${slug}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mobileTrackingEnabled: val }),
+    })
+      .then(() => {
+        setTrackingSaved(true);
+        setTimeout(() => setTrackingSaved(false), 2000);
+      })
+      .catch(() => {});
+  };
 
   const handleCopy = () => {
     navigator.clipboard?.writeText(mockUrl).catch(() => {});
@@ -593,6 +621,36 @@ function QrTab() {
         >
           🔄 QR berria sortu
         </button>
+      </div>
+
+      <div>
+        <FormLabel>Jarraipen mugikorra</FormLabel>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <ToggleRow
+            label="Gaitu jarraipen mugikorra"
+            hint="Bezeroak kode baten bidez eskaeraren egoera ikusi dezakete"
+            checked={mobileTracking}
+            onChange={saveMobileTracking}
+          />
+          {mobileTracking && trackingUrl && (
+            <div
+              style={{
+                background: 'var(--adm-surface)',
+                border: '1px solid var(--adm-border)',
+                borderRadius: 10,
+                padding: '12px 14px',
+                fontSize: 13,
+                color: 'var(--adm-text-sec)',
+              }}
+            >
+              <div style={{ marginBottom: 6, fontWeight: 600, color: 'var(--adm-text-pri)' }}>
+                Jarraipen URL-a
+              </div>
+              <span style={{ fontFamily: 'monospace' }}>{trackingUrl}</span>
+            </div>
+          )}
+          {trackingSaved && <div style={{ fontSize: 12, color: '#22c55e' }}>✓ Gordeta</div>}
+        </div>
       </div>
     </div>
   );
@@ -1013,7 +1071,7 @@ export default function TxosnaConfigPage() {
       {activeTab === 1 && <PaymentTab />}
       {activeTab === 2 && <OrdersTab />}
       {activeTab === 3 && <KitchenTab slug={slug} />}
-      {activeTab === 4 && <QrTab />}
+      {activeTab === 4 && <QrTab slug={slug} />}
     </div>
   );
 }

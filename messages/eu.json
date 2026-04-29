@@ -34,7 +34,22 @@
     "cancel_order": "Eskaera ezeztatu",
     "pause": "Gelditu",
     "resume": "Jarraitu",
-    "close_service": "Jardunaldia itxi"
+    "close_service": "Jardunaldia itxi",
+    "handoff_title": "Eman bezeroari",
+    "handoff_track_hint": "Edo idatzi geroago hemen",
+    "handoff_dismiss": "Itxi",
+    "completed_orders": "Bukatutako eskaerak",
+    "expand_qr": "QR handitu"
+  },
+  "tracking": {
+    "title": "Jarraitu zure eskaera",
+    "code_label": "Zure kodea",
+    "code_hint": "Adib.: AB-1234",
+    "submit": "Bilatu",
+    "not_found": "Koderik ez da aurkitu — egiaztatu kodea eta saiatu berriro",
+    "download_receipt": "Deskargatu txartela",
+    "print": "Inprimatu",
+    "receipt_footer": "Ez da zerga-dokumentua"
   },
   "order": {
     "order_number": "Eskaera #",
