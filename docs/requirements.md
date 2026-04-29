@@ -164,6 +164,7 @@ Each txosna is independently configurable:
 | QR validation             | On/off                                                                                                 |
 | Pending payment timeout   | Minutes before unclaimed phone orders are auto-cancelled                                               |
 | Printing                  | On/off                                                                                                 |
+| Mobile tracking           | On/off — customers can check order status by entering a code shown at the counter; disabled by default |
 | Demo mode                 | On/off — marks txosna as a sandbox for testing; never visible to customers                             |
 
 ### Payment provider selection
@@ -476,11 +477,25 @@ A fourth session PIN mode, selectable by any volunteer, that provides a coordina
 
 ---
 
-## 21. Customer Receipt
+## 21. Customer Receipt & Mobile Order Tracking
 
-- Downloadable PDF after all tickets completed on customer's phone
-- Contains: txosna name, event, date, order number, items, variants, modifiers, prices, total
+### Receipt download
+
+- Downloadable receipt (printable HTML, saved as PDF via browser) available from the moment an order is **CONFIRMED** — not gated on completion
+- Applies to all ordering channels (counter, phone-to-counter, future self-service)
+- Contains: txosna name, event, date, order number, customer name, items, variants, modifiers, prices, total
 - Not a fiscal document (TicketBAI is future)
+
+### Mobile order tracking (optional feature, per txosna)
+
+- Configurable per txosna: **"Jarraipen mugikorra"** toggle in txosna settings; disabled by default
+- When enabled, a short **verification code** (6 characters, human-readable) is displayed on the counter screen after every order is confirmed — counter orders included
+- The counter screen shows the code prominently with a QR linking to the tracking URL; auto-dismisses after 30 seconds
+- Customers visit `/{locale}/{slug}/track`, enter the code, and see their order status in real time (SSE)
+- The tracking page shows per-ticket status (RECEIVED / IN_PREPARATION / READY / COMPLETED) and a receipt download button
+- No account or login required — the verification code is the customer's credential
+- Rate-limiting applied to the public lookup endpoint to prevent enumeration
+- Demo txosnak return 404 on the tracking page
 
 ---
 
@@ -622,7 +637,7 @@ All tickets COMPLETED → receipt available for download
 | Onboarding guide         | First admin                      | Any                        | Checklist-style setup walkthrough                                                                                                       |
 | Association settings     | Admin                            | Any                        | Association name, payment providers (Stripe/Redsys credentials), volunteer management                                                   |
 | Master menu management   | Admin                            | Any                        | Association-level catalog: categories, products, variants, modifiers, allergens, dietary flags, preparation instructions, display order |
-| Txosna configuration     | Admin                            | Any                        | Per-txosna config (counter setup, channels, enabled providers from association, QR, demo mode)                                          |
+| Txosna configuration     | Admin                            | Any                        | Per-txosna config (counter setup, channels, enabled providers from association, QR, mobile tracking, demo mode)                         |
 | Txosna product selection | Admin                            | Any                        | Per-txosna: toggle which master catalog products to serve; optionally override price and preparation instructions                       |
 | Volunteer login          | Any volunteer                    | Any                        | Email + password; password reset available                                                                                              |
 | Session PIN entry        | Any volunteer                    | Any                        | Selects food counter, drinks counter, kitchen (with optional post selection when posts are configured), or kitchen manager              |
@@ -634,7 +649,8 @@ All tickets COMPLETED → receipt available for download
 | Status overview          | Any logged-in volunteer          | Any                        | Live snapshot; handover tool                                                                                                            |
 | Order board              | Everyone                         | Any (best on large screen) | Live ticket status; accessible via public txosna URL                                                                                    |
 | Pickup proof             | Customer                         | Their phone                | Per ticket; QR if enabled; counter type shown; high contrast                                                                            |
-| Order status / receipt   | Customer                         | Their phone                | Current ticket statuses; PDF download when all completed                                                                                |
+| Order status / receipt   | Customer                         | Their phone                | Current ticket statuses; receipt download from CONFIRMED; real-time via SSE                                                             |
+| Order tracking (code)    | Customer                         | Their phone                | Enter verification code at `/{slug}/track`; no account needed; only when mobile tracking enabled on txosna                             |
 | Event report             | Admin                            | Any                        | Post-event summary; downloadable PDF                                                                                                    |
 
 ---
@@ -648,4 +664,4 @@ All tickets COMPLETED → receipt available for download
 
 ---
 
-_Last updated: session 17_
+_Last updated: session 18_
