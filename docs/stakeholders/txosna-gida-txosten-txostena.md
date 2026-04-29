@@ -116,6 +116,30 @@ Saskian bildutako produktuak ikusteko, saskia ikonoa sakatu beheko barran:
 - Saskia ikonoa behean
 - Ordainketa segurua Stripe/Redsys
 
+#### Online Ordainketa Fluxua
+
+"Telefonoa + Online ordainketa" kanala aktibo dagoenean, bezeroak eskaera baieztatzean online ordainketara bideratzen da automatikoki.
+
+**Stripe bidez:**
+
+1. Bezeroak "Online (Txartelarekin)" sakatu checkout pantailan
+2. Sistema Stripe ordainketa-saio bat sortzen du
+3. Bezeroa Stripe-ren ordainketa-orrialdera bideratzen da
+4. Txartelarekin ordaindu ondoren, Stripe sistemari jakinarazten dio (webhook)
+5. Sistema automatikoki eskaera baieztatzen du eta tiketak sukaldean agertzen dira
+6. Bezeroa eskaeraren egoera orrialdera itzultzen da
+
+**Redsys bidez (TPV Birtuala):**
+
+1. Bezeroak "Online (Txartelarekin / Bizum)" sakatu checkout pantailan
+2. Sistema Redsys ordainketa-saio bat sortzen du bankuaren TPV birtualerako
+3. Bezeroa bankuaren ordainketa-orrialdera bideratzen da (Redsys)
+4. Txartelarekin edo Bizum bidez ordaindu ondoren, bankuak sistemari jakinarazten dio
+5. Sistema automatikoki eskaera baieztatzen du eta tiketak sukaldean agertzen dira
+6. Bezeroa eskaeraren egoera orrialdera itzultzen da
+
+> **Oharra**: Ordainketa-saioek 30 minutuko iraungipen-denbora dute. Denboran epean osatu ez bada, eskaera automatikoki baliogabetzen da eta bezeroak berriro hasi behar du.
+
 #### Eskaera Egoera
 
 ![Eskaera egoera](../screenshots/08-order-status-mobile.png)
@@ -628,18 +652,21 @@ Elkarte mailan ordainketa metodo globalak konfiguratu daitezke. Orri honetan:
 
 **Stripe konfigurazioa:**
 
-- **Public Key**: Stripe kontuko pk*live*... gakoa
-- **Secret Key**: Stripe kontuko sk*live*... gakoa
-- Webhooks konfigurazioa automatikoa
+- **Public Key**: Stripe kontuko `pk_live_...` gakoa
+- **Secret Key**: Stripe kontuko `sk_live_...` gakoa
+- Stripe webhook endpoint konfiguratu behar da Stripe dashboard-ean: `https://txosna.app/api/payments/webhook/stripe`
 
 **Redsys konfigurazioa:**
 
-- **Merchant Code (FUC)**: Redsys merkataritza kodea
-- **Terminal Number**: Terminal zenbakia
-- **Commerce Secret (SHA256)**: SHA256 gakoa
-- **Entorno**: Probak/Sandbox edo Produkzioa
+- **Merchant Code (FUC)**: Redsys merkataritza kodea (adib. `327123456`)
+- **Terminal Number**: Terminal zenbakia (adib. `1`)
+- **Commerce Secret (SHA256)**: SHA256 giltza (Redsys admin paneletik eskuratzen da)
+- **Entorno**: Probak/Sandbox (`sis-t.redsys.es`) edo Produkzioa (`sis.redsys.es`)
+- **Bizum**: Gaituta badago, Bizum ordainketa-aukera automatikoki agertzen da bezeroari bankuaren TPV pantailan (ez da konfigurazio gehigarririk behar)
 
-> **Oharra**: Online ordainketak gaitzeko, gutxienez metodo bat (Stripe edo Redsys) konfiguratu behar da elkarte mailan, eta txosna bakoitzean gaitu.
+> **Redsys webhook**: Stripe ez bezala, Redsys-en jakinarazpen URLa transakzio bakoitzean automatikoki pasatzen da. Ez da webhook URL-rik aldez aurretik erregistratu behar Redsys admin panelean.
+
+> **Oharra**: Online ordainketak gaitzeko, gutxienez metodo bat (Stripe edo Redsys) konfiguratu behar da elkarte mailan, eta txosna bakoitzean gaitu ordainketa fitxan.
 
 #### Txostenak
 
@@ -670,6 +697,8 @@ Elkarte mailan ordainketa metodo globalak konfiguratu daitezke. Orri honetan:
 
 ## 3. Eskaera Bizitza Zikloa
 
+### Mostradore eta Telefonoa + Mostradore ordainketa
+
 ```
 Bezeroa                 Sistema                    Sukaldea/Mostradorea
    |                       |                              |
@@ -692,14 +721,40 @@ Bezeroa                 Sistema                    Sukaldea/Mostradorea
    |                       |  Amaituta                     |
 ```
 
+### Telefonoa + Online ordainketa (Stripe / Redsys)
+
+```
+Bezeroa                 Sistema                    Stripe / Redsys
+   |                       |                              |
+   |  Eskaera egin         |                              |
+   |  (ZAIN_ORDAINKETA)    |                              |
+   |---------------------->|                              |
+   |                       |  Ordainketa-saio sortu       |
+   |                       |----------------------------->|
+   |  Bideratu ordainketara|  Saio URLa itzuli            |
+   |<----------------------|                              |
+   |  Ordaindu bankuan     |                              |
+   |---------------------------------------------->|
+   |                       |  Webhook jakinarazpena       |
+   |                       |<-----------------------------|
+   |                       |  BAIEZTATUA                  |
+   |                       |  Tiketak sortu               |
+   |  Ordainketa baieztatua|                              |
+   |<----------------------|                              |
+   |                       |  Sukaldean agertzen da       |
+```
+
+> Ordainketa 30 minututan osatu ezean, eskaera automatikoki **BALIOGABETUA** egoeran geratzen da.
+
 ### Egoerak:
 
-1. **ZAIN_ORDAINKETA** (telefono-eskariak bakarrik)
-2. **BAIEZTATUA** → Tiketak sortzen dira
+1. **ZAIN_ORDAINKETA** (online ordainketa zain; mostradore eskaerak zuzenean 2ra)
+2. **BAIEZTATUA** → Tiketak sortzen dira eta sukaldean agertzen dira
 3. **JASOTA** → Sukaldean jasota
 4. **PRESTATZEN** → Sukaldean lanean
 5. **PREST** → Bildu dezakezu
 6. **AMAITUTA** → Entregatuta
+7. **BALIOGABETUA** → Ordainketa denboran osatu ez, edo bertan behera utzi
 
 ---
 
@@ -805,5 +860,5 @@ Galderarik baduzu edo laguntza behar baduzu:
 
 ---
 
-_Dokumentazio hau Txosna sistemaren 0.1.0 bertsioari dagokio._
+_Dokumentazio hau Txosna sistemaren 0.2.0 bertsioari dagokio (Redsys / Bizum online ordainketa gehitua)._
 _Azken eguneratzea: 2026ko apirila_
