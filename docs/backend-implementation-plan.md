@@ -349,32 +349,52 @@ Computed from in-memory order and ticket data. In production this is a DB aggreg
 
 ---
 
-## Phase 9 — Online payments (Stripe)
+## Phase 9 — Online payments (Stripe + Redsys) ✅
 
 **Goal:** Self-service orders can be paid online before the txosna confirms them.
 
-**New routes**
+**Routes**
 
 `POST /api/payments/session`
 
-- Creates a Stripe Checkout session for a `PENDING_PAYMENT` order
-- Records `paymentSessionId` on the order
-- Returns `{ url }` to redirect customer
+- Accepts optional `providerType: 'STRIPE' | 'REDSYS'`
+- Stripe (default): creates a Stripe Checkout session
+- Redsys: looks up the association's active Redsys provider via `txosnaRepo` → `paymentProviderRepo`, creates a signed redirect form session
+- Records `paymentSessionId` on the order; returns `{ url, sessionId }`
 
 `POST /api/payments/webhook/stripe`
 
 - Verifies `stripe-signature` header
-- On `checkout.session.completed` → calls same confirm logic as Phase 5's `/confirm`
+- On `checkout.session.completed` → confirms order (tickets created)
 - On `checkout.session.expired` → cancels order with reason `TIMEOUT`
 
-**Abstraction:** Both handlers go through the `IPaymentProvider` interface already defined in `src/lib/payments/types.ts`. In tests, a `FakePaymentProvider` implements the interface and records calls without hitting Stripe.
+`POST /api/payments/webhook/redsys`
+
+- Two-phase: decodes `Ds_MerchantParameters` (Base64 JSON) to extract `Ds_Order` without a key, looks up the order and its association's Redsys provider, then verifies the HMAC-SHA256 signature
+- Response code 0–99 → confirms order; any other code → cancels with `TIMEOUT`
+
+`GET /api/payments/redsys/redirect`
+
+- Intermediate page that auto-submits a signed POST form to the Redsys payment URL
+- Validates the `redsysUrl` hostname against an allowlist (`sis-t.redsys.es` / `sis.redsys.es`) before rendering
+
+**Abstraction:** All handlers go through the `IPaymentProvider` interface (`src/lib/payments/types.ts`). `StripePaymentProvider` and `RedsysPaymentProvider` (using `redsys-easy`) both implement it. `FakePaymentProvider` is used in tests.
 
 **Integration tests** (using `FakePaymentProvider`)
+
+Stripe:
 
 - POST payment/session → session created, `paymentSessionId` stored on order
 - POST webhook with valid payload → order confirmed, tickets created
 - POST webhook with invalid signature → 400
 - POST webhook for unknown order → 404
+
+Redsys:
+
+- POST payment/session with `providerType: 'REDSYS'` → session created, `paymentSessionId` stored
+- POST redsys webhook with succeeded notification → order confirmed, tickets created
+- POST redsys webhook with cancelled notification → order cancelled with `TIMEOUT`
+- POST redsys webhook with invalid signature → 400
 
 ---
 
