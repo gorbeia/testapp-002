@@ -1,8 +1,8 @@
-import { getPaymentProvider } from '@/lib/payments';
-import { orderRepo } from '@/lib/store';
+import { getPaymentProvider, createPaymentProvider } from '@/lib/payments';
+import { orderRepo, txosnaRepo, paymentProviderRepo } from '@/lib/store';
 
 export async function POST(request: Request) {
-  let body: { orderId: string; returnUrl?: string };
+  let body: { orderId: string; returnUrl?: string; providerType?: 'STRIPE' | 'REDSYS' };
   try {
     body = await request.json();
   } catch {
@@ -28,7 +28,22 @@ export async function POST(request: Request) {
 
   const returnUrl = body.returnUrl ?? `${process.env.NEXT_PUBLIC_BASE_URL}/orders/${order.id}`;
 
-  const session = await getPaymentProvider().createSession(order, returnUrl);
+  let session;
+
+  if (body.providerType === 'REDSYS') {
+    const txosna = await txosnaRepo.findById(order.txosnaId);
+    if (!txosna) {
+      return Response.json({ error: 'Txosna not found' }, { status: 500 });
+    }
+    const providers = await paymentProviderRepo.listByAssociation(txosna.associationId);
+    const stored = providers.find((p) => p.providerType === 'REDSYS' && p.enabled);
+    if (!stored) {
+      return Response.json({ error: 'No active Redsys provider configured' }, { status: 409 });
+    }
+    session = await createPaymentProvider(stored).createSession(order, returnUrl);
+  } else {
+    session = await getPaymentProvider().createSession(order, returnUrl);
+  }
 
   await orderRepo.update(order.id, { paymentSessionId: session.sessionId });
 
