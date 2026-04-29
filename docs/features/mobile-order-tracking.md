@@ -22,16 +22,17 @@ The verification code already exists on every `Order` (`verificationCode` field)
 
 ## 3. Scope
 
-| What changes                                    | Notes                                                            |
-| ----------------------------------------------- | ---------------------------------------------------------------- |
-| New txosna setting: `mobileTrackingEnabled`     | Disabled by default; admin enables per txosna                    |
-| Counter screen: code handoff step               | Shown after order confirmation when feature is enabled           |
-| New public page: `/[slug]/track`                | Customer enters their code                                       |
-| New public page: `/[slug]/track/[code]`         | Real-time order status view                                      |
-| New API: `GET /orders/lookup?slug=…&code=…`     | Public, unauthenticated lookup by verification code              |
-| Ticket download for all order types             | Available once order is CONFIRMED; replaces phone-order-only PDF |
+| What changes                                | Notes                                                            |
+| ------------------------------------------- | ---------------------------------------------------------------- |
+| New txosna setting: `mobileTrackingEnabled` | Disabled by default; admin enables per txosna                    |
+| Counter screen: code handoff step           | Shown after order confirmation when feature is enabled           |
+| New public page: `/[slug]/track`            | Customer enters their code                                       |
+| New public page: `/[slug]/track/[code]`     | Real-time order status view                                      |
+| New API: `GET /orders/lookup?slug=…&code=…` | Public, unauthenticated lookup by verification code              |
+| Ticket download for all order types         | Available once order is CONFIRMED; replaces phone-order-only PDF |
 
 Out of scope for this feature:
+
 - Push notifications (already handled by the existing notification subsystem)
 - Fiscal receipts / TicketBAI (reserved, no change)
 - Self-service channel (future)
@@ -228,6 +229,7 @@ The response deliberately omits order lines and prices — those are included in
 ```
 
 Returned when:
+
 - Code does not match any order in this txosna
 - `mobileTrackingEnabled` is false for this txosna
 
@@ -375,7 +377,7 @@ All four locales (eu, es, fr, en) required.
 
 | Risk                                 | Mitigation                                                            |
 | ------------------------------------ | --------------------------------------------------------------------- |
-| Code enumeration                     | Rate-limit lookup API; use 6-char codes (36^6 ≈ 2 billion space)     |
+| Code enumeration                     | Rate-limit lookup API; use 6-char codes (36^6 ≈ 2 billion space)      |
 | Receipt access without auth          | Code param accepted on receipt endpoint; rate limit applies           |
 | Exposing order details to wrong user | Lookup scoped to `txosnaId`; response omits sensitive payment fields  |
 | Demo txosna leakage                  | Demo txosnak return 404 on the tracking page (same as closed txosnak) |

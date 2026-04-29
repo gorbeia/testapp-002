@@ -34,7 +34,22 @@
     "cancel_order": "Cancelar pedido",
     "pause": "Pausar",
     "resume": "Reanudar",
-    "close_service": "Cerrar servicio"
+    "close_service": "Cerrar servicio",
+    "handoff_title": "Dar al cliente",
+    "handoff_track_hint": "O escribirlo más tarde en",
+    "handoff_dismiss": "Cerrar",
+    "completed_orders": "Pedidos completados",
+    "expand_qr": "Ampliar QR"
+  },
+  "tracking": {
+    "title": "Seguir tu pedido",
+    "code_label": "Tu código",
+    "code_hint": "Ej.: AB-1234",
+    "submit": "Buscar",
+    "not_found": "Código no encontrado — comprueba el código e inténtalo de nuevo",
+    "download_receipt": "Descargar ticket",
+    "print": "Imprimir",
+    "receipt_footer": "No es un documento fiscal"
   },
   "order": {
     "order_number": "Pedido #",

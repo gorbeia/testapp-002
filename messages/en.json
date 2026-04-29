@@ -34,7 +34,22 @@
     "cancel_order": "Cancel order",
     "pause": "Pause",
     "resume": "Resume",
-    "close_service": "Close service"
+    "close_service": "Close service",
+    "handoff_title": "Share with customer",
+    "handoff_track_hint": "Or type it at",
+    "handoff_dismiss": "Done",
+    "completed_orders": "Completed orders",
+    "expand_qr": "Expand QR"
+  },
+  "tracking": {
+    "title": "Track your order",
+    "code_label": "Your code",
+    "code_hint": "e.g. AB-1234",
+    "submit": "Find order",
+    "not_found": "Code not found — check the code and try again",
+    "download_receipt": "Download receipt",
+    "print": "Print",
+    "receipt_footer": "Not a fiscal document"
   },
   "order": {
     "order_number": "Order #",

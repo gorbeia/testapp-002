@@ -586,6 +586,107 @@ All stages run on every pull request. Handler tests are kept under 30 seconds to
 
 ---
 
+## Phase 12 — Mobile order tracking
+
+**Goal:** Allow any customer — regardless of how they paid — to check their order status and download a printable receipt from their phone using a short human-readable code, with no account required.
+
+### Overview
+
+Every `StoredOrder` already carries a `verificationCode` in `AB-1234` format. This phase surfaces that code at the counter, builds a public lookup endpoint around it, and adds per-txosna opt-in configuration.
+
+### Schema change
+
+```prisma
+// prisma/schema.prisma — Txosna model
+mobileTrackingEnabled Boolean @default(false)
+```
+
+Added after `printingEnabled`. Default `false` keeps the feature invisible until an operator enables it.
+
+### Store changes
+
+**`StoredTxosna`** (`src/lib/store/types.ts`):
+
+```ts
+mobileTrackingEnabled: boolean;
+```
+
+**`OrderRepository`** interface (`src/lib/store/types.ts`):
+
+```ts
+findByVerificationCode(txosnaId: string, code: string): Promise<StoredOrder | null>;
+```
+
+**`memory.ts`** implementation:
+
+```ts
+async findByVerificationCode(txosnaId, code) {
+  for (const o of orders.values()) {
+    if (o.txosnaId === txosnaId && o.verificationCode === code) return o;
+  }
+  return null;
+},
+```
+
+Demo fixture: `mobileTrackingEnabled: true` on `demo-txosna-1` (`demo-janaria`) for easy smoke-testing.
+
+### API changes
+
+**Settings** (`GET/PATCH /txosnak/[slug]/settings`):
+
+- `mobileTrackingEnabled` added to GET response and PATCH whitelist
+- No additional validation — boolean toggle
+
+**Lookup** (`GET /txosnak/[slug]/orders/lookup?code=AB-1234`):
+
+- No authentication required (intentionally public)
+- 404 if txosna not found or `mobileTrackingEnabled` is false
+- In-memory rate limiter: sliding 60s window, max 20 requests per `${ip}:${slug}`; returns 429 if exceeded
+- Response:
+  ```json
+  {
+    "orderId": "...",
+    "orderNumber": 42,
+    "customerName": "Ane",
+    "status": "CONFIRMED",
+    "confirmedAt": "...",
+    "tickets": [{ "id": "...", "counterType": "FOOD", "status": "IN_PREPARATION" }]
+  }
+  ```
+
+### Frontend changes
+
+**Counter screens** (`(volunteer)/[locale]/counter/page.tsx` and `drinks/page.tsx`):
+
+- After order confirmation, if `mobileTrackingEnabled`: show full-screen handoff card with code + QR pointing directly to `/[slug]/track/[code]`
+- Collapsible "Bukatutako eskaerak" panel (session-only, capped at 20): per-row code, 48px QR, external link to tracking page
+
+**Admin settings** (`(admin)/[locale]/txosna/page.tsx` — QR tab):
+
+- `ToggleRow` for "Jarraipen mugikorra"
+- When enabled, shows the `/[slug]/track` URL as an info row
+
+**Public tracking pages** (`(public)/[locale]/[slug]/track/`):
+
+- Entry page: code input + submit → navigate to `track/[code]`
+- Status page: Server Component fetches initial state; Client Component subscribes to txosna SSE and re-fetches on `ticket:status_changed` / `order:cancelled` / `order:confirmed`
+- Receipt page: Server Component rendering full `<html>` document; printable via `window.print()`
+
+### Dependencies
+
+- `qrcode.react` v4 (`QRCodeSVG`) — added to `package.json`
+
+### Testing
+
+| Test                           | What to verify                                                                                                                                      |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit: `findByVerificationCode` | returns correct order; returns null for wrong txosna; returns null for wrong code                                                                   |
+| Handler: lookup GET            | 404 when flag off; 404 when code wrong; 200 + correct shape when found; 429 after 20 requests                                                       |
+| Handler: settings PATCH        | `mobileTrackingEnabled` persists; GET returns updated value                                                                                         |
+| Manual smoke                   | Enable on demo-janaria → place counter order → handoff card appears → navigate to `/track` → enter code → status updates via SSE → download receipt |
+
+---
+
 ## Delivery summary
 
 | Phase | What ships                             | New API surface                                             |
@@ -602,5 +703,6 @@ All stages run on every pull request. Handler tests are kept under 30 seconds to
 | 9     | Online payments                        | `POST /payments/session`, `POST /payments/webhook/stripe`   |
 | 10    | Prisma backend                         | No new routes — storage swap                                |
 | 11    | Demo provisioning                      | `POST /api/demo/reset`, `GET /api/demo/status`              |
+| 12    | Mobile order tracking                  | `GET /txosnak/[slug]/orders/lookup`                         |
 
 Each phase can be merged and deployed independently. The front-end prototype continues to run against mock data until the corresponding phase lands; switching a screen to the real API is a one-line change per `fetch` call.

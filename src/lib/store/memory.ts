@@ -108,6 +108,7 @@ function seed() {
       enabledPaymentMethods: ['CASH'],
       pendingPaymentTimeout: 15,
       printingEnabled: false,
+      mobileTrackingEnabled: false,
       associationId: MOCK_ASSOCIATION.id,
       createdAt: t,
       updatedAt: t,
@@ -281,6 +282,7 @@ export const txosnaRepo: TxosnaRepository = {
       enabledPaymentMethods: ['CASH'],
       pendingPaymentTimeout: 15,
       printingEnabled: false,
+      mobileTrackingEnabled: false,
       associationId: data.associationId,
       createdAt: t,
       updatedAt: t,
@@ -369,6 +371,13 @@ export const orderRepo: OrderRepository = {
   async findByPaymentSessionId(sessionId) {
     for (const o of orders.values()) {
       if (o.paymentSessionId === sessionId) return o;
+    }
+    return null;
+  },
+
+  async findByVerificationCode(txosnaId, code) {
+    for (const o of orders.values()) {
+      if (o.txosnaId === txosnaId && o.verificationCode === code) return o;
     }
     return null;
   },
@@ -639,6 +648,7 @@ function seedDemoAssociation() {
       enabledPaymentMethods: ['CASH'],
       pendingPaymentTimeout: 15,
       printingEnabled: false,
+      mobileTrackingEnabled: dt.id === 'demo-txosna-1',
       associationId: DEMO_ASSOCIATION.id,
       createdAt: t,
       updatedAt: t,

@@ -164,9 +164,81 @@ Pantaila handietan (telebista, tablet) jartzeko moduko taula publikoa.
 
 ---
 
+## 6. Eskaeraren Jarraipena (Jarraipen Mugikorra)
+
+> **Aukerako eginbidea** — Txosna bakoitzeko konfiguraziotik gaitu/desgaitu daiteke ("QR kodea" fitxan).
+
+**URL:** `/eu/[slug]/track`
+
+Mostradoreetan eskaera hartu ondoren, boluntarioak kode laburra ematen dio bezeroari. Bezeroak kode hori sartu dezake bere telefonoan eskaeraren egoera jarraitzeko.
+
+### 6a. Kode sarrera orrialdea
+
+**URL:** `/eu/aste-nagusia-2026/track`
+
+Bezeroaren lehen kontaktua jarraipen-sistemarekin. Pantaila soil bat kode bat sartzeko.
+
+**Pantailak erakusten duena:**
+
+- Txosna-izena goiburuan
+- Testu-eremua: "Zure kodea" (letra monoespacioan, maiuskulak automatikoki)
+- Laguntza-oharra: "Adib.: AB-1234"
+- "Bilatu" botoia → hurrengoko orrialdera
+- Kodea oker badago: mezu argia ("Koderik ez da aurkitu")
+
+**Onurak:**
+
+- Ez da konturik sortu behar — kodea da bezeroaren kredentzial bakarra
+- Edozein telefonoz funtzionatzen du, aplikaziorik gabe
+
+---
+
+### 6b. Eskaera egoera orrialdea
+
+**URL:** `/eu/aste-nagusia-2026/track/AB-1234`
+
+Kode zuzena sartu ondoren, bezeroak denbora errealean ikusten du bere eskaeraren egoera.
+
+**Pantailak erakusten duena:**
+
+- Eskaera-zenbakia eta bezeroaren izena
+- Txartel bat mostradoreko mota bakoitzeko (Janaria / Edariak), egoerarekin:
+  - Jasota · Prestatzen · **Prest! 🎉** · Amaituta ✓
+- Guztia prest dagoenean: berde-koloreko ohartarazpen-barra ("Zure eskaera prest dago! Jaso dezakezu.")
+- "↓ Deskargatu txartela" botoia edozein momentutan
+
+**Onurak:**
+
+- SSE bidez eguneratzen da denbora errealean — ez da orria freskatu behar
+- Bezeroak txosnatik urrun egon daiteke eta bere telefonoan ikusten du noiz joan behar den
+- Txartela eskatu aurretik deskargatu daiteke (eskaera baieztatzen den unetik aurrera)
+
+---
+
+### 6c. Txartela
+
+**URL:** `/eu/aste-nagusia-2026/track/AB-1234/receipt`
+
+Inprimatzeko moduko HTML orrialde gisa ematen da, PDFa sortu gabe.
+
+**Txartelak biltzen duena:**
+
+- Txosna-izena eta data
+- Eskaera-zenbakia eta bezeroaren izena
+- Produktuen zerrenda aldaera eta gehigarriekin eta prezioekin
+- Guztira
+- "Ez da zerga-dokumentua" oharrarekin
+
+**Onurak:**
+
+- Bezeroak bere telefonoko PDF gisa gorde dezake
+- Ez da liburutegirik behar zerbitzarian — nabigatzaileak inprimatzen du
+
+---
+
 # II. BOLUNTARIOAREN PANTAILAK
 
-## 6. PIN Sarbidea
+## 7. PIN Sarbidea
 
 **URL:** `/eu/pin`
 
@@ -214,7 +286,7 @@ PIN onartzen denean eta **Sukaldea** modua hautatuta dagoenean, txosnak postuak 
 
 ---
 
-## 7. Janaria Mostradore
+## 8. Janaria Mostradore
 
 **URL:** `/eu/counter`
 
@@ -237,9 +309,15 @@ Janari-mostradoreko kudeaketa-pantaila nagusia.
 - Ordainketarik gabeko eskaera guztiak ikusten dira goialdean, denbora-marka barne — boluntarioak presaka dauden kasuak berehala identifikatzen ditu
 - Hiru sekzioek eskaera-egoera argi bereizten dute: zein ordaindu, zein sukaldean, zein biltzeko prest
 
+**Jarraipen mugikorra gaituta dagoenean (aukerako):**
+
+- Eskaera baieztatzen denean, "kode trukaketa txartela" agertzen da pantailatik: eskaera-zenbakia, kode laburra (adib. AB-1234), QR kodea eta jarraipen-URLa
+- Boluntarioak QR kodea erakusten dio bezeroari (edo kodea ahozka) eta "Itxi" klikatzen du prest dagoenean
+- Pantailaren behean "Bukatutako eskaerak" panel bat dago (tolestuta), azken 20 bukatutako eskaerekin kode eta QR txiki bana dituena — bezeroak geroago txartela eskatzera badator, boluntarioak kode horretatik birbidali dezake
+
 ---
 
-### 7b. Ordainketa jasotzea (ORDAINKETARIK GABE)
+### 8b. Ordainketa jasotzea (ORDAINKETARIK GABE)
 
 ![Ordainketa-elkarrizketa — #45 Miren, 17.00 €](../screenshots/12-counter-food-pending-payment.png)
 
@@ -258,7 +336,7 @@ Ordaindu gabeko eskaera baten gainean klik eginda, ordainketa-elkarrizketa ireki
 
 ---
 
-### 7c. Eskaera prest markatzea (SUKALDEAN → PREST)
+### 8c. Eskaera prest markatzea (SUKALDEAN → PREST)
 
 ![→ Prest baieztapen-elkarrizketa — #42 Josu](../screenshots/12b-counter-mark-ready-dialog.png)
 
@@ -276,7 +354,7 @@ Sukaldeko boluntarioak eskaera prest utzi ondoren, mostradoreko boluntarioak `�
 
 ---
 
-### 7d. Eskaera jasota markatzea (PREST JASOTZEKO → AMAITUTA)
+### 8d. Eskaera jasota markatzea (PREST JASOTZEKO → AMAITUTA)
 
 ![PREST JASOTZEKO atala — ✓ Jasota botoiak](../screenshots/12b-counter-ready-section.png)
 
@@ -288,7 +366,7 @@ Bezeroa mostradorera heltzean, `✓ Jasota` klikatu eta eskaera ixten da:
 
 ---
 
-### 7e. Eskaera berria sortzea
+### 8e. Eskaera berria sortzea
 
 ![Eskaera berria — produktu-hautagailua](../screenshots/12b-counter-new-order.png)
 
@@ -340,7 +418,7 @@ Produktua gehituta eta izena sartu ondoren:
 
 ---
 
-## 8. Edariak Mostradore
+## 9. Edariak Mostradore
 
 **URL:** `/eu/drinks`
 
@@ -362,7 +440,7 @@ Edariak mostradorearen pantaila: zerrendako eskaerak eta eskaera berrien sortzai
 
 ---
 
-## 9. Sukaldea — KDS (Kitchen Display System)
+## 10. Sukaldea — KDS (Kitchen Display System)
 
 **URL:** `/eu/kitchen`
 
@@ -399,7 +477,7 @@ Txosnak sukaldeko postuak konfiguratuta dituenean (adib. _plantxa_, _muntaia_), 
 
 ---
 
-## 10. Sukalde Kudeaketa (Kitchen Manager)
+## 11. Sukalde Kudeaketa (Kitchen Manager)
 
 **URL:** `/eu/kitchen-manager`
 
@@ -431,7 +509,7 @@ Koordinatzailearen pantaila: sukaldeko eskaera guztiak ikuspegi bakarrean, postu
 
 ---
 
-## 11. Egoera Ikuspegi (Overview)
+## 12. Egoera Ikuspegi (Overview)
 
 **URL:** `/eu/overview`
 
@@ -460,7 +538,7 @@ Txosna osoaren egoera-laburpena denbora errealean. Zuzendariarentzat edo bolunta
 
 # III. ADMINISTRATZAILEAREN PANTAILAK
 
-## 12. Admin Panel — Nabigazio-alboko barra
+## 13. Admin Panel — Nabigazio-alboko barra
 
 Pantaila guztietan agertzen da ezkerrean (mahai gainekoan) edo menu gisa (mugikorrean).
 
@@ -479,7 +557,7 @@ Pantaila guztietan agertzen da ezkerrean (mahai gainekoan) edo menu gisa (mugiko
 
 ---
 
-## 13. Menu Kudeaketa
+## 14. Menu Kudeaketa
 
 **URL:** `/eu/menu`
 
@@ -534,7 +612,7 @@ Lerro batek postu bat baino gehiago ukitzen badu, lerroaren kopia bat bidaltzen 
 
 ---
 
-## 14. Boluntarioak
+## 15. Boluntarioak
 
 **URL:** `/eu/volunteers`
 
@@ -555,7 +633,7 @@ Boluntario-erregistroa eta rolen kudeaketa.
 
 ---
 
-## 15. Txosna Konfigurazioa
+## 16. Txosna Konfigurazioa
 
 **URL:** `/eu/txosna`
 
@@ -595,7 +673,7 @@ Postuak hutsik utziz gero, sukaldea estazio bakarrekoa da (tiketa bakarra eskaer
 
 ---
 
-## 16. Txostenak
+## 17. Txostenak
 
 **URL:** `/eu/reports`
 
