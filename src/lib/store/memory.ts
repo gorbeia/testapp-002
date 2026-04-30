@@ -37,9 +37,13 @@ import type {
   StoredProduct,
   StoredProductView,
   StoredTicket,
+  StoredTicketBaiConfig,
+  StoredTicketBaiInvoice,
   StoredTxosna,
   StoredTxosnaProduct,
   StoredVolunteer,
+  TicketBaiConfigRepository,
+  TicketBaiInvoiceRepository,
   TicketRepository,
   TxosnaRepository,
   VolunteerRepository,
@@ -59,6 +63,10 @@ const volunteers = new Map<string, StoredVolunteer>();
 /** Highest order number issued per txosna. */
 const orderCounters = new Map<string, number>();
 const paymentProviders = new Map<string, StoredPaymentProvider>();
+const ticketBaiConfigs = new Map<string, StoredTicketBaiConfig>();
+const ticketBaiInvoices = new Map<string, StoredTicketBaiInvoice>();
+/** Highest invoice number issued per `${associationId}:${series}`. */
+const ticketBaiInvoiceCounters = new Map<string, number>();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -90,6 +98,9 @@ function seed() {
   associations.set(MOCK_ASSOCIATION.id, {
     id: MOCK_ASSOCIATION.id,
     name: MOCK_ASSOCIATION.name,
+    phone: null,
+    cif: 'A12345678',
+    ticketBaiEnabled: false,
     createdAt: t,
   });
 
@@ -192,6 +203,7 @@ function seed() {
       confirmedAt: mo.status === 'CONFIRMED' ? new Date(mo.createdAt) : null,
       expiresAt: mo.expiresAt ? new Date(mo.expiresAt) : null,
       pendingLines: null,
+      fiscalReceiptRef: null,
       createdAt: new Date(mo.createdAt),
       updatedAt: new Date(mo.createdAt),
     });
@@ -325,6 +337,7 @@ export const orderRepo: OrderRepository = {
       confirmedAt: data.status === 'CONFIRMED' ? t : null,
       expiresAt: data.expiresAt,
       pendingLines: data.status === 'PENDING_PAYMENT' ? (data.pendingLines ?? data.tickets) : null,
+      fiscalReceiptRef: null,
       createdAt: t,
       updatedAt: t,
     };
@@ -554,7 +567,14 @@ export const catalogRepo: CatalogRepository = {
 export const associationRepo: AssociationRepository = {
   async create(name: string) {
     const t = now();
-    const assoc: StoredAssociation = { id: newId(), name, createdAt: t };
+    const assoc: StoredAssociation = {
+      id: newId(),
+      name,
+      phone: null,
+      cif: null,
+      ticketBaiEnabled: false,
+      createdAt: t,
+    };
     associations.set(assoc.id, assoc);
     return assoc;
   },
@@ -566,6 +586,14 @@ export const associationRepo: AssociationRepository = {
   async findByName(query: string) {
     const q = query.toLowerCase();
     return [...associations.values()].find((a) => a.name.toLowerCase().includes(q)) ?? null;
+  },
+
+  async update(id, patch) {
+    const existing = associations.get(id);
+    if (!existing) throw new Error(`Association not found: ${id}`);
+    const updated = { ...existing, ...patch, id };
+    associations.set(id, updated);
+    return updated;
   },
 };
 
@@ -631,6 +659,9 @@ function seedDemoAssociation() {
   associations.set(DEMO_ASSOCIATION.id, {
     id: DEMO_ASSOCIATION.id,
     name: DEMO_ASSOCIATION.name,
+    phone: null,
+    cif: null,
+    ticketBaiEnabled: false,
     createdAt: t,
   });
 
@@ -739,6 +770,7 @@ function seedDemoAssociation() {
       confirmedAt: mo.status === 'CONFIRMED' ? new Date(mo.createdAt) : null,
       expiresAt: mo.expiresAt ? new Date(mo.expiresAt) : null,
       pendingLines: null,
+      fiscalReceiptRef: null,
       createdAt: new Date(mo.createdAt),
       updatedAt: new Date(mo.createdAt),
     });
@@ -829,9 +861,85 @@ export function resetStore() {
   volunteers.clear();
   orderCounters.clear();
   paymentProviders.clear();
+  ticketBaiConfigs.clear();
+  ticketBaiInvoices.clear();
+  ticketBaiInvoiceCounters.clear();
   seed();
   seedDemoAssociation();
 }
+
+// ── TicketBaiConfigRepository ─────────────────────────────────────────────────
+
+export const ticketBaiConfigRepo: TicketBaiConfigRepository = {
+  async findByAssociation(associationId) {
+    return [...ticketBaiConfigs.values()].find((c) => c.associationId === associationId) ?? null;
+  },
+
+  async upsert(associationId, data) {
+    const t = now();
+    const existing = [...ticketBaiConfigs.values()].find((c) => c.associationId === associationId);
+    if (existing) {
+      const updated: StoredTicketBaiConfig = { ...existing, ...data, updatedAt: t };
+      ticketBaiConfigs.set(existing.id, updated);
+      return updated;
+    }
+    const created: StoredTicketBaiConfig = {
+      id: newId(),
+      associationId,
+      providerType: data.providerType ?? 'MOCK',
+      series: data.series ?? 'TB',
+      credentials: data.credentials ?? {},
+      createdAt: t,
+      updatedAt: t,
+    };
+    ticketBaiConfigs.set(created.id, created);
+    return created;
+  },
+};
+
+// ── TicketBaiInvoiceRepository ────────────────────────────────────────────────
+
+export const ticketBaiInvoiceRepo: TicketBaiInvoiceRepository = {
+  async create(data) {
+    const t = now();
+    const invoice: StoredTicketBaiInvoice = { ...data, id: newId(), createdAt: t, updatedAt: t };
+    ticketBaiInvoices.set(invoice.id, invoice);
+    const counterKey = `${data.associationId}:${data.series}`;
+    const current = ticketBaiInvoiceCounters.get(counterKey) ?? 0;
+    if (data.invoiceNumber > current) {
+      ticketBaiInvoiceCounters.set(counterKey, data.invoiceNumber);
+    }
+    return invoice;
+  },
+
+  async findByOrder(orderId) {
+    return [...ticketBaiInvoices.values()].find((i) => i.orderId === orderId) ?? null;
+  },
+
+  async findById(id) {
+    return ticketBaiInvoices.get(id) ?? null;
+  },
+
+  async listByAssociation(associationId) {
+    return [...ticketBaiInvoices.values()]
+      .filter((i) => i.associationId === associationId)
+      .sort((a, b) => b.invoiceNumber - a.invoiceNumber);
+  },
+
+  async getLastByAssociation(associationId, series) {
+    const all = [...ticketBaiInvoices.values()].filter(
+      (i) => i.associationId === associationId && i.series === series
+    );
+    if (all.length === 0) return null;
+    return all.reduce((prev, curr) => (curr.invoiceNumber > prev.invoiceNumber ? curr : prev));
+  },
+
+  async nextInvoiceNumber(associationId, series) {
+    const key = `${associationId}:${series}`;
+    const current = ticketBaiInvoiceCounters.get(key) ?? 0;
+    return current + 1;
+  },
+};
 
 // ── Test helpers (not part of repository interfaces) ─────────────────────────
 

@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { broadcast } from '@/lib/sse';
 import { txosnaRepo, orderRepo, catalogRepo } from '@/lib/store';
+import { issueTicketBaiInvoice } from '@/lib/ticketbai/service';
 import type {
   CounterType,
   CreateOrderInput,
@@ -216,6 +217,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     total: order.total,
     status: order.status,
   });
+
+  if (!isSelfService) {
+    issueTicketBaiInvoice(order, txosna.associationId).catch(() => {});
+  }
 
   return Response.json(order, { status: 201 });
 }

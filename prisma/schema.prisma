@@ -88,6 +88,18 @@ enum PaymentMethodDetail {
   BIZUM
 }
 
+enum TicketBaiProviderType {
+  MOCK
+}
+
+enum TicketBaiInvoiceStatus {
+  PENDING
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  MOCK
+}
+
 // ── Models ───────────────────────────────────────────────────────────────────
 
 model VatType {
@@ -118,8 +130,10 @@ model Association {
   events            Event[]
   categories        Category[]
   txosnak           Txosna[]
-  paymentProviders PaymentProvider[]
+  paymentProviders  PaymentProvider[]
   vatTypes          VatType[]
+  ticketBaiConfig   TicketBaiConfig?
+  ticketBaiInvoices TicketBaiInvoice[]
 }
 
 model Volunteer {
@@ -313,7 +327,8 @@ model Order {
   paymentProviderId String?
   paymentProvider   PaymentProvider? @relation(fields: [paymentProviderId], references: [id])
 
-  tickets OrderTicket[]
+  tickets          OrderTicket[]
+  ticketBaiInvoice TicketBaiInvoice?
 
   @@unique([txosnaId, orderNumber])
 }
@@ -404,4 +419,44 @@ model TxosnaPaymentProvider {
   createdAt DateTime @default(now())
 
   @@unique([txosnaId, paymentProviderId])
+}
+
+model TicketBaiConfig {
+  id            String                @id @default(cuid())
+  providerType  TicketBaiProviderType @default(MOCK)
+  series        String                @default("TB")
+  credentials   Json                  @default("{}")
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  associationId String      @unique
+  association   Association @relation(fields: [associationId], references: [id])
+}
+
+model TicketBaiInvoice {
+  id            String                 @id @default(cuid())
+  orderNumber   Int
+  series        String
+  invoiceNumber Int
+  issuedAt      DateTime
+  sellerName    String
+  sellerCif     String
+  linesJson     Json
+  total         Decimal                @db.Decimal(10, 2)
+  vatJson       Json
+  chainId       String
+  providerRef   String?
+  qrUrl         String?
+  xmlPayload    String?
+  status        TicketBaiInvoiceStatus @default(PENDING)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  associationId String
+  association   Association @relation(fields: [associationId], references: [id])
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  @@unique([associationId, series, invoiceNumber])
 }
