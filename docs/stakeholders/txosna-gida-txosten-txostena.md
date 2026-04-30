@@ -739,6 +739,90 @@ Elkarte mailan ordainketa metodo globalak konfiguratu daitezke. Orri honetan:
 
 > **Oharra**: Online ordainketak gaitzeko, gutxienez metodo bat (Stripe edo Redsys) konfiguratu behar da elkarte mailan, eta txosna bakoitzean gaitu ordainketa fitxan.
 
+#### TicketBAI Fakturara Nola Heldu — Bezeroaren Ibilbidea
+
+Fakturara heltzeko bi bide daude, eskaera-kanala eta txosna-konfigurazioa kontuan hartuta:
+
+---
+
+##### Bide 1 — Telefono-eskaera (Phone-to-counter / Self-service)
+
+Bezeroak bere telefonoarekin eskaera egin badu, eskaera baieztatzen den unean bertan fakturaren berri ematen da:
+
+```
+Bezeroak eskaera egiten du (telefonoa)
+          │
+          ▼
+Eskaera Egoera pantaila → /eu/order/[id]
+          │
+          ▼
+"Txartel argia / Faktura" sekzioa agertzen da automatikoki
+  ┌─ Faktura erreferentzia (TB-2026-00000001)
+  ├─ Data
+  └─ "QR kodea ikusi →" botoia → Hazienda Vasca
+```
+
+Ez da ekintza gehigarririk behar: faktura eskaera-egoera pantailan bertan dago.
+
+---
+
+##### Bide 2 — Mostradoreko eskaera (Counter) + Jarraipen mugikorra
+
+Mostradorean eskaera hartu bada, boluntarioak kode laburra ematen dio bezeroari. Bezeroak kode horrekin bere fakturara hel daiteke:
+
+```
+Boluntarioak mostradorean eskaera baieztatzen du
+          │
+          ▼
+Eskualdatze txartela agertzen da boluntarioaren pantailan:
+  ┌─ Kode alfanumerikoa letra handiz  (adib. AB-1234)
+  ├─ QR kodea → /eu/[slug]/track/AB-1234
+  └─ URL testuan: /[slug]/track
+          │
+          ▼  (Bezeroak QR eskaneatu edo kodea idatzi)
+          │
+          ▼
+Eskaera-jarraipena pantaila → /eu/[slug]/track/AB-1234
+  ┌─ Egoera-txartelak (Janaria / Edariak)
+  ├─ "Zure eskaera prest dago!" barra (denak prest direnean)
+  ├─ "Txartel argia / Faktura" sekzioa  ← faktura hemen
+  │    ├─ Faktura erreferentzia (TB-00000042)
+  │    ├─ Data
+  │    └─ "QR kodea ikusi →" → Hazienda Vasca
+  └─ "↓ Deskargatu txartela" botoia
+```
+
+![Eskualdatze txartela boluntarioaren pantailan](../screenshots/42-counter-handoff-card.png)
+
+> **[ARGAZKI-OHARRA — 42-counter-handoff-card.png]**
+> Hartu argazkia mostradoreko pantailari eskaera berri bat baieztatzen denean mobileTrackingEnabled gaituta. Erakutsi behar du: pantaila osoko dark-modu overlay bat, "ESKAERA #42" testu txikia, "Eman kode hau bezeroari" instrukzioa, kode monoespacioa letra handi zuriarekin (adib. AB-1234), QR kode handi bat, "/aste-nagusia-2026/track" URL testua, eta "Itxi" botoi laranja bat behean.
+
+![Eskaeraren egoera kode bidez — TicketBAI fakturarekin](../screenshots/43-track-status-with-invoice.png)
+
+> **[ARGAZKI-OHARRA — 43-track-status-with-invoice.png]**
+> Hartu argazkia bezeroaren eskaera-jarraipena pantailari (`/eu/[slug]/track/AB-1234`) eskaera prest dagoenean eta TicketBAI faktura jaulkita dagoenean. Erakutsi behar du: egoera-txartelak, "Txartel argia / Faktura" sekzioa faktura-erreferentziarekin eta QR estekarekin, eta "↓ Deskargatu txartela" botoia.
+
+**Boluntarioaren zeregina:**
+
+1. Eskaera baieztatzen du mostradorean
+2. Eskualdatze txartela agertzen da automatikoki — ez da ezer konfiguratu behar
+3. QR kodea erakusten dio bezeroari eskaneatzeko **edo** kodea (adib. `AB-1234`) ematen dio ahoz
+4. "Itxi" klikatu eta mostradorera itzultzen da
+
+> **Oharra**: Mostradoreko jarraipena txosna bakoitzeko konfiguratzen da (`Ezarpenak → QR kodea fitxa → Jarraipen mugikorra`). Desgaituta badago, ez da txartelik agertuko eta bezeroak ez du eskaera jarraipena izango.
+
+---
+
+##### Txartela inprimatzea — Faktura barnean
+
+Bezeroek `/track/[kode]/receipt` orrialdetik inprimagarria deskarga dezakete. TicketBAI gaituta dagoenean, txartelak zuzenean faktura-erreferentzia eta QR URL barne hartzen ditu:
+
+- Faktura-erreferentzia (adib. `TB-00000001`)
+- QR URL testuan inprimatu (eskaneatuz Hazienda Vaskara doa)
+- TicketBAI gabe: "Ez da zerga-dokumentua" oharra
+
+---
+
 #### TicketBAI Faktura Liburua
 
 **URL:** `/eu/ticketbai`

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { txosnaRepo, orderRepo, ticketRepo } from '@/lib/store';
+import { txosnaRepo, orderRepo, ticketRepo, ticketBaiInvoiceRepo } from '@/lib/store';
 import { TrackStatusClient } from './track-status-client';
 
 interface Props {
@@ -64,7 +64,10 @@ export default async function TrackStatusPage({ params }: Props) {
     );
   }
 
-  const tickets = await ticketRepo.listByOrder(order.id);
+  const [tickets, fiscalInvoice] = await Promise.all([
+    ticketRepo.listByOrder(order.id),
+    order.fiscalReceiptRef ? ticketBaiInvoiceRepo.findByOrder(order.id) : null,
+  ]);
 
   return (
     <TrackStatusClient
@@ -83,6 +86,16 @@ export default async function TrackStatusPage({ params }: Props) {
         counterType: t.counterType,
         status: t.status,
       }))}
+      fiscalInvoice={
+        fiscalInvoice
+          ? {
+              series: fiscalInvoice.series,
+              invoiceNumber: fiscalInvoice.invoiceNumber,
+              issuedAt: fiscalInvoice.issuedAt.toISOString(),
+              qrUrl: fiscalInvoice.qrUrl,
+            }
+          : null
+      }
     />
   );
 }

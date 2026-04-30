@@ -172,26 +172,57 @@ Pantaila handietan (telebista, tablet) jartzeko moduko taula publikoa.
 
 ---
 
-## 6. Eskaeraren Jarraipena (Jarraipen Mugikorra)
+## 6. Eskaeraren Jarraipena — Mostradoreko Eskaera Kodearen Bidez
 
 > **Aukerako eginbidea** — Txosna bakoitzeko konfiguraziotik gaitu/desgaitu daiteke ("QR kodea" fitxan).
 
 **URL:** `/eu/[slug]/track`
 
-Mostradoreetan eskaera hartu ondoren, boluntarioak kode laburra ematen dio bezeroari. Bezeroak kode hori sartu dezake bere telefonoan eskaeraren egoera jarraitzeko.
+Mostradorean hartu eskaera baten ondoren, boluntarioak kode laburra ematen dio bezeroari. Bezeroak kode hori erabiliz bere eskaeraren egoera jarraitu dezake bere telefonoan — eta TicketBAI gaituta badago, bere faktura fiskala ere bertatik jaso dezake.
 
-### 6a. Kode sarrera orrialdea
+---
+
+### 6a. Boluntarioaren pantaila — Eskualdatze txartela
+
+**URL:** `/eu/counter` (boluntarioaren pantaila)
+
+Boluntarioak mostradore-pantailatik eskaera berri bat sortzen eta baieztatzen duenean, **eskualdatze txartel bat** agertzen da pantaila osoa hartuz:
+
+![Eskualdatze txartela kontrakolore handian](../screenshots/42-counter-handoff-card.png)
+
+> **[ARGAZKI-OHARRA — 42-counter-handoff-card.png]**
+> Hartu argazkia mostradoreko pantailari eskaera berri bat baieztatzen denean (mobileTrackingEnabled gaituta). Pantaila osoko txartel dark-modu bat agertzen da: "ESKAERA #42" testu txikia goialdean, "Eman kode hau bezeroari" instrukzioa, kode monoespacioa letra handi zuriarekin etxe-beltz atzeko planoan (adib. AB-1234), QR kode handi bat, "Edo geroago idatzi hemen: /aste-nagusia-2026/track" testu txikia, eta "Itxi" botoi laranja bat behean.
+
+**Txartelak erakusten duena:**
+
+- `ESKAERA #42` — eskaera-zenbakia
+- **"Eman kode hau bezeroari"** — boluntarioari instrukzioa
+- **Kode laburra letra handiz**: adib. `AB-1234` (monoespacioan, letra zuriak etxe-beltze gainean)
+- **QR kodea** (160×160 px) — bezeroaren telefonoarekin eskaneatzeko; zuzenean `/eu/[slug]/track/AB-1234` orrialdera doa
+- URL testuan: `Edo geroago idatzi hemen: /aste-nagusia-2026/track`
+- **"Itxi"** botoi laranja bat — boluntarioak baztertu ostean mostradorea ikusgai geratzen da
+
+**Boluntarioak zer egiten du:**
+
+1. Bezeroak ordaindu du (edo ordainketa hartu da)
+2. Pantailan automatikoki txartela agertzen da
+3. Boluntarioak QR kodea erakusten dio bezeroari telefonoz eskaneatzeko **edo** kode alfanumerikoa ahozka/papereez ematen dio
+4. "Itxi" klikatzen du eta mostradorera itzultzen da
+
+---
+
+### 6b. Kode sarrera orrialdea (bezeroa)
 
 **URL:** `/eu/aste-nagusia-2026/track`
 
-Bezeroaren lehen kontaktua jarraipen-sistemarekin. Pantaila soil bat kode bat sartzeko.
+Bezeroak URL-a idazten du edo QR kodea eskaneatzen du. Kodea QR bidez eskaneatuz gero, zuzenean 6c ataleko orrialdera doa (sarrera-orria saltatu egiten da).
 
 **Pantailak erakusten duena:**
 
 - Txosna-izena goiburuan
 - Testu-eremua: "Zure kodea" (letra monoespacioan, maiuskulak automatikoki)
 - Laguntza-oharra: "Adib.: AB-1234"
-- "Bilatu" botoia → hurrengoko orrialdera
+- "Bilatu" botoia → hurrengo orrialdera
 - Kodea oker badago: mezu argia ("Koderik ez da aurkitu")
 
 **Onurak:**
@@ -201,29 +232,38 @@ Bezeroaren lehen kontaktua jarraipen-sistemarekin. Pantaila soil bat kode bat sa
 
 ---
 
-### 6b. Eskaera egoera orrialdea
+### 6c. Eskaera egoera orrialdea (bezeroa)
 
 **URL:** `/eu/aste-nagusia-2026/track/AB-1234`
 
-Kode zuzena sartu ondoren, bezeroak denbora errealean ikusten du bere eskaeraren egoera.
+Kode zuzena sartu ondoren (edo QR eskaneatuta), bezeroak denbora errealean ikusten du bere eskaeraren egoera eta faktura fiskala.
+
+![Eskaeraren egoera kode bidez — TicketBAI fakturarekin](../screenshots/43-track-status-with-invoice.png)
+
+> **[ARGAZKI-OHARRA — 43-track-status-with-invoice.png]**
+> Hartu argazkia bezeroaren eskaera-jarraipena pantailari (`/eu/[slug]/track/AB-1234`) eskaera CONFIRMED edo prest dagoenean eta faktura jaulkita dagoenean. Erakutsi behar du: goiburua "← Txosna-izena" loturarekin eta "Eskaera #42" izenburuarekin; jarraian egoera-txartelak (Janaria Prest!, Edariak Amaituta); "Txartel argia / Faktura" sekzioa faktura-erreferentziarekin (TB-00000042), data eta "QR kodea ikusi →" esteka; eta azpian "↓ Deskargatu txartela" botoi laranja lerro batean.
 
 **Pantailak erakusten duena:**
 
-- Eskaera-zenbakia eta bezeroaren izena
+- Eskaera-zenbakia eta bezeroaren izena goialdean
 - Txartel bat mostradoreko mota bakoitzeko (Janaria / Edariak), egoerarekin:
   - Jasota · Prestatzen · **Prest! 🎉** · Amaituta ✓
-- Guztia prest dagoenean: berde-koloreko ohartarazpen-barra ("Zure eskaera prest dago! Jaso dezakezu.")
-- "↓ Deskargatu txartela" botoia edozein momentutan
+- Guztia prest dagoenean: **"Zure eskaera prest dago! Jaso dezakezu."** barra berde bat
+- **"Txartel argia / Faktura" atala** (TicketBAI gaituta dagoenean eta faktura jaulkita dagoenean):
+  - Faktura-erreferentzia monoespacioan: adib. `TB-00000042`
+  - Data: `2026ko api. 30` · `10:00`
+  - **"QR kodea ikusi →"** esteka — Hazienda Vaskaren egiaztapen-orrira berri fitxa batean
+- **"↓ Deskargatu txartela"** botoia — jasotzeko txartela/frogagirria
 
 **Onurak:**
 
 - SSE bidez eguneratzen da denbora errealean — ez da orria freskatu behar
-- Bezeroak txosnatik urrun egon daiteke eta bere telefonoan ikusten du noiz joan behar den
-- Txartela eskatu aurretik deskargatu daiteke (eskaera baieztatzen den unetik aurrera)
+- Bezeroak faktura fiskala hemen bertan du: ez da beste URL-rik behar
+- Telefono bidez edo QR eskaneatuz eskura daiteke — mostradorean beti erosoa
 
 ---
 
-### 6c. Txartela
+### 6d. Txartela inprimatzeko
 
 **URL:** `/eu/aste-nagusia-2026/track/AB-1234/receipt`
 
@@ -235,7 +275,10 @@ Inprimatzeko moduko HTML orrialde gisa ematen da, PDFa sortu gabe.
 - Eskaera-zenbakia eta bezeroaren izena
 - Produktuen zerrenda aldaera eta gehigarriekin eta prezioekin
 - Guztira
-- "Ez da zerga-dokumentua" oharrarekin
+- **"Txartel argia / Faktura" sekzioa** (TicketBAI gaituta eta faktura jaulkita dagoenean):
+  - Faktura-erreferentzia
+  - QR URL testuan (inprimatzean eskaneatzeko)
+- "Ez da zerga-dokumentua" ohar soilarekin (TicketBAI **ez** dagoenean soilik)
 
 **Onurak:**
 

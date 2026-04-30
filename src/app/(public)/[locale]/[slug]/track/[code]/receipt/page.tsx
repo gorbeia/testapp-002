@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { txosnaRepo, orderRepo, ticketRepo } from '@/lib/store';
+import { txosnaRepo, orderRepo, ticketRepo, ticketBaiInvoiceRepo } from '@/lib/store';
 
 interface Props {
   params: Promise<{ locale: string; slug: string; code: string }>;
@@ -14,7 +14,10 @@ export default async function ReceiptPage({ params }: Props) {
   const order = await orderRepo.findByVerificationCode(txosna.id, code.toUpperCase());
   if (!order) notFound();
 
-  const tickets = await ticketRepo.listByOrder(order.id);
+  const [tickets, fiscalInvoice] = await Promise.all([
+    ticketRepo.listByOrder(order.id),
+    order.fiscalReceiptRef ? ticketBaiInvoiceRepo.findByOrder(order.id) : null,
+  ]);
 
   const confirmedDate = order.confirmedAt ?? order.createdAt;
   const dateStr = confirmedDate.toLocaleDateString('eu-EU', {
@@ -54,6 +57,10 @@ export default async function ReceiptPage({ params }: Props) {
           .line-price { font-size: 13px; white-space: nowrap; font-weight: 500; }
           .total-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; padding: 12px 0; }
           .footer { font-size: 11px; color: #aaa; text-align: center; margin-top: 24px; }
+          .fiscal { margin-top: 16px; padding: 12px 14px; border: 1px solid #e0e0e0; border-radius: 8px; }
+          .fiscal-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+          .fiscal-ref { font-family: monospace; font-size: 14px; font-weight: 700; }
+          .fiscal-qr { display: inline-block; margin-top: 8px; font-size: 12px; color: #e85d2f; text-decoration: none; }
           .print-btn {
             display: block;
             width: 100%;
@@ -107,7 +114,21 @@ export default async function ReceiptPage({ params }: Props) {
           <span>{order.total.toFixed(2)} €</span>
         </div>
 
-        <div className="footer">Ez da zerga-dokumentua</div>
+        {fiscalInvoice ? (
+          <div className="fiscal">
+            <div className="fiscal-label">Txartel argia / Faktura</div>
+            <div className="fiscal-ref">
+              {fiscalInvoice.series}-{String(fiscalInvoice.invoiceNumber).padStart(8, '0')}
+            </div>
+            {fiscalInvoice.qrUrl && (
+              <a className="fiscal-qr" href={fiscalInvoice.qrUrl}>
+                QR kodea ikusi → {fiscalInvoice.qrUrl}
+              </a>
+            )}
+          </div>
+        ) : (
+          <div className="footer">Ez da zerga-dokumentua</div>
+        )}
 
         <button className="print-btn" onClick={undefined}>
           🖨 Inprimatu
