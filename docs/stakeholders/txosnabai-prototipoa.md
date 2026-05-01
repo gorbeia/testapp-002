@@ -178,6 +178,8 @@ Mostradoreetan eskaera hartu ondoren, boluntarioak kode laburra ematen dio bezer
 
 Bezeroaren lehen kontaktua jarraipen-sistemarekin. Pantaila soil bat kode bat sartzeko.
 
+![Kode sarrera — eskaeraren jarraipena](../screenshots/38-track-entry-mobile.png)
+
 **Pantailak erakusten duena:**
 
 - Txosna-izena goiburuan
@@ -198,6 +200,8 @@ Bezeroaren lehen kontaktua jarraipen-sistemarekin. Pantaila soil bat kode bat sa
 **URL:** `/eu/aste-nagusia-2026/track/AB-1234`
 
 Kode zuzena sartu ondoren, bezeroak denbora errealean ikusten du bere eskaeraren egoera.
+
+![Eskaera egoera — kodearen bidez jarraipena](../screenshots/39-track-status-mobile.png)
 
 **Pantailak erakusten duena:**
 
@@ -220,6 +224,8 @@ Kode zuzena sartu ondoren, bezeroak denbora errealean ikusten du bere eskaeraren
 **URL:** `/eu/aste-nagusia-2026/track/AB-1234/receipt`
 
 Inprimatzeko moduko HTML orrialde gisa ematen da, PDFa sortu gabe.
+
+![Txartela — inprimatzeko orrialdea](../screenshots/40-track-receipt-mobile.png)
 
 **Txartelak biltzen duena:**
 

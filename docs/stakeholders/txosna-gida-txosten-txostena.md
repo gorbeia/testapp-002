@@ -171,10 +171,14 @@ Bezeroak bere eskaeraren egoera ikusten du:
 
 **Sarrera orrialdea** (`/track`):
 
+![Kode sarrera — eskaeraren jarraipena](../screenshots/38-track-entry-mobile.png)
+
 - Kodea idazteko eremua (adib.: `AB-1234`)
 - "Bilatu" botoiarekin eskaera aurkitu
 
 **Egoera orrialdea** (`/track/[kode]`):
+
+![Eskaera egoera — kodearen bidez jarraipena](../screenshots/39-track-status-mobile.png)
 
 - Eskaeraren egungo egoera denbora errealean (SSE bidez)
 - Janari eta Edarien tiketen egoera bereizita
@@ -182,6 +186,8 @@ Bezeroak bere eskaeraren egoera ikusten du:
 - "Deskargatu txartela" lotura frogagirri orrialdera
 
 **Frogagirri orrialdea** (`/track/[kode]/receipt`):
+
+![Txartela — inprimatzeko orrialdea](../screenshots/40-track-receipt-mobile.png)
 
 - Txosna izena, data, eskaera zenbakia, bezeroaren izena
 - Lerro bakoitzeko produktua eta prezioa

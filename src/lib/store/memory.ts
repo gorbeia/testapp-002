@@ -108,7 +108,7 @@ function seed() {
       enabledPaymentMethods: ['CASH'],
       pendingPaymentTimeout: 15,
       printingEnabled: false,
-      mobileTrackingEnabled: false,
+      mobileTrackingEnabled: mt.id === 'txosna-1',
       associationId: MOCK_ASSOCIATION.id,
       createdAt: t,
       updatedAt: t,
