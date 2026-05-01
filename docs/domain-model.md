@@ -8,14 +8,16 @@ _Session 17 — April 2026_
 
 ### Association (Tenant)
 
-| Attribute          | Type      | Notes                                                 |
-| ------------------ | --------- | ----------------------------------------------------- |
-| name               | text      | Name of the association                               |
-| phone              | text?     | Contact phone number                                  |
-| cif                | text?     | Spanish tax ID                                        |
-| ticket_bai_enabled | boolean   | When true, all products must have a VAT type assigned |
-| created_at         | datetime  | When the association registered                       |
-| vat_types          | VatType[] | Tax rate definitions for the association              |
+| Attribute          | Type               | Notes                                                    |
+| ------------------ | ------------------ | -------------------------------------------------------- |
+| name               | text               | Name of the association                                  |
+| phone              | text?              | Contact phone number                                     |
+| cif                | text?              | Spanish tax ID used as `sellerCif` on invoices           |
+| ticket_bai_enabled | boolean            | When true, all confirmed orders trigger invoice issuance |
+| created_at         | datetime           | When the association registered                          |
+| vat_types          | VatType[]          | Tax rate definitions for the association                 |
+| ticketBaiConfig    | TicketBaiConfig?   | TicketBAI provider configuration (one per association)   |
+| ticketBaiInvoices  | TicketBaiInvoice[] | All issued fiscal invoices                               |
 
 ---
 
@@ -99,6 +101,50 @@ _Session 17 — April 2026_
 | label       | text        | e.g. "BEZ Murriztua" |
 | percentage  | decimal     | e.g. 10.00           |
 | association | Association | Owner                |
+
+---
+
+### TicketBaiConfig
+
+Per-association configuration for the TicketBAI fiscal invoice system. One record per association (created on first save via the admin settings panel).
+
+| Attribute    | Type        | Notes                                                    |
+| ------------ | ----------- | -------------------------------------------------------- |
+| association  | Association | Owner (one-to-one)                                       |
+| providerType | enum        | MOCK (only option currently)                             |
+| series       | text        | Invoice series prefix, e.g. "TB"                         |
+| credentials  | json        | Provider-specific API credentials (shape varies by type) |
+| created_at   | datetime    |                                                          |
+| updated_at   | datetime    |                                                          |
+
+---
+
+### TicketBaiInvoice
+
+Provider-independent ledger of issued fiscal invoices. Each confirmed order produces one record here. The ledger is the compliance artefact — it is preserved independently of which external provider was used to submit the invoice.
+
+| Attribute     | Type        | Notes                                                                     |
+| ------------- | ----------- | ------------------------------------------------------------------------- |
+| association   | Association | Owner                                                                     |
+| order         | Order       | The order this invoice covers (one-to-one)                                |
+| orderNumber   | integer     | Captured at issue time                                                    |
+| series        | text        | Series prefix used (e.g. "TB")                                            |
+| invoiceNumber | integer     | Sequential per (association, series); unique within the series            |
+| issuedAt      | datetime    | Timestamp used in signing; matches order confirmation time                |
+| sellerName    | text        | Association name at time of issue                                         |
+| sellerCif     | text        | Association CIF at time of issue                                          |
+| lines         | json        | Line items: description, quantity, unitPrice, vatRate                     |
+| total         | decimal     | Order total                                                               |
+| vatBreakdown  | json        | VAT breakdown by rate: rate, base, vatAmount                              |
+| chainId       | text        | SHA-256 hash over series+invoiceNumber+sellerCif+total+issuedAt+prevChain |
+| providerRef   | text?       | Reference returned by the external provider                               |
+| qrUrl         | text?       | QR verification URL returned by the provider                              |
+| xmlPayload    | text?       | Signed XML, if returned by the provider                                   |
+| status        | enum        | PENDING, SUBMITTED, ACCEPTED, REJECTED, MOCK                              |
+| created_at    | datetime    |                                                                           |
+| updated_at    | datetime    |                                                                           |
+
+**Unique constraint:** `(associationId, series, invoiceNumber)` — prevents duplicate invoice numbers within a series.
 
 ---
 
@@ -236,7 +282,7 @@ A txosna can only enable providers that exist in its association.
 | notification_token  | text                | Optional; browser push notification token                  |
 | local_storage_key   | text                | Links order to customer's browser local storage            |
 | notes               | text                | Optional free text instructions                            |
-| fiscal_receipt_ref  | text                | Future; TicketBAI reference; null until built              |
+| fiscal_receipt_ref  | text?               | ID of the associated `TicketBaiInvoice`; null until issued |
 | tickets             | list of OrderTicket | One per counter type present in the order                  |
 
 ---
@@ -478,10 +524,13 @@ Association
   │           ├── has many → VariantGroups → VariantOptions
   │           └── has many → Modifiers
   ├── has many → PaymentProviders (Stripe / Redsys)
+  ├── has one  → TicketBaiConfig
+  ├── has many → TicketBaiInvoices
   └── has many → Txosnak
         ├── has many → TxosnaPaymentProviders (junction → PaymentProviders)
         ├── has many → TxosnaProducts (references Products)
         └── has many → Orders
+              ├── has one  → TicketBaiInvoice (via fiscal_receipt_ref)
               └── has many → OrderTickets (FOOD and/or DRINKS)
                     └── has many → OrderLines
                           ├── has many → SelectedVariants

@@ -30,6 +30,7 @@ function makeOrder(
     confirmedAt: new Date(),
     expiresAt: null,
     pendingLines: null,
+    fiscalReceiptRef: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

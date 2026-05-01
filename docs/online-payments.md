@@ -214,6 +214,7 @@ Customer places order on phone
   │   ↓
   │   ┌── Payment successful
   │   │     Provider webhook received → order confirmed → tickets created
+  │   │     TicketBAI invoice issued (non-blocking, if enabled for association)
   │   │     Customer redirected back to order status screen
   │   │
   │   └── Payment failed / abandoned
@@ -222,7 +223,10 @@ Customer places order on phone
   │
   └── (alternative) Customer goes to counter and pays cash
         Volunteer confirms payment manually → order confirmed
+        TicketBAI invoice issued (non-blocking, if enabled for association)
 ```
+
+**TicketBAI issuance:** After an order is confirmed — whether via online payment webhook or cash payment at the counter — `issueTicketBaiInvoice()` is called automatically if the association has TicketBAI enabled. Failures are swallowed (`.catch(() => {})`) so they never block the confirmation itself. When issued, the invoice is linked to the order via `fiscalReceiptRef` and appears on the customer's order status screen and printable receipt.
 
 **Webhook reliability:** Payment confirmation must arrive via webhook, not only via the redirect return URL. The return URL can be blocked by network issues, browser back-navigation, or app closure. Webhooks are the authoritative signal.
 

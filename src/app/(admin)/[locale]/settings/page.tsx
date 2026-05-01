@@ -1322,15 +1322,46 @@ function VatTab() {
   const [formLabel, setFormLabel] = useState('');
   const [formPercentage, setFormPercentage] = useState('');
   const [error, setError] = useState('');
+  const [associationId, setAssociationId] = useState('');
+  const [tbaiSeries, setTbaiSeries] = useState('TB');
+  const [tbaiSaved, setTbaiSaved] = useState(false);
+  const [tbaiError, setTbaiError] = useState('');
+  const [tbaiTesting, setTbaiTesting] = useState(false);
+  const [tbaiTestResult, setTbaiTestResult] = useState<{ ok: boolean; error?: string } | null>(
+    null
+  );
 
-  // Load VAT types on mount
+  // Load VAT types and association config on mount
   React.useEffect(() => {
-    const loadVatTypes = async () => {
+    const loadData = async () => {
       try {
-        const resp = await fetch('/api/vat-types');
-        if (!resp.ok) throw new Error('Failed to load VAT types');
-        const data = await resp.json();
-        setVatTypes(data);
+        const sessionRes = await fetch('/api/auth/session');
+        const session = await sessionRes.json();
+        const assocId: string = session?.user?.associationId ?? '';
+        setAssociationId(assocId);
+
+        const [vatRes, assocRes] = await Promise.all([
+          fetch('/api/vat-types'),
+          assocId ? fetch(`/api/associations/${assocId}`) : Promise.resolve(null),
+        ]);
+
+        if (vatRes.ok) {
+          const data = await vatRes.json();
+          setVatTypes(data);
+        }
+
+        if (assocRes?.ok) {
+          const assoc = await assocRes.json();
+          setTicketBaiEnabled(assoc.ticketBaiEnabled ?? false);
+        }
+
+        if (assocId) {
+          const tbaiRes = await fetch(`/api/associations/${assocId}/ticketbai`);
+          if (tbaiRes.ok) {
+            const tbai = await tbaiRes.json();
+            if (tbai.series) setTbaiSeries(tbai.series);
+          }
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -1338,18 +1369,7 @@ function VatTab() {
       }
     };
 
-    // Load association config for TicketBAI
-    const loadAssociation = async () => {
-      try {
-        // Assuming associationId is available from session/context
-        // For now, we'll skip this load
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    loadVatTypes();
-    loadAssociation();
+    loadData();
   }, []);
 
   const handleAddVat = () => {
@@ -1416,9 +1436,6 @@ function VatTab() {
 
   const handleToggleTicketBai = async (newValue: boolean) => {
     try {
-      const sessionRes = await fetch('/api/auth/session');
-      const session = await sessionRes.json();
-      const associationId = session?.user?.associationId ?? '';
       const resp = await fetch('/api/associations/' + associationId, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -1431,14 +1448,157 @@ function VatTab() {
     }
   };
 
+  const handleSaveTbaiConfig = async () => {
+    setTbaiError('');
+    try {
+      const resp = await fetch(`/api/associations/${associationId}/ticketbai`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ series: tbaiSeries.trim() || 'TB', providerType: 'MOCK' }),
+      });
+      if (!resp.ok) throw new Error(`Errorea (${resp.status})`);
+      setTbaiSaved(true);
+      setTimeout(() => setTbaiSaved(false), 2000);
+    } catch (err) {
+      setTbaiError(String(err));
+    }
+  };
+
+  const handleTestTbai = async () => {
+    setTbaiTesting(true);
+    setTbaiTestResult(null);
+    try {
+      const resp = await fetch(`/api/associations/${associationId}/ticketbai`, { method: 'POST' });
+      const result: { ok: boolean; error?: string } = await resp.json();
+      setTbaiTestResult(result);
+    } catch {
+      setTbaiTestResult({ ok: false, error: 'Konexio errorea' });
+    } finally {
+      setTbaiTesting(false);
+    }
+  };
+
   return (
     <div style={{ maxWidth: 520, display: 'flex', flexDirection: 'column', gap: 20 }}>
       <ToggleRow
         label="TicketBAI gaitu"
-        hint="Produktuak BEZ mota dute obligatorioa"
+        hint="Fakturazioa zerga agintaritzari bidaltzea"
         checked={ticketBaiEnabled}
         onChange={handleToggleTicketBai}
       />
+
+      {ticketBaiEnabled && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+            padding: 20,
+            background: 'var(--adm-surface)',
+            border: '1px solid var(--adm-border)',
+            borderRadius: 12,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: 'var(--adm-text-sec)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
+            TicketBAI konfigurazioa
+          </div>
+
+          <div>
+            <FormLabel>Faktura serie</FormLabel>
+            <FormHint>Faktura zenbakien aurrizki gisa erabiliko da (adib. &quot;TB&quot;)</FormHint>
+            <input
+              type="text"
+              value={tbaiSeries}
+              onChange={(e) => setTbaiSeries(e.target.value)}
+              maxLength={10}
+              style={{
+                marginTop: 8,
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--adm-border)',
+                background: 'var(--adm-surface)',
+                color: 'var(--adm-text-pri)',
+                fontSize: 14,
+                fontFamily: 'JetBrains Mono, monospace',
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          <div>
+            <FormLabel>Hornitzaile mota</FormLabel>
+            <div
+              style={{
+                padding: '10px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--adm-border)',
+                background: 'var(--adm-surface)',
+                color: 'var(--adm-text-sec)',
+                fontSize: 14,
+              }}
+            >
+              Mock (Proba modua) — hornitzaile gehiago laster
+            </div>
+          </div>
+
+          {tbaiError && <div style={{ fontSize: 12, color: '#ef4444' }}>{tbaiError}</div>}
+
+          {tbaiTestResult && (
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 500,
+                color: tbaiTestResult.ok ? '#22c55e' : '#ef4444',
+              }}
+            >
+              {tbaiTestResult.ok
+                ? '✓ Hornitzailea ondo dago'
+                : `✗ ${tbaiTestResult.error ?? 'Errorea'}`}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={handleTestTbai}
+              disabled={tbaiTesting}
+              style={{
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 500,
+                border: '1px solid var(--adm-border)',
+                background: 'var(--adm-surface-hi)',
+                color: 'var(--adm-text-sec)',
+                cursor: tbaiTesting ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {tbaiTesting ? '⏳ Probatzen...' : '⚡ Probatu'}
+            </button>
+            <SaveButton saved={tbaiSaved} onClick={handleSaveTbaiConfig} />
+          </div>
+
+          <a
+            href="ticketbai"
+            style={{
+              fontSize: 13,
+              color: 'var(--adm-primary, #e85d2f)',
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}
+          >
+            → Faktura liburua ikusi
+          </a>
+        </div>
+      )}
 
       {loading ? (
         <div style={{ color: 'var(--adm-text-sec)' }}>Kargatzen...</div>

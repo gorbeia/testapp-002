@@ -315,6 +315,7 @@ Given(
       confirmedAt: now,
       expiresAt: null,
       pendingLines: null,
+      fiscalReceiptRef: null,
       createdAt: now,
       updatedAt: now,
     };

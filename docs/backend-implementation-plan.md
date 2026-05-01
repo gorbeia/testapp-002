@@ -415,6 +415,7 @@ Redsys:
 2. `CatalogRepository` — merges with existing product/category routes
 3. `VolunteerRepository` — maps cleanly to single table
 4. `OrderRepository` + `TicketRepository` — most complex, do together
+5. `TicketBaiConfigRepository` + `TicketBaiInvoiceRepository` — add after order repos; depends on `Order`
 
 **No API changes required.** All handlers already use repository interfaces.
 
@@ -669,8 +670,8 @@ Demo fixture: `mobileTrackingEnabled: true` on `demo-txosna-1` (`demo-janaria`) 
 **Public tracking pages** (`(public)/[locale]/[slug]/track/`):
 
 - Entry page: code input + submit → navigate to `track/[code]`
-- Status page: Server Component fetches initial state; Client Component subscribes to txosna SSE and re-fetches on `ticket:status_changed` / `order:cancelled` / `order:confirmed`
-- Receipt page: Server Component rendering full `<html>` document; printable via `window.print()`
+- Status page: Server Component fetches initial state; Client Component subscribes to txosna SSE and re-fetches on `ticket:status_changed` / `order:cancelled` / `order:confirmed`; also renders the "Txartel argia / Faktura" fiscal invoice section when `order.fiscalReceiptRef` is non-null (fetched in the same `Promise.all` as tickets)
+- Receipt page: Server Component rendering full `<html>` document; printable via `window.print()`; shows fiscal invoice section when invoice exists, otherwise shows "Ez da zerga-dokumentua"
 
 ### Dependencies
 
@@ -687,22 +688,83 @@ Demo fixture: `mobileTrackingEnabled: true` on `demo-txosna-1` (`demo-janaria`) 
 
 ---
 
+## Phase 13 — TicketBAI fiscal invoices
+
+**Goal:** Every confirmed sale automatically generates a digitally-signed, chained fiscal invoice and submits it to Hacienda Vasca (Basque Country tax authority). Customers see the invoice reference and QR code on their order screen and printable receipt.
+
+### Architecture
+
+Provider abstraction mirrors `src/lib/payments/`. The `ITicketBaiProvider` interface is the only contract application code depends on — the association can swap providers without changing any handler.
+
+```
+src/lib/ticketbai/
+  types.ts      ← ITicketBaiProvider interface + input/result types
+  mock.ts       ← MockTicketBaiProvider (dev and test)
+  index.ts      ← createTicketBaiProvider(config) factory
+  service.ts    ← issueTicketBaiInvoice() orchestrator
+```
+
+### Store changes
+
+**New models** added to `prisma/schema.prisma`: `TicketBaiConfig` (per-association config: series, providerType, credentials) and `TicketBaiInvoice` (provider-independent ledger record: lines, VAT breakdown, chain fields, QR URL, XML payload).
+
+**New repository interfaces** in `src/lib/store/types.ts`: `TicketBaiConfigRepository` and `TicketBaiInvoiceRepository`.
+
+**`StoredAssociation`** extended with `ticketBaiEnabled: boolean` and `cif: string | null`.
+
+### Integration points
+
+Invoice issuance is triggered from two places — both wrapped in `.catch(() => {})` so failures never block confirmation:
+
+1. `src/lib/confirm-order.ts` — phone-to-counter order confirmation
+2. `src/app/api/handlers/txosna-orders.ts` — counter order created directly as CONFIRMED
+
+### Hash chain
+
+`chainId` is SHA-256 over `series|invoiceNumber|sellerCif|total|issuedAt|previousChainId`. First invoice uses literal `FIRST` as `previousChainId`. Deterministic — chain can be verified independently of any external system.
+
+### Frontend changes
+
+**Admin settings** (BEZ tab): Toggle to enable TicketBAI; when enabled, a config panel appears (series, provider type, test-connection button, link to ledger).
+
+**Admin invoice ledger** (`/[locale]/ticketbai`): Table of all issued invoices — number, series, order, date, total, status, QR link. Admin-only.
+
+**Customer tracking page** (`/[locale]/[slug]/track/[code]`): "Txartel argia / Faktura" section rendered above the receipt download button when `order.fiscalReceiptRef` is non-null.
+
+**Customer receipt page** (`/[locale]/[slug]/track/[code]/receipt`): Fiscal section shown when invoice exists; "Ez da zerga-dokumentua" fallback when none.
+
+### Testing
+
+| Test                                | What to verify                                                                                  |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Unit: `MockTicketBaiProvider`       | `issue()` returns valid chainId; `issued[]` grows; multiple invoices produce different chainIds |
+| Unit: chain computation             | same inputs always produce same chainId; changing any input changes the chainId                 |
+| Integration: issuance flow          | confirmed order triggers invoice creation; `order.fiscalReceiptRef` set; invoice in ledger      |
+| Integration: chain ordering         | second invoice's `previousChainId` equals first invoice's `chainId`                             |
+| Integration: disabled association   | no invoice created when `ticketBaiEnabled = false`                                              |
+| Integration: GET config (no config) | returns defaults                                                                                |
+| Integration: PATCH config           | persists updated series and providerType                                                        |
+| Integration: auth checks            | unauthenticated returns 401; wrong association returns 403                                      |
+
+---
+
 ## Delivery summary
 
-| Phase | What ships                             | New API surface                                             |
-| ----- | -------------------------------------- | ----------------------------------------------------------- |
-| 0     | In-memory store, repository interfaces | —                                                           |
-| 1     | Txosna metadata + catalog reads        | `GET /txosnak/[slug]`, `GET /txosnak/[slug]/catalog`        |
-| 2     | Counter order creation + listing       | `POST /txosnak/[slug]/orders`, `GET /txosnak/[slug]/orders` |
-| 3     | KDS ticket lifecycle                   | `PATCH /tickets/[id]`, `GET /txosnak/[slug]/tickets`        |
-| 4     | Customer order status + SSE            | `GET /orders/[id]`, `/events` SSE wiring                    |
-| 5     | Self-service orders + confirm/cancel   | Extends order POST, adds `/confirm`, `/cancel`              |
-| 6     | Volunteer management + PIN auth        | `/volunteers`, `POST /auth/pin`                             |
-| 7     | Txosna settings                        | `GET/PATCH /txosnak/[slug]/settings`                        |
-| 8     | Reports                                | `GET /txosnak/[slug]/reports`                               |
-| 9     | Online payments                        | `POST /payments/session`, `POST /payments/webhook/stripe`   |
-| 10    | Prisma backend                         | No new routes — storage swap                                |
-| 11    | Demo provisioning                      | `POST /api/demo/reset`, `GET /api/demo/status`              |
-| 12    | Mobile order tracking                  | `GET /txosnak/[slug]/orders/lookup`                         |
+| Phase | What ships                             | New API surface                                                                                                             |
+| ----- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 0     | In-memory store, repository interfaces | —                                                                                                                           |
+| 1     | Txosna metadata + catalog reads        | `GET /txosnak/[slug]`, `GET /txosnak/[slug]/catalog`                                                                        |
+| 2     | Counter order creation + listing       | `POST /txosnak/[slug]/orders`, `GET /txosnak/[slug]/orders`                                                                 |
+| 3     | KDS ticket lifecycle                   | `PATCH /tickets/[id]`, `GET /txosnak/[slug]/tickets`                                                                        |
+| 4     | Customer order status + SSE            | `GET /orders/[id]`, `/events` SSE wiring                                                                                    |
+| 5     | Self-service orders + confirm/cancel   | Extends order POST, adds `/confirm`, `/cancel`                                                                              |
+| 6     | Volunteer management + PIN auth        | `/volunteers`, `POST /auth/pin`                                                                                             |
+| 7     | Txosna settings                        | `GET/PATCH /txosnak/[slug]/settings`                                                                                        |
+| 8     | Reports                                | `GET /txosnak/[slug]/reports`                                                                                               |
+| 9     | Online payments                        | `POST /payments/session`, `POST /payments/webhook/stripe`                                                                   |
+| 10    | Prisma backend                         | No new routes — storage swap                                                                                                |
+| 11    | Demo provisioning                      | `POST /api/demo/reset`, `GET /api/demo/status`                                                                              |
+| 12    | Mobile order tracking                  | `GET /txosnak/[slug]/orders/lookup`                                                                                         |
+| 13    | TicketBAI fiscal invoices              | `GET/PATCH /associations/[id]/ticketbai`, `GET /associations/[id]/ticketbai/invoices`, `GET /orders/[id]/ticketbai-invoice` |
 
 Each phase can be merged and deployed independently. The front-end prototype continues to run against mock data until the corresponding phase lands; switching a screen to the real API is a one-line change per `fetch` call.

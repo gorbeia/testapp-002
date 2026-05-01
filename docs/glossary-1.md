@@ -146,17 +146,21 @@ _Session 17 — April 2026_
 
 ## Payment
 
-| Term                    | English                 | Definition                                                                           |
-| ----------------------- | ----------------------- | ------------------------------------------------------------------------------------ |
-| Cash payment            | Cash payment            | Payment made in person at the counter                                                |
-| Online payment          | Online payment          | Digital payment by customer on phone (future)                                        |
-| Payment method          | Payment method          | How the order was paid: cash or online; configurable per txosna                      |
-| Enabled payment methods | Enabled payment methods | Payment methods accepted by a txosna; set by admin                                   |
-| Pending payment         | Pending payment         | Phone order not yet confirmed by cash payment at counter                             |
-| Change                  | Change / change due     | Cash to return; calculated optionally when volunteer enters amount given             |
-| Receipt                 | Receipt                 | Downloadable PDF of completed order on customer's phone                              |
-| Fiscal receipt          | Fiscal receipt          | Official proof of purchase for TicketBAI (future)                                    |
-| TicketBAI               | TicketBAI               | Fiscal receipt system required in the Basque Country; planned for future integration |
+| Term                    | English                 | Definition                                                                                                                                                                                                        |
+| ----------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cash payment            | Cash payment            | Payment made in person at the counter                                                                                                                                                                             |
+| Online payment          | Online payment          | Digital payment by customer on phone (future)                                                                                                                                                                     |
+| Payment method          | Payment method          | How the order was paid: cash or online; configurable per txosna                                                                                                                                                   |
+| Enabled payment methods | Enabled payment methods | Payment methods accepted by a txosna; set by admin                                                                                                                                                                |
+| Pending payment         | Pending payment         | Phone order not yet confirmed by cash payment at counter                                                                                                                                                          |
+| Change                  | Change / change due     | Cash to return; calculated optionally when volunteer enters amount given                                                                                                                                          |
+| Receipt                 | Receipt                 | Downloadable PDF of completed order on customer's phone                                                                                                                                                           |
+| Fiscal receipt          | Fiscal receipt          | Official proof of purchase required by TicketBAI regulation; shown on customer order screens and printable receipts when TicketBAI is enabled for the association                                                 |
+| TicketBAI               | TicketBAI               | Basque Country fiscal regulation requiring every sale to generate a digitally signed, chained invoice submitted to Hacienda Vasca; implemented via `ITicketBaiProvider` with `MockTicketBaiProvider` for dev/test |
+| Txartel argia           | Fiscal receipt card     | The "Txartel argia / Faktura" UI section shown on customer order and tracking screens when a TicketBAI invoice has been issued; displays series/number, issue date, and QR link                                   |
+| Faktura liburua         | Invoice ledger          | Admin screen listing all issued TicketBAI invoices; provider-independent record preserved in the app's own store even if the provider changes                                                                     |
+| Invoice chain           | Invoice chain           | SHA-256 hash chain linking consecutive TicketBAI invoices; makes it impossible to delete or reorder invoices without detection                                                                                    |
+| Handoff card            | Handoff card            | Full-screen overlay shown to the counter volunteer after a counter order is confirmed when `mobileTrackingEnabled`; displays verification code, QR code, and tracking URL for the customer                        |
 
 ---
 
@@ -250,4 +254,4 @@ _Session 17 — April 2026_
 
 ---
 
-_Last updated: session 17_
+_Last updated: session 20_

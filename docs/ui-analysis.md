@@ -174,6 +174,10 @@ After placing the order:
 - Current status with a progress indicator (pending payment / received / in preparation / ready)
 - Clear explanation of next steps: "Go to the counter to pay"
 - If push notifications are enabled: confirmation that they will be notified
+- When the association has TicketBAI enabled and the order is confirmed, a **"Txartel argia / Faktura"** card appears:
+  - Invoice reference in monospace (`TB-00000001`)
+  - Issue date and time
+  - "QR kodea ikusi →" link (opens Hacienda Vasca portal in new tab)
 
 ### Kitchen pause / txosna closed state
 
@@ -231,6 +235,87 @@ When a txosna has separate counters, there are **two separate pickup proof scree
 - READY: dark green background (`#14532d`), white text
 - IN_PREPARATION: dark amber background (`#78350f`), white text — customer is waiting
 - The screen automatically updates when status changes — no refresh needed
+
+---
+
+## 4b. Mobile Order Tracking Screen
+
+### Context
+
+Counter-order customers receive a printed or displayed verification code (e.g. `AB-1234`) after placing their order. They can use this code at any time to look up their order status from their phone without creating an account.
+
+### Entry page (`/[locale]/[slug]/track`)
+
+Clean single-field form. No chrome — just the stall name and a code input.
+
+```
+┌─────────────────────────┐
+│  Txosna Nagusia         │
+│  ─────────────────────  │
+│                         │
+│  Sartu zure kodea:      │
+│  [AB-1234          ]    │
+│                         │
+│  [Bilatu →]             │
+└─────────────────────────┘
+```
+
+### Status page (`/[locale]/[slug]/track/[code]`)
+
+Shows live ticket status for the order. Updates in real time via SSE subscription (same events as the main order screen). Layout mirrors the phone-order status screen.
+
+```
+┌─────────────────────────┐
+│  ← Txosna Nagusia       │
+│  Eskaera #42            │
+│  Josu                   │
+├─────────────────────────┤
+│  JANARIA                │
+│  Prestatzen             │  ← orange, left border
+├─────────────────────────┤
+│  EDARIAK                │
+│  Jasota                 │  ← grey, left border
+├─────────────────────────┤
+│  ┌─── Txartel argia ───┐ │
+│  │ TB-00000042         │ │  ← monospace, dark
+│  │ 2026-05-01  10:32   │ │
+│  │ [QR kodea ikusi →]  │ │  ← orange link
+│  └─────────────────────┘ │
+├─────────────────────────┤
+│  ↓ Deskargatu txartela  │  ← bordered button
+└─────────────────────────┘
+```
+
+- The "Txartel argia / Faktura" card appears only when the order has a `fiscalReceiptRef`; hidden otherwise
+- The ready banner ("Zure eskaera prest dago!") appears in green when all tickets are READY or COMPLETED
+- SSE reconnection is transparent — status stays current even on a slow mobile connection
+
+### Receipt page (`/[locale]/[slug]/track/[code]/receipt`)
+
+Printable HTML document rendered as a full `<html>` response (no layout wrapper). Optimised for `window.print()`.
+
+```
+Txosna Nagusia
+2026ko maiatzaren 1a
+──────────────────
+Eskaera #42
+Josu
+──────────────────
+2× Txuleta (tripakiz)         €18.00
+1× Garagardoa (pinta)          €3.50
+──────────────────
+Guztira                       €21.50
+
+┌ Txartel argia / Faktura ┐
+│ TB-00000042             │
+│ QR kodea: https://...   │
+└─────────────────────────┘
+
+[🖨 Inprimatu]  ← hidden on print
+```
+
+- When no invoice exists, the footer reads "Ez da zerga-dokumentua"
+- Print button executes `window.print()` via inline script; hidden via `@media print`
 
 ---
 
@@ -608,6 +693,58 @@ Wizard-style setup for new txosnak. Fields grouped logically: basic info → cou
 
 For existing txosnak: tabbed layout with sections for settings, menu overrides, and reports.
 
+### Association settings — BEZ / TicketBAI tab
+
+Separate tab in the admin settings area for fiscal configuration. Two sub-sections:
+
+**VAT types** — existing functionality: list of VAT rates for the association.
+
+**TicketBAI** — toggle and configuration:
+
+```
+┌─────────────────────────────────────────────────────┐
+│  TicketBAI                                          │
+│  Faktura elektronikoa aktibatu                      │
+│                                     [● Gaitu]       │
+├─────────────────────────────────────────────────────┤
+│  Serie:  [TB            ]                           │
+│                                                     │
+│  Hornitzailea:  [Mock (test) ▼]                     │
+│                                                     │
+│  [Konexioa probatu]    [Gorde]                      │
+│                                                     │
+│  → Faktura liburua ikusi                            │
+└─────────────────────────────────────────────────────┘
+```
+
+- Toggle is off by default; enabling reveals the config panel
+- Series field: default "TB"; 1–4 uppercase letters
+- Provider selector: shows available provider types (currently only "Mock (test)")
+- "Test connection" button calls the provider's `validate()` and shows the result inline
+- Save button calls `PATCH /api/associations/[id]/ticketbai`; on success shows a check mark
+- "Faktura liburua ikusi" link navigates to the invoice ledger page
+
+### Invoice ledger (`/[locale]/ticketbai`)
+
+Admin-only page listing all issued TicketBAI invoices for the association.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  TicketBAI Fakturak                                                     │
+├────────────┬──────────┬───────────┬───────────┬──────────┬─────────────┤
+│  Zenbakia  │  Serie   │  Eskaera  │  Data     │  Total   │  Egoera     │
+├────────────┼──────────┼───────────┼───────────┼──────────┼─────────────┤
+│  TB-000001 │  TB      │  #42      │  2026-05  │  €24.50  │  MOCK  [QR] │
+│  TB-000002 │  TB      │  #43      │  2026-05  │  €12.00  │  MOCK  [QR] │
+└────────────┴──────────┴───────────┴───────────┴──────────┴─────────────┘
+```
+
+- Invoice reference column: monospace, zero-padded number, links to order detail
+- QR column: small link icon opening the QR URL in a new tab
+- Status badge: MOCK (grey), SUBMITTED (blue), ACCEPTED (green), REJECTED (red)
+- Sorted by invoice number descending (newest first)
+- No editing — ledger is append-only
+
 ### Volunteer management
 
 Simple table of volunteers with name, email, role, and active status. Add volunteer opens a form. Inline deactivation. No complex permissions — just Admin or Volunteer.
@@ -696,4 +833,4 @@ After login, the volunteer sees the txosna name and a large numpad for PIN entry
 
 ---
 
-_Last updated: session 18_
+_Last updated: session 20_

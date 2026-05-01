@@ -484,7 +484,7 @@ A fourth session PIN mode, selectable by any volunteer, that provides a coordina
 - Downloadable receipt (printable HTML, saved as PDF via browser) available from the moment an order is **CONFIRMED** — not gated on completion
 - Applies to all ordering channels (counter, phone-to-counter, future self-service)
 - Contains: txosna name, event, date, order number, customer name, items, variants, modifiers, prices, total
-- Not a fiscal document (TicketBAI is future)
+- Not a TicketBAI fiscal invoice — the fiscal invoice is shown separately on the order status page when TicketBAI is enabled
 
 ### Mobile order tracking (optional feature, per txosna)
 
@@ -546,9 +546,48 @@ A fourth session PIN mode, selectable by any volunteer, that provides a coordina
 
 ---
 
-## 28. Fiscal Receipts — Future
+## 28. Fiscal Receipts — TicketBAI
 
-- TicketBAI integration planned; `fiscal_receipt_ref` reserved on Order
+TicketBAI (TBAI) is mandatory in the Basque Country. It requires every sale to produce a signed, chained invoice submitted to the regional tax authority (Hacienda Vasca) with a QR code on the receipt.
+
+### Enabling TicketBAI
+
+- Admin toggles **"TicketBAI gaitu"** in Settings → BEZ tab
+- When enabled, every confirmed order automatically triggers invoice issuance
+- Issuance failures are swallowed — order confirmation is never blocked
+
+### Association configuration
+
+Each association configures TicketBAI independently in Settings → BEZ tab:
+
+| Setting     | Notes                                                       |
+| ----------- | ----------------------------------------------------------- |
+| Series      | Invoice series prefix (e.g. "TB"); applied to every invoice |
+| Provider    | Which external API handles signing and submission           |
+| Credentials | API keys for the chosen provider; stored server-side        |
+| Test button | Validates credentials against the provider without issuing  |
+
+### Invoice ledger
+
+All issued invoices are stored in the system's own ledger, independent of the external provider. This ensures audit access even if the association changes providers or terminates a contract.
+
+Each invoice records: series, sequential number, issue date, seller name and CIF, line items, VAT breakdown, total, the chain hash (`chainId`), the provider reference, and the QR URL.
+
+### Invoice chain
+
+Each invoice's `chainId` is a SHA-256 hash linking to the previous invoice in the series. Deletion or reordering of any invoice breaks the chain and is detectable. The first invoice in a series has `previousChainId = null`.
+
+### Customer display
+
+When an order has an issued invoice, the order status page shows a **"Txartel argia / Faktura"** section with the formatted invoice reference, issue date, and a button linking to the QR verification URL on the Hacienda Vasca portal.
+
+### Admin invoice ledger
+
+Admins can view all issued invoices at `/[locale]/ticketbai`. The table shows invoice number, order, date, total, status, and a QR link for each invoice.
+
+### Provider abstraction
+
+The system uses a provider interface (`ITicketBaiProvider`) that decouples application logic from the specific signing and submission API. Currently, only the **Mock** provider is implemented (for development and testing). Adding a real provider requires implementing the interface and registering the new type — see `docs/ticketbai.md` for the full guide.
 
 ---
 
