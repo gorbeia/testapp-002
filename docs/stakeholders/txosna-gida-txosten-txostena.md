@@ -160,7 +160,7 @@ Faktura jaulkitzen denean, "**Txartel argia / Faktura**" sekzio bat agertzen da 
 
 - **Faktura erreferentzia**: `TB-2026-00000001` formatuan (serie-urtea-zenbakia)
 - **Data**: faktura jaulkitzeko ordua
-- **"QR kodea ikusi"** botoia — Hazienda Vaskaren egiaztapen-orrira irekitzen da berriko fitxa batean
+- **"QR kodea ikusi"** botoia — Euskal Ogasunaren egiaztapen-orrira irekitzen da berriko fitxa batean
 
 #### Frogagirria (Pickup Proof)
 
@@ -762,7 +762,7 @@ Eskaera Egoera pantaila → /eu/order/[id]
 "Txartel argia / Faktura" sekzioa agertzen da automatikoki
   ┌─ Faktura erreferentzia (TB-2026-00000001)
   ├─ Data
-  └─ "QR kodea ikusi →" botoia → Hazienda Vasca
+  └─ "QR kodea ikusi →" botoia → Euskal Ogasuna
 ```
 
 Ez da ekintza gehigarririk behar: faktura eskaera-egoera pantailan bertan dago.
@@ -791,7 +791,7 @@ Eskaera-jarraipena pantaila → /eu/[slug]/track/AB-1234
   ├─ "Txartel argia / Faktura" sekzioa  ← faktura hemen
   │    ├─ Faktura erreferentzia (TB-00000042)
   │    ├─ Data
-  │    └─ "QR kodea ikusi →" → Hazienda Vasca
+  │    └─ "QR kodea ikusi →" → Euskal Ogasuna
   └─ "↓ Deskargatu txartela" botoia
 ```
 
@@ -815,7 +815,7 @@ Eskaera-jarraipena pantaila → /eu/[slug]/track/AB-1234
 Bezeroek `/track/[kode]/receipt` orrialdetik inprimagarria deskarga dezakete. TicketBAI gaituta dagoenean, txartelak zuzenean faktura-erreferentzia eta QR URL barne hartzen ditu:
 
 - Faktura-erreferentzia (adib. `TB-00000001`)
-- QR URL testuan inprimatu (eskaneatuz Hazienda Vaskara doa)
+- QR URL testuan inprimatu (eskaneatuz Euskal Ogasunara doa)
 - TicketBAI gabe: "Ez da zerga-dokumentua" oharra
 
 ---
@@ -837,7 +837,7 @@ Elkartearen faktura fiskal guztiak biltzen ditu: TicketBAI araudi fiskala betetz
 | Data             | Faktura jaulkitzeko ordua eta data                           |
 | Guztira          | Fakturatutako zenbatekoa euroak                              |
 | Egoera           | MOCK · SUBMITTED · ACCEPTED · REJECTED (kolorez bereizita)   |
-| QR               | Hazienda Vaskaren egiaztapen-orrira lotura                   |
+| QR               | Euskal Ogasunaren egiaztapen-orrira lotura                   |
 
 **Hutsik dagoenean:** "Oraindik ez da fakturik jaulki" mezua, Ezarpenetara lotura batekin TicketBAI gaitzeko.
 
@@ -867,7 +867,7 @@ TicketBAI konfiguratzeko, joan **Ezarpenak → BEZ** fitxara.
 3. "**Gorde konfigurazioa**" klikatu
 4. Hemendik aurrera, eskaera baieztatzen den bakoitzean faktura bat automatikoki jaulkitzen da
 
-> **Oharra**: "Mock (Probak)" hornitzailea probetarako soilik da. Hornitzaile erreal batek (Argi, etab.) fakturak Hazienda Vaskara bidaltzen ditu benetan. Hornitzaile berri bat gehitzeko, jarri harremanetan garatzailearekin.
+> **Oharra**: "Mock (Probak)" hornitzailea probetarako soilik da. Hornitzaile erreal batek (Argi, etab.) fakturak Euskal Ogasunara bidaltzen ditu benetan. Hornitzaile berri bat gehitzeko, jarri harremanetan garatzailearekin.
 
 #### Txostenak
 

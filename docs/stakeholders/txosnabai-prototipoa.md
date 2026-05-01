@@ -123,7 +123,7 @@ Eskaerak bidali ondoren, bezeroak pantaila hau bistaratzen du. Egoera aldatzen d
 - Bezeroak ez du galdetu behar "ea eskaera hartu duten" — pantailak erakusten du
 - Zarata-maila mostradoreetan drastikoki murrizten da
 - SSE (Server-Sent Events) bidez eguneratzen da denbora errealean — ez da orria freskatu behar
-- TicketBAI gaituta dagoenean, bezeroak bere faktura fiskala pantailan bertan du, QR kodearekin Hazienda Vaskarekiko egiaztapenerako
+- TicketBAI gaituta dagoenean, bezeroak bere faktura fiskala pantailan bertan du, QR kodearekin Euskal Ogasunarekiko egiaztapenerako
 
 ---
 
@@ -247,7 +247,7 @@ Kode zuzena sartu ondoren (edo QR eskaneatuta), bezeroak denbora errealean ikust
 - **"Txartel argia / Faktura" atala** (TicketBAI gaituta dagoenean eta faktura jaulkita dagoenean):
   - Faktura-erreferentzia monoespacioan: adib. `TB-00000042`
   - Data: `2026ko api. 30` · `10:00`
-  - **"QR kodea ikusi →"** esteka — Hazienda Vaskaren egiaztapen-orrira berri fitxa batean
+  - **"QR kodea ikusi →"** esteka — Euskal Ogasunaren egiaztapen-orrira berri fitxa batean
 - **"↓ Deskargatu txartela"** botoia — jasotzeko txartela/frogagirria
 
 **Onurak:**
@@ -776,7 +776,7 @@ Elkarteko zerga-ezarpenak kudeatzeko fitxa. Bi zati ditu: TicketBAI konfigurazio
   - **Data**: `30 api. 2026` formatuan
   - **Guztira**: `7.00 €`
   - **Egoera**: koloretako etiketa bat — MOCK (grisa) · SUBMITTED (urdina) · ACCEPTED (berdea) · REJECTED (gorria)
-  - **QR**: esteka-botoi txiki bat Hazienda Vaskako egiaztapen-orrira
+  - **QR**: esteka-botoi txiki bat Euskal Ogasunako egiaztapen-orrira
 - **Hutsik dagoenean**: "Oraindik ez da fakturik jaulki" mezu informatibo bat
 
 **Zergatik da garrantzitsua?**
@@ -850,7 +850,7 @@ Salmenten eta eragiketen laburpena.
 | ---------------------------------------- | ---------------------------------------------------------------------------------- |
 | Faktura fiskalen erregistroa eskuz       | Sistema automatikoki jaulkitzen du faktura eskaera baieztatzen den unean           |
 | Hornitzaile aldatzean fakturak galtzea   | Faktura liburuak faktura guztiak gordetzen ditu, hornitzaileak independenteki      |
-| "Nola jakin bezeroak faktura zuzena da?" | QR kodea Hazienda Vaskaren egiaztapen-orrira zuzentzen da zuzenean                 |
+| "Nola jakin bezeroak faktura zuzena da?" | QR kodea Euskal Ogasunaren egiaztapen-orrira zuzentzen da zuzenean                 |
 | Faktura-katea frogatzea auditoria batean | SHA-256 hash katea: faktura bakoitza aurreko fakturari kriptografikoki lotuta dago |
 | Bezeroak faktura eskatu eta bilatu egin  | Eskaera-egoera pantailan automatikoki agertzen da faktura eta QR botoia            |
 
