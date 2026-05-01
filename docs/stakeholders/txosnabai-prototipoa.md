@@ -118,9 +118,6 @@ Eskaerak bidali ondoren, bezeroak pantaila hau bistaratzen du. Egoera aldatzen d
 
 ![Eskaera egoera bezeroaren pantailan — TicketBAI faktura atalarekin](../screenshots/41-order-status-fiscal-invoice.png)
 
-> **[ARGAZKI-OHARRA — 41-order-status-fiscal-invoice.png]**
-> Hartu argazkia bezeroaren eskaera-egoera pantailari (`/eu/order/[id]`) eskaera CONFIRMED egoerean dagoenean eta TicketBAI faktura bat jada jaulkita dagoenean. Pantailak erakutsi behar du: eskaera-zenbakia eta egoera-progresoa goialdean; eta beheko aldean "Txartel argia / Faktura" sekzioa faktura-erreferentziarekin (adib. TB-2026-00000001), data eta "QR kodea ikusi" botoiarekin (urdin/linea kolorea).
-
 **Onurak:**
 
 - Bezeroak ez du galdetu behar "ea eskaera hartu duten" — pantailak erakusten du
@@ -190,9 +187,6 @@ Boluntarioak mostradore-pantailatik eskaera berri bat sortzen eta baieztatzen du
 
 ![Eskualdatze txartela kontrakolore handian](../screenshots/42-counter-handoff-card.png)
 
-> **[ARGAZKI-OHARRA — 42-counter-handoff-card.png]**
-> Hartu argazkia mostradoreko pantailari eskaera berri bat baieztatzen denean (mobileTrackingEnabled gaituta). Pantaila osoko txartel dark-modu bat agertzen da: "ESKAERA #42" testu txikia goialdean, "Eman kode hau bezeroari" instrukzioa, kode monoespacioa letra handi zuriarekin etxe-beltz atzeko planoan (adib. AB-1234), QR kode handi bat, "Edo geroago idatzi hemen: /aste-nagusia-2026/track" testu txikia, eta "Itxi" botoi laranja bat behean.
-
 **Txartelak erakusten duena:**
 
 - `ESKAERA #42` — eskaera-zenbakia
@@ -241,9 +235,6 @@ Bezeroak URL-a idazten du edo QR kodea eskaneatzen du. Kodea QR bidez eskaneatuz
 Kode zuzena sartu ondoren (edo QR eskaneatuta), bezeroak denbora errealean ikusten du bere eskaeraren egoera eta faktura fiskala.
 
 ![Eskaeraren egoera kode bidez — TicketBAI fakturarekin](../screenshots/43-track-status-with-invoice.png)
-
-> **[ARGAZKI-OHARRA — 43-track-status-with-invoice.png]**
-> Hartu argazkia bezeroaren eskaera-jarraipena pantailari (`/eu/[slug]/track/AB-1234`) eskaera CONFIRMED edo prest dagoenean eta faktura jaulkita dagoenean. Erakutsi behar du: goiburua "← Txosna-izena" loturarekin eta "Eskaera #42" izenburuarekin; jarraian egoera-txartelak (Janaria Prest!, Edariak Amaituta); "Txartel argia / Faktura" sekzioa faktura-erreferentziarekin (TB-00000042), data eta "QR kodea ikusi →" esteka; eta azpian "↓ Deskargatu txartela" botoi laranja lerro batean.
 
 ![Eskaera egoera — kodearen bidez jarraipena](../screenshots/39-track-status-mobile.png)
 
@@ -740,9 +731,6 @@ Elkarteko zerga-ezarpenak kudeatzeko fitxa. Bi zati ditu: TicketBAI konfigurazio
 
 ![Ezarpenak — BEZ fitxa TicketBAI desgaituta](../screenshots/38-settings-bez-tab.png)
 
-> **[ARGAZKI-OHARRA — 38-settings-bez-tab.png]**
-> Hartu argazkia admin ezarpenen BEZ fitxari (`/eu/settings`, BEZ fitxa hautatuta) TicketBAI toggle DESAKTIBATUTA dagoelarik. Pantailak erakutsi behar du: goialdean "TicketBAI gaitu" toggle botoia (gris/desaktibatuta egoerean), eta azpian BEZ mota-zerrenda (BEZ Orokorra 21%, BEZ Murriztua 10%, BEZ Superurriztua 4%, BEZtik salbuetsia 0%) eta "BEZ mota berria gehitu" formularioa.
-
 **Pantailak erakusten duena (toggle off):**
 
 - **"TicketBAI gaitu"** toggle botoia (gris/desaktibatuta)
@@ -753,9 +741,6 @@ Elkarteko zerga-ezarpenak kudeatzeko fitxa. Bi zati ditu: TicketBAI konfigurazio
 ### TicketBAI gaituta
 
 ![Ezarpenak — BEZ fitxa TicketBAI gaituta eta konfiguratuta](../screenshots/39-settings-bez-ticketbai-enabled.png)
-
-> **[ARGAZKI-OHARRA — 39-settings-bez-ticketbai-enabled.png]**
-> Hartu argazkia admin ezarpenen BEZ fitxari (`/eu/settings`, BEZ fitxa) TicketBAI toggle AKTIBATUTA dagoelarik. Erakutsi behar du: toggle botoia urdin/aktibo kolorean, eta azpian konfigurazio-panela zabalik: "Faktura seriea" eremu bat "TB" balioarekin, "Hornitzailea" dropdown bat "Mock (Probak)" hautatuta, "Konexioa probatu" botoi bat eta "Gorde konfigurazioa" botoi gorri-laranja bat. Ondoren lotura bat: "→ Faktura liburua ikusi".
 
 **Pantailak erakusten duena (toggle on):**
 
@@ -781,9 +766,6 @@ Elkarteko zerga-ezarpenak kudeatzeko fitxa. Bi zati ditu: TicketBAI konfigurazio
 **URL:** `/eu/ticketbai`
 
 ![TicketBAI faktura liburua — faktura-zerrenda osoa](../screenshots/40-ticketbai-invoice-ledger.png)
-
-> **[ARGAZKI-OHARRA — 40-ticketbai-invoice-ledger.png]**
-> Hartu argazkia admin TicketBAI faktura-liburu pantailari (`/eu/ticketbai`). Pantailak erakutsi behar du: "TicketBAI Fakturak" izenburua goialdean eta "← Ezarpenak" itzultze-esteka. Taula bat jarraian zutabe hauek dituena: "Faktura zenbakia" (adib. TB-00000001), "Eskaera" (#1), "Data" (data formatuarekin), "Guztira" (7.00 €), "Egoera" (MOCK etiketa gris batekin) eta "QR" (esteka botoi txiki bat). Gutxienez bi lerro erakutsi taula beterik dagoela ikusteko.
 
 **Pantailak erakusten duena:**
 

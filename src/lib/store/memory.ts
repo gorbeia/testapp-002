@@ -100,7 +100,7 @@ function seed() {
     name: MOCK_ASSOCIATION.name,
     phone: null,
     cif: 'A12345678',
-    ticketBaiEnabled: false,
+    ticketBaiEnabled: true,
     createdAt: t,
   });
 
@@ -203,7 +203,8 @@ function seed() {
       confirmedAt: mo.status === 'CONFIRMED' ? new Date(mo.createdAt) : null,
       expiresAt: mo.expiresAt ? new Date(mo.expiresAt) : null,
       pendingLines: null,
-      fiscalReceiptRef: null,
+      fiscalReceiptRef:
+        mo.id === 'order-1' ? 'tbai-inv-1' : mo.id === 'order-3' ? 'tbai-inv-2' : null,
       createdAt: new Date(mo.createdAt),
       updatedAt: new Date(mo.createdAt),
     });
@@ -218,7 +219,7 @@ function seed() {
       txosnaId: 'txosna-1',
       counterType: mt.counterType,
       kitchenPost: mt.kitchenPost ?? null,
-      status: mt.status,
+      status: mt.id === 'ticket-2b' ? 'READY' : mt.status,
       requiresPreparation: mt.lines.some((l) => {
         const p = products.get(l.productId);
         return p?.requiresPreparation ?? false;
@@ -237,11 +238,95 @@ function seed() {
         splitInstructions: l.splitInstructions,
       })),
       createdAt: t,
-      readyAt: mt.status === 'READY' ? t : null,
+      readyAt: mt.status === 'READY' || mt.id === 'ticket-2b' ? t : null,
       completedAt: mt.status === 'COMPLETED' ? t : null,
       updatedAt: t,
     });
   }
+
+  // TicketBAI config and demo invoices
+  ticketBaiConfigs.set('tbai-config-1', {
+    id: 'tbai-config-1',
+    associationId: 'assoc-1',
+    providerType: 'MOCK',
+    series: 'TB',
+    credentials: {},
+    createdAt: t,
+    updatedAt: t,
+  });
+
+  const inv1: StoredTicketBaiInvoice = {
+    id: 'tbai-inv-1',
+    associationId: 'assoc-1',
+    orderId: 'order-1',
+    orderNumber: 42,
+    series: 'TB',
+    invoiceNumber: 42,
+    issuedAt: new Date('2026-04-13T18:40:00Z'),
+    sellerName: MOCK_ASSOCIATION.name,
+    sellerCif: 'A12345678',
+    lines: [
+      {
+        description: 'Burgerra (Patata frijituak)',
+        quantity: 1,
+        unitPrice: 13.5,
+        vatRate: 0,
+        vatAmount: 0,
+        total: 13.5,
+      },
+      {
+        description: 'Tortilla',
+        quantity: 1,
+        unitPrice: 3.5,
+        vatRate: 0,
+        vatAmount: 0,
+        total: 3.5,
+      },
+    ],
+    total: 17.0,
+    vatBreakdown: [{ rate: 0, base: 17.0, vatAmount: 0 }],
+    chainId: 'mock-chain-42',
+    providerRef: 'MOCK-TB-00000042',
+    qrUrl: null,
+    xmlPayload: null,
+    status: 'MOCK',
+    createdAt: t,
+    updatedAt: t,
+  };
+  ticketBaiInvoices.set('tbai-inv-1', inv1);
+
+  const inv2: StoredTicketBaiInvoice = {
+    id: 'tbai-inv-2',
+    associationId: 'assoc-1',
+    orderId: 'order-3',
+    orderNumber: 35,
+    series: 'TB',
+    invoiceNumber: 35,
+    issuedAt: new Date('2026-04-13T18:20:00Z'),
+    sellerName: MOCK_ASSOCIATION.name,
+    sellerCif: 'A12345678',
+    lines: [
+      {
+        description: 'Pintxo nahasia',
+        quantity: 1,
+        unitPrice: 6.0,
+        vatRate: 0,
+        vatAmount: 0,
+        total: 6.0,
+      },
+    ],
+    total: 6.0,
+    vatBreakdown: [{ rate: 0, base: 6.0, vatAmount: 0 }],
+    chainId: 'mock-chain-35',
+    providerRef: 'MOCK-TB-00000035',
+    qrUrl: null,
+    xmlPayload: null,
+    status: 'MOCK',
+    createdAt: t,
+    updatedAt: t,
+  };
+  ticketBaiInvoices.set('tbai-inv-2', inv2);
+  ticketBaiInvoiceCounters.set('assoc-1:TB', 42);
 
   // Volunteers
   for (const mv of MOCK_VOLUNTEERS) {
