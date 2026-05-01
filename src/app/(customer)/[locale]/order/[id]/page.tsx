@@ -6,7 +6,6 @@ import { CustomerHeader } from '@/components/layout/customer-header';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { OrderNumberHeading } from '@/components/order-status/order-number-heading';
 import { OrderProgressSteps } from '@/components/order-status/order-progress-steps';
-import { OrderReadyBanner } from '@/components/order-status/order-ready-banner';
 import {
   FiscalInvoiceCard,
   type FiscalInvoiceData,
