@@ -51,7 +51,8 @@ Txosnabai txosnak kudeatzeko sistema digital bat da: bezeroen autozerbitzu-eskae
 │                 ADMINISTRATZAILEAREN IBILBIDEA            │
 │                                                           │
 │  Admin Panel ──► Menua / Boluntarioak / Ezarpenak        │
-│              └──► Txostenak                               │
+│              ├──► Txostenak                               │
+│              └──► TicketBAI Faktura Liburua               │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -113,12 +114,19 @@ Eskaerak bidali ondoren, bezeroak pantaila hau bistaratzen du. Egoera aldatzen d
   2. 🧑‍🍳 **Prestatzen** (itxaroten)
   3. 🎉 **Prest!** (itxaroten)
 - Proto-oharra: "Egoera automatikoki aldatzen da (2s). Demo bakarrik."
+- **Txartel argia / Faktura** atala (TicketBAI gaituta dagoenean): faktura-erreferentzia, data eta QR botoia
+
+![Eskaera egoera bezeroaren pantailan — TicketBAI faktura atalarekin](../screenshots/41-order-status-fiscal-invoice.png)
+
+> **[ARGAZKI-OHARRA — 41-order-status-fiscal-invoice.png]**
+> Hartu argazkia bezeroaren eskaera-egoera pantailari (`/eu/order/[id]`) eskaera CONFIRMED egoerean dagoenean eta TicketBAI faktura bat jada jaulkita dagoenean. Pantailak erakutsi behar du: eskaera-zenbakia eta egoera-progresoa goialdean; eta beheko aldean "Txartel argia / Faktura" sekzioa faktura-erreferentziarekin (adib. TB-2026-00000001), data eta "QR kodea ikusi" botoiarekin (urdin/linea kolorea).
 
 **Onurak:**
 
 - Bezeroak ez du galdetu behar "ea eskaera hartu duten" — pantailak erakusten du
 - Zarata-maila mostradoreetan drastikoki murrizten da
 - SSE (Server-Sent Events) bidez eguneratzen da denbora errealean — ez da orria freskatu behar
+- TicketBAI gaituta dagoenean, bezeroak bere faktura fiskala pantailan bertan du, QR kodearekin Hazienda Vaskarekiko egiaztapenerako
 
 ---
 
@@ -164,26 +172,57 @@ Pantaila handietan (telebista, tablet) jartzeko moduko taula publikoa.
 
 ---
 
-## 6. Eskaeraren Jarraipena (Jarraipen Mugikorra)
+## 6. Eskaeraren Jarraipena — Mostradoreko Eskaera Kodearen Bidez
 
 > **Aukerako eginbidea** — Txosna bakoitzeko konfiguraziotik gaitu/desgaitu daiteke ("QR kodea" fitxan).
 
 **URL:** `/eu/[slug]/track`
 
-Mostradoreetan eskaera hartu ondoren, boluntarioak kode laburra ematen dio bezeroari. Bezeroak kode hori sartu dezake bere telefonoan eskaeraren egoera jarraitzeko.
+Mostradorean hartu eskaera baten ondoren, boluntarioak kode laburra ematen dio bezeroari. Bezeroak kode hori erabiliz bere eskaeraren egoera jarraitu dezake bere telefonoan — eta TicketBAI gaituta badago, bere faktura fiskala ere bertatik jaso dezake.
 
-### 6a. Kode sarrera orrialdea
+---
+
+### 6a. Boluntarioaren pantaila — Eskualdatze txartela
+
+**URL:** `/eu/counter` (boluntarioaren pantaila)
+
+Boluntarioak mostradore-pantailatik eskaera berri bat sortzen eta baieztatzen duenean, **eskualdatze txartel bat** agertzen da pantaila osoa hartuz:
+
+![Eskualdatze txartela kontrakolore handian](../screenshots/42-counter-handoff-card.png)
+
+> **[ARGAZKI-OHARRA — 42-counter-handoff-card.png]**
+> Hartu argazkia mostradoreko pantailari eskaera berri bat baieztatzen denean (mobileTrackingEnabled gaituta). Pantaila osoko txartel dark-modu bat agertzen da: "ESKAERA #42" testu txikia goialdean, "Eman kode hau bezeroari" instrukzioa, kode monoespacioa letra handi zuriarekin etxe-beltz atzeko planoan (adib. AB-1234), QR kode handi bat, "Edo geroago idatzi hemen: /aste-nagusia-2026/track" testu txikia, eta "Itxi" botoi laranja bat behean.
+
+**Txartelak erakusten duena:**
+
+- `ESKAERA #42` — eskaera-zenbakia
+- **"Eman kode hau bezeroari"** — boluntarioari instrukzioa
+- **Kode laburra letra handiz**: adib. `AB-1234` (monoespacioan, letra zuriak etxe-beltze gainean)
+- **QR kodea** (160×160 px) — bezeroaren telefonoarekin eskaneatzeko; zuzenean `/eu/[slug]/track/AB-1234` orrialdera doa
+- URL testuan: `Edo geroago idatzi hemen: /aste-nagusia-2026/track`
+- **"Itxi"** botoi laranja bat — boluntarioak baztertu ostean mostradorea ikusgai geratzen da
+
+**Boluntarioak zer egiten du:**
+
+1. Bezeroak ordaindu du (edo ordainketa hartu da)
+2. Pantailan automatikoki txartela agertzen da
+3. Boluntarioak QR kodea erakusten dio bezeroari telefonoz eskaneatzeko **edo** kode alfanumerikoa ahozka/papereez ematen dio
+4. "Itxi" klikatzen du eta mostradorera itzultzen da
+
+---
+
+### 6b. Kode sarrera orrialdea (bezeroa)
 
 **URL:** `/eu/aste-nagusia-2026/track`
 
-Bezeroaren lehen kontaktua jarraipen-sistemarekin. Pantaila soil bat kode bat sartzeko.
+Bezeroak URL-a idazten du edo QR kodea eskaneatzen du. Kodea QR bidez eskaneatuz gero, zuzenean 6c ataleko orrialdera doa (sarrera-orria saltatu egiten da).
 
 **Pantailak erakusten duena:**
 
 - Txosna-izena goiburuan
 - Testu-eremua: "Zure kodea" (letra monoespacioan, maiuskulak automatikoki)
 - Laguntza-oharra: "Adib.: AB-1234"
-- "Bilatu" botoia → hurrengoko orrialdera
+- "Bilatu" botoia → hurrengo orrialdera
 - Kodea oker badago: mezu argia ("Koderik ez da aurkitu")
 
 **Onurak:**
@@ -193,29 +232,38 @@ Bezeroaren lehen kontaktua jarraipen-sistemarekin. Pantaila soil bat kode bat sa
 
 ---
 
-### 6b. Eskaera egoera orrialdea
+### 6c. Eskaera egoera orrialdea (bezeroa)
 
 **URL:** `/eu/aste-nagusia-2026/track/AB-1234`
 
-Kode zuzena sartu ondoren, bezeroak denbora errealean ikusten du bere eskaeraren egoera.
+Kode zuzena sartu ondoren (edo QR eskaneatuta), bezeroak denbora errealean ikusten du bere eskaeraren egoera eta faktura fiskala.
+
+![Eskaeraren egoera kode bidez — TicketBAI fakturarekin](../screenshots/43-track-status-with-invoice.png)
+
+> **[ARGAZKI-OHARRA — 43-track-status-with-invoice.png]**
+> Hartu argazkia bezeroaren eskaera-jarraipena pantailari (`/eu/[slug]/track/AB-1234`) eskaera CONFIRMED edo prest dagoenean eta faktura jaulkita dagoenean. Erakutsi behar du: goiburua "← Txosna-izena" loturarekin eta "Eskaera #42" izenburuarekin; jarraian egoera-txartelak (Janaria Prest!, Edariak Amaituta); "Txartel argia / Faktura" sekzioa faktura-erreferentziarekin (TB-00000042), data eta "QR kodea ikusi →" esteka; eta azpian "↓ Deskargatu txartela" botoi laranja lerro batean.
 
 **Pantailak erakusten duena:**
 
-- Eskaera-zenbakia eta bezeroaren izena
+- Eskaera-zenbakia eta bezeroaren izena goialdean
 - Txartel bat mostradoreko mota bakoitzeko (Janaria / Edariak), egoerarekin:
   - Jasota · Prestatzen · **Prest! 🎉** · Amaituta ✓
-- Guztia prest dagoenean: berde-koloreko ohartarazpen-barra ("Zure eskaera prest dago! Jaso dezakezu.")
-- "↓ Deskargatu txartela" botoia edozein momentutan
+- Guztia prest dagoenean: **"Zure eskaera prest dago! Jaso dezakezu."** barra berde bat
+- **"Txartel argia / Faktura" atala** (TicketBAI gaituta dagoenean eta faktura jaulkita dagoenean):
+  - Faktura-erreferentzia monoespacioan: adib. `TB-00000042`
+  - Data: `2026ko api. 30` · `10:00`
+  - **"QR kodea ikusi →"** esteka — Hazienda Vaskaren egiaztapen-orrira berri fitxa batean
+- **"↓ Deskargatu txartela"** botoia — jasotzeko txartela/frogagirria
 
 **Onurak:**
 
 - SSE bidez eguneratzen da denbora errealean — ez da orria freskatu behar
-- Bezeroak txosnatik urrun egon daiteke eta bere telefonoan ikusten du noiz joan behar den
-- Txartela eskatu aurretik deskargatu daiteke (eskaera baieztatzen den unetik aurrera)
+- Bezeroak faktura fiskala hemen bertan du: ez da beste URL-rik behar
+- Telefono bidez edo QR eskaneatuz eskura daiteke — mostradorean beti erosoa
 
 ---
 
-### 6c. Txartela
+### 6d. Txartela inprimatzeko
 
 **URL:** `/eu/aste-nagusia-2026/track/AB-1234/receipt`
 
@@ -227,7 +275,10 @@ Inprimatzeko moduko HTML orrialde gisa ematen da, PDFa sortu gabe.
 - Eskaera-zenbakia eta bezeroaren izena
 - Produktuen zerrenda aldaera eta gehigarriekin eta prezioekin
 - Guztira
-- "Ez da zerga-dokumentua" oharrarekin
+- **"Txartel argia / Faktura" sekzioa** (TicketBAI gaituta eta faktura jaulkita dagoenean):
+  - Faktura-erreferentzia
+  - QR URL testuan (inprimatzean eskaneatzeko)
+- "Ez da zerga-dokumentua" ohar soilarekin (TicketBAI **ez** dagoenean soilik)
 
 **Onurak:**
 
@@ -545,7 +596,7 @@ Pantaila guztietan agertzen da ezkerrean (mahai gainekoan) edo menu gisa (mugiko
 **Erakusten duena:**
 
 - **Txosna Admin** goiburua · Elkartea izena
-- ELKARTEA atala: Menua · Txosnak · Boluntarioak · Ezarpenak
+- ELKARTEA atala: Menua · Txosnak · Boluntarioak · **TicketBAI** · Ezarpenak
 - TXOSNAK atala: Aste Nagusia 2026 (berdea) · Pintxo Txokoa (berdea) · Garagardo Barra (anbarra)
 - \+ Txosna berria botoia
 - Behean: Ilun modua · ← Mostradorera itzuli
@@ -673,7 +724,84 @@ Postuak hutsik utziz gero, sukaldea estazio bakarrekoa da (tiketa bakarra eskaer
 
 ---
 
-## 17. Txostenak
+## 17. Ezarpenak — BEZ eta TicketBAI
+
+**URL:** `/eu/settings` → **BEZ** fitxa
+
+Elkarteko zerga-ezarpenak kudeatzeko fitxa. Bi zati ditu: TicketBAI konfigurazioa eta BEZ mota-kudeaketa.
+
+### TicketBAI desgaituta (lehenetsia)
+
+![Ezarpenak — BEZ fitxa TicketBAI desgaituta](../screenshots/38-settings-bez-tab.png)
+
+> **[ARGAZKI-OHARRA — 38-settings-bez-tab.png]**
+> Hartu argazkia admin ezarpenen BEZ fitxari (`/eu/settings`, BEZ fitxa hautatuta) TicketBAI toggle DESAKTIBATUTA dagoelarik. Pantailak erakutsi behar du: goialdean "TicketBAI gaitu" toggle botoia (gris/desaktibatuta egoerean), eta azpian BEZ mota-zerrenda (BEZ Orokorra 21%, BEZ Murriztua 10%, BEZ Superurriztua 4%, BEZtik salbuetsia 0%) eta "BEZ mota berria gehitu" formularioa.
+
+**Pantailak erakusten duena (toggle off):**
+
+- **"TicketBAI gaitu"** toggle botoia (gris/desaktibatuta)
+- **BEZ motak zerrenda**: BEZ Orokorra 21% · BEZ Murriztua 10% · BEZ Superurriztua 4% · BEZtik salbuetsia 0%
+- Bakoitza ✏️ aldatu / 🗑 ezabatu botoiekin
+- **BEZ mota berria gehitu** formularioa: label + ehuneko + Gehitu botoia
+
+### TicketBAI gaituta
+
+![Ezarpenak — BEZ fitxa TicketBAI gaituta eta konfiguratuta](../screenshots/39-settings-bez-ticketbai-enabled.png)
+
+> **[ARGAZKI-OHARRA — 39-settings-bez-ticketbai-enabled.png]**
+> Hartu argazkia admin ezarpenen BEZ fitxari (`/eu/settings`, BEZ fitxa) TicketBAI toggle AKTIBATUTA dagoelarik. Erakutsi behar du: toggle botoia urdin/aktibo kolorean, eta azpian konfigurazio-panela zabalik: "Faktura seriea" eremu bat "TB" balioarekin, "Hornitzailea" dropdown bat "Mock (Probak)" hautatuta, "Konexioa probatu" botoi bat eta "Gorde konfigurazioa" botoi gorri-laranja bat. Ondoren lotura bat: "→ Faktura liburua ikusi".
+
+**Pantailak erakusten duena (toggle on):**
+
+- **"TicketBAI gaitu"** toggle botoia (urdina/aktibo)
+- **Konfigurazio-panela**:
+  - **Faktura seriea** eremu bat: "TB" balio lehenetsiarekin — faktura-zenbakien aurrizkia (adib. `TB-2026-00000001`)
+  - **Hornitzailea**: "Mock (Probak)" — etorkizunean hornitzaile errealak gehituko dira (Argi, etc.)
+  - **"Konexioa probatu"** botoia — API konexioa egiaztatzen du, "✓ Konexioa ondo" mezu berde batekin
+  - **"Gorde konfigurazioa"** botoia
+  - **"→ Faktura liburua ikusi"** esteka — faktura-zerrendara zuzenean joaten da
+- **BEZ motak zerrenda** (azpian, aldaketarik gabe)
+
+**Onurak:**
+
+- Toggle bakar batek TicketBAI aktibatu eta desaktibatzen du eskaera guztientzat
+- Seriea pertsonalizatzeak elkarte bakoitzak bere faktura-identifikadorea izatea ahalbidetzen du
+- Konexio-probak konfigurazio-akatsak aurkitzen ditu faktura errealak sortu baino lehen
+
+---
+
+## 18. TicketBAI Faktura Liburua
+
+**URL:** `/eu/ticketbai`
+
+![TicketBAI faktura liburua — faktura-zerrenda osoa](../screenshots/40-ticketbai-invoice-ledger.png)
+
+> **[ARGAZKI-OHARRA — 40-ticketbai-invoice-ledger.png]**
+> Hartu argazkia admin TicketBAI faktura-liburu pantailari (`/eu/ticketbai`). Pantailak erakutsi behar du: "TicketBAI Fakturak" izenburua goialdean eta "← Ezarpenak" itzultze-esteka. Taula bat jarraian zutabe hauek dituena: "Faktura zenbakia" (adib. TB-00000001), "Eskaera" (#1), "Data" (data formatuarekin), "Guztira" (7.00 €), "Egoera" (MOCK etiketa gris batekin) eta "QR" (esteka botoi txiki bat). Gutxienez bi lerro erakutsi taula beterik dagoela ikusteko.
+
+**Pantailak erakusten duena:**
+
+- **"TicketBAI Fakturak"** izenburua + **"← Ezarpenak"** itzultze-esteka
+- **Faktura-taula** zutabe hauek dituena:
+  - **Faktura zenbakia**: `TB-00000001` formatuan (serie + zenbaki beteta 8 digitura)
+  - **Eskaera**: `#1` (eskaera-zenbakia)
+  - **Data**: `30 api. 2026` formatuan
+  - **Guztira**: `7.00 €`
+  - **Egoera**: koloretako etiketa bat — MOCK (grisa) · SUBMITTED (urdina) · ACCEPTED (berdea) · REJECTED (gorria)
+  - **QR**: esteka-botoi txiki bat Hazienda Vaskako egiaztapen-orrira
+- **Hutsik dagoenean**: "Oraindik ez da fakturik jaulki" mezu informatibo bat
+
+**Zergatik da garrantzitsua?**
+
+TicketBAI araudi fiskalak exijitzen du faktura guztien erregistro iraunkor bat mantentzea, API hornitzaile baten eskutik independenteki. Faktura liburuak bermatzen du:
+
+- **Ikusgarritasuna**: Administradoreak une oro ikus ditzake jaulkitako faktura guztiak
+- **Auditoria**: Inspektoreak faktura-katea egiaztatu dezake: bakoitza aurreko fakturari lotuta dago SHA-256 hash bidez
+- **Hornitzailearekiko independentzia**: Fakturak sisteman gordetzen dira API hornitzailea aldatzen bada ere
+
+---
+
+## 19. Txostenak
 
 **URL:** `/eu/reports`
 
@@ -728,15 +856,25 @@ Salmenten eta eragiketen laburpena.
 | Alergenoen informazioa eguneratuta mantendu | Menu-editorean 14 EU alergenoak, betidanik ikusgai                         |
 | Postu guztien egoera aldi berean ikusi ezin | Sukalde Kudeaketa pantailak postu guztiak agertzen ditu eskaera bakoitzean |
 
+## Betetze Fiskala (TicketBAI)
+
+| Arazo ohikoa                             | Soluzio berria                                                                     |
+| ---------------------------------------- | ---------------------------------------------------------------------------------- |
+| Faktura fiskalen erregistroa eskuz       | Sistema automatikoki jaulkitzen du faktura eskaera baieztatzen den unean           |
+| Hornitzaile aldatzean fakturak galtzea   | Faktura liburuak faktura guztiak gordetzen ditu, hornitzaileak independenteki      |
+| "Nola jakin bezeroak faktura zuzena da?" | QR kodea Hazienda Vaskaren egiaztapen-orrira zuzentzen da zuzenean                 |
+| Faktura-katea frogatzea auditoria batean | SHA-256 hash katea: faktura bakoitza aurreko fakturari kriptografikoki lotuta dago |
+| Bezeroak faktura eskatu eta bilatu egin  | Eskaera-egoera pantailan automatikoki agertzen da faktura eta QR botoia            |
+
 ---
 
 ## Hurrengo Pausoak
 
-1. **Backend integrazioa** — Prisma/PostgreSQL bidez datu errealak
-2. **SSE konexioa** — eskaera-eguneraketak denbora errealean (protokoloa definituta)
-3. **Ordainketa** — Stripe edo Redsys konfiguratu
-4. **Inprimagailua** — ESC/POS edo STAR protokoloa
-5. **Sarbide sistema** — NextAuth.js dagoeneko konfiguratuta
+1. **Backend integrazioa** — Prisma/PostgreSQL bidez datu errealak ✓ (eginda)
+2. **SSE konexioa** — eskaera-eguneraketak denbora errealean ✓ (eginda)
+3. **Ordainketa** — Stripe edo Redsys konfiguratu ✓ (eginda)
+4. **TicketBAI** — Mock hornitzailea ✓ (eginda); hornitzaile errealak (Argi, etab.) gehitzeko prest
+5. **Inprimagailua** — ESC/POS edo STAR protokoloa
 
 ---
 

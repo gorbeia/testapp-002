@@ -1,5 +1,6 @@
 import { broadcast } from '@/lib/sse';
 import { orderRepo, ticketRepo, txosnaRepo } from '@/lib/store';
+import { issueTicketBaiInvoice } from '@/lib/ticketbai/service';
 
 export async function confirmOrder(
   orderId: string,
@@ -46,6 +47,11 @@ export async function confirmOrder(
     orderNumber: order.orderNumber,
     status: 'CONFIRMED',
   });
+
+  const txosna = await txosnaRepo.findById(order.txosnaId);
+  if (txosna) {
+    issueTicketBaiInvoice(updated!, txosna.associationId).catch(() => {});
+  }
 
   return { ok: true, order: updated };
 }

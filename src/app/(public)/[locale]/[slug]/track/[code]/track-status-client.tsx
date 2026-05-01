@@ -16,6 +16,13 @@ interface OrderSummary {
   confirmedAt: string | null;
 }
 
+interface FiscalInvoice {
+  series: string;
+  invoiceNumber: number;
+  issuedAt: string;
+  qrUrl: string | null;
+}
+
 interface Props {
   slug: string;
   locale: string;
@@ -23,6 +30,7 @@ interface Props {
   code: string;
   initialOrder: OrderSummary;
   initialTickets: TicketSummary[];
+  fiscalInvoice: FiscalInvoice | null;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -53,6 +61,7 @@ export function TrackStatusClient({
   code,
   initialOrder,
   initialTickets,
+  fiscalInvoice,
 }: Props) {
   const [order, setOrder] = useState<OrderSummary>(initialOrder);
   const [tickets, setTickets] = useState<TicketSummary[]>(initialTickets);
@@ -178,6 +187,72 @@ export function TrackStatusClient({
             }}
           >
             Zure eskaera prest dago! Jaso dezakezu.
+          </div>
+        )}
+
+        {/* Fiscal invoice */}
+        {fiscalInvoice && (
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              padding: '16px 18px',
+              boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+              marginBottom: 12,
+              border: '1px solid #e5e7eb',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: '#9ca3af',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                marginBottom: 6,
+              }}
+            >
+              Txartel argia / Faktura
+            </div>
+            <div
+              style={{
+                fontFamily: 'monospace',
+                fontSize: 15,
+                fontWeight: 700,
+                color: '#111',
+                marginBottom: 4,
+              }}
+            >
+              {fiscalInvoice.series}-{String(fiscalInvoice.invoiceNumber).padStart(8, '0')}
+            </div>
+            <div
+              style={{ fontSize: 13, color: '#6b7280', marginBottom: fiscalInvoice.qrUrl ? 8 : 0 }}
+            >
+              {new Date(fiscalInvoice.issuedAt).toLocaleString('eu-ES', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              })}
+            </div>
+            {fiscalInvoice.qrUrl && (
+              <a
+                href={fiscalInvoice.qrUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-block',
+                  padding: '6px 14px',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  background: '#fff7f5',
+                  color: '#e85d2f',
+                  border: '1px solid #fbd0c3',
+                  textDecoration: 'none',
+                }}
+              >
+                QR kodea ikusi →
+              </a>
+            )}
           </div>
         )}
 

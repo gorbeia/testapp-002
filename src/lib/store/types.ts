@@ -24,6 +24,9 @@ export type VolunteerRole = 'ADMIN' | 'VOLUNTEER';
 export interface StoredAssociation {
   id: string;
   name: string;
+  phone: string | null;
+  cif: string | null;
+  ticketBaiEnabled: boolean;
   createdAt: Date;
 }
 
@@ -172,6 +175,8 @@ export interface StoredOrder {
   expiresAt: Date | null;
   /** Ticket structure for PENDING_PAYMENT orders; cleared on confirm. */
   pendingLines: CreateTicketInput[] | null;
+  /** ID of the TicketBAI invoice issued for this order, once confirmed. */
+  fiscalReceiptRef: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -187,6 +192,58 @@ export interface StoredVolunteer {
   active: boolean;
   passwordResetToken: string | null;
   passwordResetExpiresAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ── TicketBAI ─────────────────────────────────────────────────────────────────
+
+export type TicketBaiProviderType = 'MOCK';
+export type TicketBaiInvoiceStatus = 'PENDING' | 'SUBMITTED' | 'ACCEPTED' | 'REJECTED' | 'MOCK';
+
+export interface StoredTicketBaiConfig {
+  id: string;
+  associationId: string;
+  providerType: TicketBaiProviderType;
+  series: string;
+  credentials: Record<string, string>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TicketBaiInvoiceLine {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  vatRate: number;
+  vatAmount: number;
+  total: number;
+}
+
+export interface TicketBaiVatBreakdown {
+  rate: number;
+  base: number;
+  vatAmount: number;
+}
+
+export interface StoredTicketBaiInvoice {
+  id: string;
+  associationId: string;
+  orderId: string;
+  orderNumber: number;
+  series: string;
+  invoiceNumber: number;
+  issuedAt: Date;
+  sellerName: string;
+  sellerCif: string;
+  lines: TicketBaiInvoiceLine[];
+  total: number;
+  vatBreakdown: TicketBaiVatBreakdown[];
+  chainId: string;
+  providerRef: string | null;
+  qrUrl: string | null;
+  xmlPayload: string | null;
+  status: TicketBaiInvoiceStatus;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -294,6 +351,32 @@ export interface AssociationRepository {
   create(name: string): Promise<StoredAssociation>;
   findById(id: string): Promise<StoredAssociation | null>;
   findByName(query: string): Promise<StoredAssociation | null>;
+  update(
+    id: string,
+    patch: Partial<Omit<StoredAssociation, 'id' | 'createdAt'>>
+  ): Promise<StoredAssociation>;
+}
+
+export interface TicketBaiConfigRepository {
+  findByAssociation(associationId: string): Promise<StoredTicketBaiConfig | null>;
+  upsert(
+    associationId: string,
+    data: Partial<Omit<StoredTicketBaiConfig, 'id' | 'associationId' | 'createdAt'>>
+  ): Promise<StoredTicketBaiConfig>;
+}
+
+export interface TicketBaiInvoiceRepository {
+  create(
+    data: Omit<StoredTicketBaiInvoice, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<StoredTicketBaiInvoice>;
+  findByOrder(orderId: string): Promise<StoredTicketBaiInvoice | null>;
+  findById(id: string): Promise<StoredTicketBaiInvoice | null>;
+  listByAssociation(associationId: string): Promise<StoredTicketBaiInvoice[]>;
+  getLastByAssociation(
+    associationId: string,
+    series: string
+  ): Promise<StoredTicketBaiInvoice | null>;
+  nextInvoiceNumber(associationId: string, series: string): Promise<number>;
 }
 
 export interface PaymentProviderRepository {

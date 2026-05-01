@@ -18,6 +18,7 @@ interface OrderWithTickets {
   createdAt: string;
   expiresAt?: string | null;
   cancellationReason?: string | null;
+  fiscalReceiptRef?: string | null;
   tickets: {
     id: string;
     counterType: string;
@@ -25,6 +26,96 @@ interface OrderWithTickets {
     readyAt: string | null;
     completedAt: string | null;
   }[];
+}
+
+interface TicketBaiInvoiceData {
+  id: string;
+  series: string;
+  invoiceNumber: number;
+  issuedAt: string;
+  total: number;
+  qrUrl: string | null;
+  status: string;
+}
+
+function TicketBaiSection({ orderId }: { orderId: string }) {
+  const [invoice, setInvoice] = useState<TicketBaiInvoiceData | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/orders/${orderId}/ticketbai-invoice`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: TicketBaiInvoiceData | null) => {
+        if (data) setInvoice(data);
+      })
+      .catch(() => {});
+  }, [orderId]);
+
+  if (!invoice) return null;
+
+  const invoiceRef = `${invoice.series}-${String(invoice.invoiceNumber).padStart(8, '0')}`;
+
+  return (
+    <div
+      style={{
+        background: 'var(--cust-surface, #fff)',
+        border: '1px solid var(--cust-border, #e5e7eb)',
+        borderRadius: 12,
+        padding: '16px 20px',
+        marginBottom: 12,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: 'var(--cust-text-sec, #6b7280)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          marginBottom: 8,
+        }}
+      >
+        Txartel argia / Faktura
+      </div>
+      <div
+        style={{
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: 15,
+          fontWeight: 700,
+          color: 'var(--cust-text-pri, #111)',
+          marginBottom: 4,
+        }}
+      >
+        {invoiceRef}
+      </div>
+      <div style={{ fontSize: 13, color: 'var(--cust-text-sec, #6b7280)' }}>
+        {new Date(invoice.issuedAt).toLocaleString('eu-ES', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        })}
+      </div>
+      {invoice.qrUrl && (
+        <a
+          href={invoice.qrUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-block',
+            marginTop: 10,
+            padding: '6px 14px',
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: 600,
+            background: 'var(--cust-primary-light, #fff7f5)',
+            color: 'var(--cust-primary, #e85d2f)',
+            border: '1px solid var(--cust-primary-light, #fbd0c3)',
+            textDecoration: 'none',
+          }}
+        >
+          QR kodea ikusi →
+        </a>
+      )}
+    </div>
+  );
 }
 
 function ReceiptDownload({ orderId: _orderId }: { orderId: string }) {
@@ -471,6 +562,7 @@ export default function OrderStatusPage() {
               Jasotzeko kodea ikusi →
             </Link>
             <ReceiptDownload orderId={orderId} />
+            {order.fiscalReceiptRef && <TicketBaiSection orderId={orderId} />}
           </>
         )}
 

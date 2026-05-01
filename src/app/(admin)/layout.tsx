@@ -15,6 +15,7 @@ const ASSOCIATION_NAV = [
   { href: '/eu/menu', label: 'Menua', icon: '🍽' },
   { href: '/eu/txosnak', label: 'Txosnak', icon: '🏘' },
   { href: '/eu/volunteers', label: 'Boluntarioak', icon: '👥' },
+  { href: '/eu/ticketbai', label: 'TicketBAI', icon: '🧾' },
   { href: '/eu/settings', label: 'Ezarpenak', icon: '⚙️' },
 ];
 

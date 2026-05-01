@@ -54,6 +54,7 @@ function makeOnlineOrder(
         ],
       },
     ],
+    fiscalReceiptRef: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

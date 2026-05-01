@@ -20,6 +20,7 @@
 | Assertions            | `expect` from `vitest` (integration) / Playwright built-ins (e2e) |
 | SSE spy (integration) | `vi.spyOn(sse, 'broadcast')`                                      |
 | Payment stub          | `FakePaymentProvider` implementing `IPaymentProvider`             |
+| TicketBAI stub        | `MockTicketBaiProvider` implementing `ITicketBaiProvider`         |
 
 > The existing Vitest unit/store tests (`src/lib/store/__tests__/`, component tests) are **kept as-is** and continue to run via `vitest run`. Cucumber handles integration and e2e exclusively.
 
@@ -44,6 +45,10 @@ features/
     reports.feature              # Phase 8
   payments/
     online-payment.feature       # Phase 9
+  tracking/
+    mobile-tracking.feature      # Phase 12
+  ticketbai/
+    fiscal-invoice.feature       # Phase 13
   step-definitions/
     integration/
       world.ts                   # in-memory store + direct handler calls
@@ -55,6 +60,7 @@ features/
       settings.steps.ts
       reports.steps.ts
       payments.steps.ts
+      ticketbai.steps.ts
     e2e/
       world.ts                   # Playwright browser + page objects
       shared.steps.ts
@@ -636,6 +642,69 @@ Feature: Online payment via Stripe
 
 ---
 
+### Phase 13 — TicketBAI fiscal invoices (`features/ticketbai/fiscal-invoice.feature`)
+
+```gherkin
+Feature: TicketBAI fiscal invoice issuance
+  As an association admin
+  I want every confirmed order to produce a fiscal invoice
+  So that we comply with Basque Country tax regulations
+
+  Background:
+    Given the association has TicketBAI enabled with series "TB"
+    And the MockTicketBaiProvider is active
+    And the txosna "aste-nagusia" exists and is OPEN
+
+  @smoke
+  Scenario: Confirmed order triggers invoice issuance
+    Given a PENDING_PAYMENT order "order-fiscal-1" exists
+    When the volunteer confirms order "order-fiscal-1"
+    Then a TicketBAI invoice is created for "order-fiscal-1"
+    And the invoice has series "TB" and invoiceNumber 1
+    And the invoice status is "MOCK"
+    And order "order-fiscal-1" has a fiscalReceiptRef set
+
+  @integration-only
+  Scenario: Second invoice references first in the chain
+    Given order "order-fiscal-1" has been confirmed and has invoice with chainId "abc123"
+    When a second order "order-fiscal-2" is confirmed
+    Then the second invoice's previousChainId equals "abc123"
+
+  @integration-only
+  Scenario: TicketBAI failure does not block confirmation
+    Given the MockTicketBaiProvider is configured to throw an error
+    When the volunteer confirms order "order-fiscal-1"
+    Then the order status is "CONFIRMED"
+    And no TicketBAI invoice is created
+
+  @integration-only
+  Scenario: No invoice when TicketBAI is disabled
+    Given the association has TicketBAI disabled
+    When the volunteer confirms an order
+    Then no TicketBAI invoice is created
+
+  @integration-only
+  Scenario: Admin retrieves config
+    When I GET /api/associations/{id}/ticketbai
+    Then the response status is 200
+    And the response includes series "TB"
+
+  @integration-only
+  Scenario: Unauthorized access is rejected
+    Given I am not authenticated
+    When I GET /api/associations/{id}/ticketbai
+    Then the response status is 401
+
+  @e2e @smoke
+  Scenario: Customer sees fiscal invoice on tracking page
+    Given a counter order has been confirmed and a TicketBAI invoice issued
+    When the customer visits the tracking page with the verification code
+    Then the "Txartel argia / Faktura" section is visible
+    And the invoice reference and QR link are shown
+```
+
+---
+
 ## CI pipeline
 
 ```
@@ -660,12 +729,12 @@ Nightly build runs step 5 with `@e2e or @smoke` (all e2e scenarios, including `@
 
 ## Coverage targets
 
-| Layer                   | Target                                               |
-| ----------------------- | ---------------------------------------------------- |
-| Vitest unit/store tests | 100% branch coverage on `src/lib/store/`             |
-| Cucumber integration    | Every route from phases 1–9 has ≥1 `@smoke` scenario |
-| Cucumber e2e            | Happy path per user role: customer, volunteer, admin |
-| React components        | Snapshot regression only (Vitest)                    |
+| Layer                   | Target                                                                 |
+| ----------------------- | ---------------------------------------------------------------------- |
+| Vitest unit/store tests | 100% branch coverage on `src/lib/store/`; 100% on `src/lib/ticketbai/` |
+| Cucumber integration    | Every route from phases 1–13 has ≥1 `@smoke` scenario                  |
+| Cucumber e2e            | Happy path per user role: customer, volunteer, admin                   |
+| React components        | Snapshot regression only (Vitest)                                      |
 
 ---
 
