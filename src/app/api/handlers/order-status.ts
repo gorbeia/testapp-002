@@ -37,7 +37,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ orde
     customerName: order.customerName,
     total: order.total,
     channel: order.channel,
+    paymentMethod: order.paymentMethod,
     notes: order.notes,
+    expiresAt: order.expiresAt,
+    fiscalReceiptRef: order.fiscalReceiptRef,
     createdAt: order.createdAt,
     tickets: tickets.map((t) => ({
       id: t.id,

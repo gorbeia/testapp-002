@@ -156,14 +156,11 @@ Bezeroak bere eskaeraren egoera ikusten du:
 
 ![Eskaera egoera faktura atalarekin](../screenshots/41-order-status-fiscal-invoice.png)
 
-> **[ARGAZKI-OHARRA — 41-order-status-fiscal-invoice.png]**
-> Hartu argazkia bezeroaren eskaera-egoera pantailari (`/eu/order/[id]`) eskaera baieztatuta dagoenean eta faktura jaulkita dagoenean. Erakutsi behar du: egoera-progresoa goialdean eta "Txartel argia / Faktura" sekzioa behean faktura-erreferentziarekin (adib. TB-2026-00000001), data eta "QR kodea ikusi" botoi urdinarekin.
-
 Faktura jaulkitzen denean, "**Txartel argia / Faktura**" sekzio bat agertzen da eskaera-egoera pantailan:
 
 - **Faktura erreferentzia**: `TB-2026-00000001` formatuan (serie-urtea-zenbakia)
 - **Data**: faktura jaulkitzeko ordua
-- **"QR kodea ikusi"** botoia — Hazienda Vaskaren egiaztapen-orrira irekitzen da berriko fitxa batean
+- **"QR kodea ikusi"** botoia — Euskal Ogasunaren egiaztapen-orrira irekitzen da berriko fitxa batean
 
 #### Frogagirria (Pickup Proof)
 
@@ -184,10 +181,14 @@ Faktura jaulkitzen denean, "**Txartel argia / Faktura**" sekzio bat agertzen da 
 
 **Sarrera orrialdea** (`/track`):
 
+![Kode sarrera — eskaeraren jarraipena](../screenshots/38-track-entry-mobile.png)
+
 - Kodea idazteko eremua (adib.: `AB-1234`)
 - "Bilatu" botoiarekin eskaera aurkitu
 
 **Egoera orrialdea** (`/track/[kode]`):
+
+![Eskaera egoera — kodearen bidez jarraipena](../screenshots/39-track-status-mobile.png)
 
 - Eskaeraren egungo egoera denbora errealean (SSE bidez)
 - Janari eta Edarien tiketen egoera bereizita
@@ -195,6 +196,8 @@ Faktura jaulkitzen denean, "**Txartel argia / Faktura**" sekzio bat agertzen da 
 - "Deskargatu txartela" lotura frogagirri orrialdera
 
 **Frogagirri orrialdea** (`/track/[kode]/receipt`):
+
+![Txartela — inprimatzeko orrialdea](../screenshots/40-track-receipt-mobile.png)
 
 - Txosna izena, data, eskaera zenbakia, bezeroaren izena
 - Lerro bakoitzeko produktua eta prezioa
@@ -759,7 +762,7 @@ Eskaera Egoera pantaila → /eu/order/[id]
 "Txartel argia / Faktura" sekzioa agertzen da automatikoki
   ┌─ Faktura erreferentzia (TB-2026-00000001)
   ├─ Data
-  └─ "QR kodea ikusi →" botoia → Hazienda Vasca
+  └─ "QR kodea ikusi →" botoia → Euskal Ogasuna
 ```
 
 Ez da ekintza gehigarririk behar: faktura eskaera-egoera pantailan bertan dago.
@@ -788,19 +791,13 @@ Eskaera-jarraipena pantaila → /eu/[slug]/track/AB-1234
   ├─ "Txartel argia / Faktura" sekzioa  ← faktura hemen
   │    ├─ Faktura erreferentzia (TB-00000042)
   │    ├─ Data
-  │    └─ "QR kodea ikusi →" → Hazienda Vasca
+  │    └─ "QR kodea ikusi →" → Euskal Ogasuna
   └─ "↓ Deskargatu txartela" botoia
 ```
 
 ![Eskualdatze txartela boluntarioaren pantailan](../screenshots/42-counter-handoff-card.png)
 
-> **[ARGAZKI-OHARRA — 42-counter-handoff-card.png]**
-> Hartu argazkia mostradoreko pantailari eskaera berri bat baieztatzen denean mobileTrackingEnabled gaituta. Erakutsi behar du: pantaila osoko dark-modu overlay bat, "ESKAERA #42" testu txikia, "Eman kode hau bezeroari" instrukzioa, kode monoespacioa letra handi zuriarekin (adib. AB-1234), QR kode handi bat, "/aste-nagusia-2026/track" URL testua, eta "Itxi" botoi laranja bat behean.
-
 ![Eskaeraren egoera kode bidez — TicketBAI fakturarekin](../screenshots/43-track-status-with-invoice.png)
-
-> **[ARGAZKI-OHARRA — 43-track-status-with-invoice.png]**
-> Hartu argazkia bezeroaren eskaera-jarraipena pantailari (`/eu/[slug]/track/AB-1234`) eskaera prest dagoenean eta TicketBAI faktura jaulkita dagoenean. Erakutsi behar du: egoera-txartelak, "Txartel argia / Faktura" sekzioa faktura-erreferentziarekin eta QR estekarekin, eta "↓ Deskargatu txartela" botoia.
 
 **Boluntarioaren zeregina:**
 
@@ -818,7 +815,7 @@ Eskaera-jarraipena pantaila → /eu/[slug]/track/AB-1234
 Bezeroek `/track/[kode]/receipt` orrialdetik inprimagarria deskarga dezakete. TicketBAI gaituta dagoenean, txartelak zuzenean faktura-erreferentzia eta QR URL barne hartzen ditu:
 
 - Faktura-erreferentzia (adib. `TB-00000001`)
-- QR URL testuan inprimatu (eskaneatuz Hazienda Vaskara doa)
+- QR URL testuan inprimatu (eskaneatuz Euskal Ogasunara doa)
 - TicketBAI gabe: "Ez da zerga-dokumentua" oharra
 
 ---
@@ -828,9 +825,6 @@ Bezeroek `/track/[kode]/receipt` orrialdetik inprimagarria deskarga dezakete. Ti
 **URL:** `/eu/ticketbai`
 
 ![TicketBAI faktura liburua](../screenshots/40-ticketbai-invoice-ledger.png)
-
-> **[ARGAZKI-OHARRA — 40-ticketbai-invoice-ledger.png]**
-> Hartu argazkia admin TicketBAI faktura-liburu pantailari (`/eu/ticketbai`). Pantailak erakutsi behar du: "TicketBAI Fakturak" izenburua eta "← Ezarpenak" itzultze-esteka goialdean. Jarraian taula bat: "Faktura zenbakia" zutabea (adib. TB-00000001), "Eskaera" (#1, #2…), "Data", "Guztira" (€), "Egoera" (koloretako etiketa) eta "QR" esteka. Gutxienez bi faktura lerro.
 
 Elkartearen faktura fiskal guztiak biltzen ditu: TicketBAI araudi fiskala betetzen duten agiriak.
 
@@ -843,7 +837,7 @@ Elkartearen faktura fiskal guztiak biltzen ditu: TicketBAI araudi fiskala betetz
 | Data             | Faktura jaulkitzeko ordua eta data                           |
 | Guztira          | Fakturatutako zenbatekoa euroak                              |
 | Egoera           | MOCK · SUBMITTED · ACCEPTED · REJECTED (kolorez bereizita)   |
-| QR               | Hazienda Vaskaren egiaztapen-orrira lotura                   |
+| QR               | Euskal Ogasunaren egiaztapen-orrira lotura                   |
 
 **Hutsik dagoenean:** "Oraindik ez da fakturik jaulki" mezua, Ezarpenetara lotura batekin TicketBAI gaitzeko.
 
@@ -857,18 +851,12 @@ TicketBAI konfiguratzeko, joan **Ezarpenak → BEZ** fitxara.
 
 ![Ezarpenak — BEZ fitxa TicketBAI desgaituta](../screenshots/38-settings-bez-tab.png)
 
-> **[ARGAZKI-OHARRA — 38-settings-bez-tab.png]**
-> Hartu argazkia admin ezarpenen BEZ fitxari (`/eu/settings`, BEZ fitxa) TicketBAI toggle DESAKTIBATUTA dagoelarik. Erakutsi behar du: "TicketBAI gaitu" toggle botoia (gris/desaktibatuta) goialdean, eta azpian BEZ mota-zerrenda (4 zerga-tasak) eta "BEZ mota berria gehitu" formularioa.
-
 **Aktibatzeko:**
 
 1. "**TicketBAI gaitu**" toggle botoia piztu
 2. Konfigurazio-panela agertzen da:
 
 ![Ezarpenak — BEZ fitxa TicketBAI gaituta](../screenshots/39-settings-bez-ticketbai-enabled.png)
-
-> **[ARGAZKI-OHARRA — 39-settings-bez-ticketbai-enabled.png]**
-> Hartu argazkia admin ezarpenen BEZ fitxari (`/eu/settings`, BEZ fitxa) TicketBAI toggle AKTIBATUTA dagoelarik. Erakutsi behar du: toggle botoia urdin/aktibo kolorean, eta azpian konfigurazio-panela: "Faktura seriea" eremua "TB" balioarekin, "Hornitzailea" dropdown bat "Mock (Probak)" hautatuta, "Konexioa probatu" botoia, "Gorde konfigurazioa" botoia eta "→ Faktura liburua ikusi" esteka.
 
 | Ezarpena             | Azalpena                                                        | Balio lehenetsia |
 | -------------------- | --------------------------------------------------------------- | ---------------- |
@@ -879,7 +867,7 @@ TicketBAI konfiguratzeko, joan **Ezarpenak → BEZ** fitxara.
 3. "**Gorde konfigurazioa**" klikatu
 4. Hemendik aurrera, eskaera baieztatzen den bakoitzean faktura bat automatikoki jaulkitzen da
 
-> **Oharra**: "Mock (Probak)" hornitzailea probetarako soilik da. Hornitzaile erreal batek (Argi, etab.) fakturak Hazienda Vaskara bidaltzen ditu benetan. Hornitzaile berri bat gehitzeko, jarri harremanetan garatzailearekin.
+> **Oharra**: "Mock (Probak)" hornitzailea probetarako soilik da. Hornitzaile erreal batek (Argi, etab.) fakturak Euskal Ogasunara bidaltzen ditu benetan. Hornitzaile berri bat gehitzeko, jarri harremanetan garatzailearekin.
 
 #### Txostenak
 

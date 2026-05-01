@@ -244,6 +244,32 @@ export default function OrderStatusPage() {
     return () => es.close();
   }, [orderId, txosnaSlug, order]);
 
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+
+  const handleCompletePayment = useCallback(async () => {
+    setPaying(true);
+    setPayError(null);
+    try {
+      const locale = Array.isArray(params.locale) ? params.locale[0] : (params.locale ?? '');
+      const returnUrl = `${window.location.origin}/${locale}/order/${orderId}`;
+      const res = await fetch('/api/payments/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, returnUrl }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? `Errorea (${res.status})`);
+      }
+      const session = await res.json();
+      window.location.href = session.url;
+    } catch (err) {
+      setPayError(err instanceof Error ? err.message : 'Errorea gertatu da');
+      setPaying(false);
+    }
+  }, [orderId, params.locale]);
+
   if (loading) {
     return (
       <div className="cust-theme" style={{ minHeight: '100vh', background: 'var(--cust-bg)' }}>
@@ -281,32 +307,6 @@ export default function OrderStatusPage() {
   const isPending = order.status === 'PENDING_PAYMENT';
   const isOnlinePending = isPending && order.paymentMethod === 'ONLINE';
   const isCancelled = order.status === 'CANCELLED';
-
-  const [paying, setPaying] = useState(false);
-  const [payError, setPayError] = useState<string | null>(null);
-
-  const handleCompletePayment = useCallback(async () => {
-    setPaying(true);
-    setPayError(null);
-    try {
-      const locale = Array.isArray(params.locale) ? params.locale[0] : (params.locale ?? '');
-      const returnUrl = `${window.location.origin}/${locale}/order/${orderId}`;
-      const res = await fetch('/api/payments/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, returnUrl }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? `Errorea (${res.status})`);
-      }
-      const session = await res.json();
-      window.location.href = session.url;
-    } catch (err) {
-      setPayError(err instanceof Error ? err.message : 'Errorea gertatu da');
-      setPaying(false);
-    }
-  }, [orderId, params.locale]);
 
   // Derive current step from ticket statuses
   const ticketStatuses = order.tickets?.map((t) => t.status) ?? [];
