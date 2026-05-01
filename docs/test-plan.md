@@ -85,6 +85,15 @@ The boolean predicate `available AND NOT sold_out AND txosna.status = OPEN AND N
 - "Burger + salad" (salad variant has `kitchenPost = null`) → one FOOD ticket: griddle only
 - Txosna without kitchen posts: single FOOD ticket with `kitchenPost = null` (unchanged behaviour)
 
+### TicketBAI Invoice Chain
+
+- `MockTicketBaiProvider.issue()` returns a result with non-empty `chainId`, `qrUrl`, and `status: 'MOCK'`
+- Two calls with different inputs produce different `chainId` values
+- `provider.issued[]` grows with each call (for test assertions in integration tests)
+- `chainId` is deterministic: same series/number/cif/total/issuedAt/previousChainId always produces the same hash
+- First invoice in a series uses `FIRST` as `previousChainId`; subsequent invoices use prior invoice's `chainId`
+- `validate()` always returns `{ ok: true }` for the mock
+
 ### Multitenancy Filtering
 
 Unit-test the query-building layer: every entity query must include `associationId`. Test that a query built for association A cannot return data belonging to association B, even if IDs are guessed.
@@ -188,6 +197,21 @@ Integration tests verify that components work correctly together, with a real da
 ### SSE Broadcast
 
 Integration-test the broadcast layer without a real browser: after a ticket status change, the correct SSE event is emitted to all registered clients for that txosnaId. Verify that clients registered for txosna B do not receive events from txosna A.
+
+### TicketBAI Invoice Issuance
+
+- Confirming a cash counter order triggers `issueTicketBaiInvoice` when `ticketBaiEnabled = true`
+- Invoice record created with correct `series`, `invoiceNumber`, `sellerName`, `sellerCif`, `total`, `chainId`, `qrUrl`
+- `order.fiscalReceiptRef` updated to the new invoice ID
+- Confirming a phone-to-counter order (via `confirm-order.ts`) also triggers issuance
+- Provider failure does not prevent order confirmation — order reaches CONFIRMED status; no invoice record created
+- `ticketBaiEnabled = false`: no invoice created; `fiscalReceiptRef` remains null
+- No config found: no invoice created; no error thrown
+- `GET /api/associations/[id]/ticketbai` returns defaults when no config exists
+- `PATCH /api/associations/[id]/ticketbai` persists series and providerType; subsequent GET reflects updated values
+- `GET /api/associations/[id]/ticketbai/invoices` returns all invoices for the association; cross-tenant access returns 403
+- `GET /api/orders/[orderId]/ticketbai-invoice` returns invoice when one exists; returns 404 when none
+- Sequential confirmations produce correctly chained invoices: invoice N's `previousChainId` equals invoice N-1's `chainId`
 
 ### Password Reset Flow
 
@@ -314,6 +338,24 @@ E2E tests run a real browser against a running instance. Use Playwright. Test th
 6. Board readable at distance (visual check — large text, high contrast)
 7. Txosna PAUSED or CLOSED: appropriate message shown; no menu visible
 
+### Admin — TicketBAI Configuration
+
+1. Admin navigates to Settings → BEZ tab
+2. TicketBAI toggle off by default; enabling it shows the config panel
+3. Series field defaults to "TB"; can be changed and saved
+4. After saving config, link to invoice ledger is visible
+5. Invoice ledger page shows all issued invoices with correct columns
+6. QR link in ledger opens in a new tab
+
+### Customer — Fiscal Invoice on Tracking Page
+
+1. Counter volunteer confirms order; handoff card appears with verification code
+2. Customer navigates to `/[slug]/track`, enters code; tracking page loads
+3. When TicketBAI is enabled, "Txartel argia / Faktura" section is visible above receipt download button
+4. Invoice reference in `{series}-{number}` format; QR link present
+5. Receipt page (`/track/[code]/receipt`) also shows fiscal section
+6. When TicketBAI is not enabled, tracking page shows no fiscal section; receipt shows "Ez da zerga-dokumentua"
+
 ### Admin — Configuration
 
 1. Self-registration: fill name/email/password; onboarding guide shown immediately
@@ -365,4 +407,4 @@ E2E tests run a real browser against a running instance. Use Playwright. Test th
 
 ---
 
-_Last updated: session 18_
+_Last updated: session 20_

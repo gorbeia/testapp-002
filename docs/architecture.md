@@ -325,20 +325,25 @@ Reference implementation: `src/app/api/txosnak/[slug]/reports/route.ts`
 
 ### Public vs Protected Endpoints
 
-| Route                                | Method    | Auth     | Scope                | Note                                                                                                                                                            |
-| ------------------------------------ | --------- | -------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/txosnak/[slug]`            | GET       | None     | Public               | Txosna metadata (name, status, channels)                                                                                                                        |
-| `GET /api/txosnak/[slug]/catalog`    | GET       | None     | Public               | Menu visible to customers                                                                                                                                       |
-| `GET /api/txosnak/[slug]/events`     | GET (SSE) | None     | Public               | Real-time order/ticket events (scoped by txosnaId)                                                                                                              |
-| `POST /api/txosnak/[slug]/orders`    | POST      | Optional | By slug              | Self-service orders (SELF_SERVICE, PHONE_TO_COUNTER channels) don't require auth; counter orders (COUNTER channel) require volunteer auth + associationId check |
-| `GET /api/orders/[orderId]`          | GET       | None     | By verification code | Customers access their order via verification code secret                                                                                                       |
-| `GET /api/txosnak/[slug]/tickets`    | GET       | Required | Volunteer            | Requires volunteer session; verified to belong to caller's association                                                                                          |
-| `PATCH /api/tickets/[id]`            | PATCH     | Required | Volunteer            | Requires volunteer session; ticket verified to belong to caller's association                                                                                   |
-| `POST /api/orders/[orderId]/confirm` | POST      | Required | Volunteer            | Requires volunteer session; order's txosna verified to belong to caller's association                                                                           |
-| `POST /api/orders/[orderId]/cancel`  | POST      | Optional | By caller type       | Customers can cancel PENDING_PAYMENT orders; volunteers can cancel any order but must belong to their association                                               |
-| `GET /api/txosnak/[slug]/reports`    | GET       | Required | ADMIN                | Requires ADMIN role; txosna verified to belong to caller's association                                                                                          |
-| `PATCH /api/vat-types/[vatTypeId]`   | PATCH     | Required | ADMIN                | Requires ADMIN role; VAT type verified to belong to caller's association                                                                                        |
-| `DELETE /api/vat-types/[vatTypeId]`  | DELETE    | Required | ADMIN                | Requires ADMIN role; VAT type verified to belong to caller's association                                                                                        |
+| Route                                           | Method    | Auth     | Scope                 | Note                                                                                                                                                            |
+| ----------------------------------------------- | --------- | -------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/txosnak/[slug]`                       | GET       | None     | Public                | Txosna metadata (name, status, channels)                                                                                                                        |
+| `GET /api/txosnak/[slug]/catalog`               | GET       | None     | Public                | Menu visible to customers                                                                                                                                       |
+| `GET /api/txosnak/[slug]/events`                | GET (SSE) | None     | Public                | Real-time order/ticket events (scoped by txosnaId)                                                                                                              |
+| `POST /api/txosnak/[slug]/orders`               | POST      | Optional | By slug               | Self-service orders (SELF_SERVICE, PHONE_TO_COUNTER channels) don't require auth; counter orders (COUNTER channel) require volunteer auth + associationId check |
+| `GET /api/orders/[orderId]`                     | GET       | None     | By verification code  | Customers access their order via verification code secret                                                                                                       |
+| `GET /api/txosnak/[slug]/tickets`               | GET       | Required | Volunteer             | Requires volunteer session; verified to belong to caller's association                                                                                          |
+| `PATCH /api/tickets/[id]`                       | PATCH     | Required | Volunteer             | Requires volunteer session; ticket verified to belong to caller's association                                                                                   |
+| `POST /api/orders/[orderId]/confirm`            | POST      | Required | Volunteer             | Requires volunteer session; order's txosna verified to belong to caller's association                                                                           |
+| `POST /api/orders/[orderId]/cancel`             | POST      | Optional | By caller type        | Customers can cancel PENDING_PAYMENT orders; volunteers can cancel any order but must belong to their association                                               |
+| `GET /api/txosnak/[slug]/reports`               | GET       | Required | ADMIN                 | Requires ADMIN role; txosna verified to belong to caller's association                                                                                          |
+| `PATCH /api/vat-types/[vatTypeId]`              | PATCH     | Required | ADMIN                 | Requires ADMIN role; VAT type verified to belong to caller's association                                                                                        |
+| `DELETE /api/vat-types/[vatTypeId]`             | DELETE    | Required | ADMIN                 | Requires ADMIN role; VAT type verified to belong to caller's association                                                                                        |
+| `GET /api/associations/[id]/ticketbai`          | GET       | Required | ADMIN                 | Returns TicketBAI config for association (or defaults if none set); association ID verified against session                                                     |
+| `PATCH /api/associations/[id]/ticketbai`        | PATCH     | Required | ADMIN                 | Updates series, providerType, credentials; association ID verified against session                                                                              |
+| `GET /api/associations/[id]/ticketbai/invoices` | GET       | Required | ADMIN                 | Lists all issued TicketBAI invoices for the association                                                                                                         |
+| `GET /api/orders/[orderId]/ticketbai-invoice`   | GET       | None     | By orderId            | Returns the TicketBAI invoice for a specific order; orderId is the customer's credential (not guessable)                                                        |
+| `GET /api/txosnak/[slug]/orders/lookup`         | GET       | None     | Public (rate-limited) | Returns order status by verification code; no auth required; max 20 req/60s per IP+slug                                                                         |
 
 ### PROTO_MODE
 
@@ -366,4 +371,4 @@ echo $PROTO_MODE  # should be empty or unset
 
 ---
 
-_Last updated: session 18_ (Security section added in session 19)
+_Last updated: session 20_

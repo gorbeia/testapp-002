@@ -174,11 +174,19 @@ The orders endpoint is intentionally unauthenticated — the `orderId` is the cu
 
 ## Customer UI
 
-When an order has a `fiscalReceiptRef`, the order status page (`/[locale]/order/[id]`) shows a "Txartel argia / Faktura" section with:
+The "Txartel argia / Faktura" section appears whenever an order has a `fiscalReceiptRef`. It is shown in two places:
 
-- Formatted invoice reference (`{series}-{year}-{invoiceNumber padded to 8}`)
+**Phone-order customers** (`/[locale]/order/[id]`): The order status page includes the fiscal invoice section below the ticket status cards.
+
+**Counter-order customers** (`/[locale]/[slug]/track/[code]`): The public tracking page — accessed via the handoff code displayed at the counter — renders the same fiscal invoice section above the receipt download button.
+
+Both views show:
+
+- Formatted invoice reference (`{series}-{invoiceNumber zero-padded to 8 digits}`)
 - Issue date
-- A button opening the QR URL in a new tab (links to Hacienda Vasca's verification portal)
+- A link opening the QR URL in a new tab (Hacienda Vasca's verification portal)
+
+The **printable receipt** (`/[locale]/[slug]/track/[code]/receipt`) conditionally renders the full fiscal section when an invoice exists; when no invoice is present it shows "Ez da zerga-dokumentua" (not a fiscal document).
 
 ---
 
@@ -205,4 +213,4 @@ Example: `TB-2026-00000001`
 
 ---
 
-_Last updated: session 18_
+_Last updated: session 20_
