@@ -3,12 +3,13 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import { BASE_URL } from './world';
 import type { E2eWorld } from './world';
 
-// ── PIN flow helpers ──────────────────────────────────────────────────────────
+// ── PIN flow helpers ────────────────────────────────────────────────────────
 
 async function doPinFlow(world: E2eWorld, mode: string, pin: string, slug = 'aste-nagusia-2026') {
   await world.page.goto(`${BASE_URL}/eu/pin?slug=${slug}`, { waitUntil: 'domcontentloaded' });
-  // Select mode
+  // Select mode and wait for the button state to update
   await world.page.getByRole('button', { name: mode }).click();
+  await world.page.waitForLoadState('networkidle');
   // Enter PIN digits one by one via keypad buttons
   for (const digit of pin) {
     await world.page.getByRole('button', { name: digit, exact: true }).click();
@@ -61,10 +62,11 @@ Given('I am on the overview page via PIN {string}', async function (this: E2eWor
   await this.page.goto(`${BASE_URL}/eu/overview`, { waitUntil: 'domcontentloaded' });
 });
 
-// ── PIN page steps ────────────────────────────────────────────────────────────
+// ── PIN page steps ─────────────────────────────────────────────────────────
 
 When('I select pin mode {string}', async function (this: E2eWorld, mode: string) {
   await this.page.getByRole('button', { name: mode }).click();
+  await this.page.waitForLoadState('networkidle');
 });
 
 When('I enter PIN {string}', async function (this: E2eWorld, pin: string) {
@@ -121,7 +123,7 @@ Then('the page shows {string} error', async function (this: E2eWorld, errorText:
   await this.page.waitForSelector(`text=${errorText}`, { timeout: 5_000 });
 });
 
-// ── Counter steps ─────────────────────────────────────────────────────────────
+// ── Counter steps ─────────────────────────────────────────────────────────
 
 When('I click {string}', async function (this: E2eWorld, label: string) {
   await this.page.getByRole('button', { name: label }).click();
