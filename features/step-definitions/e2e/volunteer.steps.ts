@@ -7,9 +7,10 @@ import type { E2eWorld } from './world';
 
 async function doPinFlow(world: E2eWorld, mode: string, pin: string, slug = 'aste-nagusia-2026') {
   await world.page.goto(`${BASE_URL}/eu/pin?slug=${slug}`, { waitUntil: 'domcontentloaded' });
-  // Select mode and wait for the button state to update
+  // Select mode and wait for the button to visibly change state
   await world.page.getByRole('button', { name: mode }).click();
-  await world.page.waitForLoadState('networkidle');
+  // Wait for the mode button to appear selected (UI state change, not network)
+  await world.page.waitForTimeout(100);
   // Enter PIN digits one by one via keypad buttons
   for (const digit of pin) {
     await world.page.getByRole('button', { name: digit, exact: true }).click();
@@ -66,7 +67,8 @@ Given('I am on the overview page via PIN {string}', async function (this: E2eWor
 
 When('I select pin mode {string}', async function (this: E2eWorld, mode: string) {
   await this.page.getByRole('button', { name: mode }).click();
-  await this.page.waitForLoadState('networkidle');
+  // Wait for the button state to visually update (no network wait needed for SSE)
+  await this.page.waitForTimeout(100);
 });
 
 When('I enter PIN {string}', async function (this: E2eWorld, pin: string) {
