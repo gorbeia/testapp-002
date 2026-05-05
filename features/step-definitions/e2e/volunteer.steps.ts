@@ -2,10 +2,13 @@ import assert from 'assert';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { BASE_URL } from './world';
 import type { E2eWorld } from './world';
+import { loginAsVolunteer } from './auth.steps';
 
 // ── PIN flow helpers ────────────────────────────────────────────────────────
 
 async function doPinFlow(world: E2eWorld, mode: string, pin: string, slug = 'aste-nagusia-2026') {
+  // Establish a session first so protected API calls from counter/drinks/kitchen succeed
+  await loginAsVolunteer(world);
   await world.page.goto(`${BASE_URL}/eu/pin?slug=${slug}`, { waitUntil: 'domcontentloaded' });
   // Select mode and wait for the button to visibly change state
   await world.page.getByRole('button', { name: mode }).click();

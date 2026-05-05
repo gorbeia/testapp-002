@@ -11,7 +11,7 @@ const intlMiddleware = createIntlMiddleware({
   localePrefix: 'always',
 });
 
-const volunteerPaths = ['/counter', '/drinks', '/kitchen', '/overview', '/pin'];
+const volunteerPaths = ['/counter', '/drinks', '/kitchen', '/overview'];
 const adminPaths = ['/menu', '/txosna', '/volunteers', '/reports', '/onboarding', '/dashboard'];
 
 export async function proxy(request: NextRequest) {
