@@ -5,7 +5,8 @@ Feature: Volunteer PIN access
   So that I am taken to the correct operational screen
 
   Background:
-    Given I navigate to "/eu/pin?slug=aste-nagusia-2026"
+    Given I am logged in as volunteer
+    And I navigate to "/eu/pin?slug=aste-nagusia-2026"
 
   @e2e @smoke
   Scenario: PIN screen shows four mode buttons and a keypad

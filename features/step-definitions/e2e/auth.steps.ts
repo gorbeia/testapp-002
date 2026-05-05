@@ -23,10 +23,27 @@ async function loginAsAdmin(world: E2eWorld, association: string, email: string,
   await world.page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 5_000 });
 }
 
+export async function loginAsVolunteer(world: E2eWorld) {
+  await world.goto('/login');
+  const assocInput = world.page.getByPlaceholder('Adib.: Bilbao Zaharra');
+  await assocInput.click();
+  await assocInput.pressSequentially('Erreka Gaztedi', { delay: 30 });
+  await world.page.getByRole('button', { name: /Jarraitu/ }).click();
+  await world.page.waitForSelector('input[type="email"]', { timeout: 5_000 });
+  await world.page.fill('input[type="email"]', 'gorka@elkartea.eus');
+  await world.page.fill('input[type="password"]', 'test1234');
+  await world.page.getByRole('button', { name: 'Saioa hasi →' }).click();
+  await world.page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 5_000 });
+}
+
 // ── Given ─────────────────────────────────────────────────────────────────────
 
 Given('I navigate to {string}', async function (this: E2eWorld, path: string) {
   await this.goto(path);
+});
+
+Given('I am logged in as volunteer', async function (this: E2eWorld) {
+  await loginAsVolunteer(this);
 });
 
 /**
