@@ -14,7 +14,7 @@ When(
     await this.page.waitForSelector(
       `button:has-text("${tabLabel}"), [role="tab"]:has-text("${tabLabel}")`,
       {
-        timeout: 10_000,
+        timeout: 5_000,
       }
     );
     await this.page

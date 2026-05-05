@@ -3,8 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import type { E2eWorld } from '../step-definitions/e2e/world';
 
-// Browser navigation is slow — give each step 30s
-setDefaultTimeout(30_000);
+// Memory database is fast — 5s is plenty
+setDefaultTimeout(5_000);
 
 Before({ tags: '@e2e' }, async function (this: E2eWorld) {
   await this.openBrowser();
