@@ -58,7 +58,13 @@ global.fakePaymentProvider = new FakePaymentProvider();
 Module.prototype.require = function (id) {
   if (id === '@/lib/auth') {
     return {
-      auth: async () => ({ user: { id: 'test-volunteer' } }),
+      auth: async () => ({
+        user: {
+          id: 'test-volunteer',
+          role: global.__TEST_ROLE__ ?? 'ADMIN',
+          associationId: global.__TEST_ASSOCIATION_ID__ ?? 'assoc-1',
+        },
+      }),
       signIn: async () => {},
       signOut: async () => {},
       handlers: {},

@@ -3,14 +3,9 @@ import { prisma } from '@/lib/prisma';
 import type { NextRequest } from 'next/server';
 
 export async function GET() {
-  let associationId: string;
-  if (process.env.PROTO_MODE === 'true') {
-    associationId = (global as any).__TEST_ASSOCIATION_ID__ ?? 'assoc-1';
-  } else {
-    const session = await auth();
-    if (!session?.user) return new Response('Unauthorized', { status: 401 });
-    associationId = (session.user as any).associationId as string;
-  }
+  const session = await auth();
+  if (!session?.user) return new Response('Unauthorized', { status: 401 });
+  const associationId = (session.user as any).associationId as string;
 
   if (!prisma) {
     const { catalogRepo } = await import('@/lib/store');

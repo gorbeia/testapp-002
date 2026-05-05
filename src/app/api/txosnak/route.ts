@@ -7,19 +7,12 @@ import { txosnaRepo } from '@/lib/store';
  * Create a new txosna for the authenticated ADMIN's association.
  */
 export async function POST(req: NextRequest) {
-  let associationId: string;
-
-  if (process.env.PROTO_MODE === 'true') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    associationId = (global as any).__TEST_ASSOCIATION_ID__ ?? 'assoc-1';
-  } else {
-    const session = await auth();
-    if (!session?.user) return new Response('Unauthorized', { status: 401 });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session.user as any;
-    if (user.role !== 'ADMIN') return new Response('Forbidden', { status: 403 });
-    associationId = user.associationId;
-  }
+  const session = await auth();
+  if (!session?.user) return new Response('Unauthorized', { status: 401 });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user = session.user as any;
+  if (user.role !== 'ADMIN') return new Response('Forbidden', { status: 403 });
+  const associationId: string = user.associationId;
 
   try {
     const body = await req.json();

@@ -15,16 +15,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
 
   const reason = (body.reason ?? 'CUSTOMER') as CancellationReason;
 
-  let isVolunteer = false;
-  let sessionAssociationId: string | null = null;
-  if (process.env.PROTO_MODE !== 'true') {
-    const session = await auth();
-    isVolunteer = !!session?.user;
-    if (isVolunteer)
-      sessionAssociationId = (session?.user as { associationId?: string }).associationId ?? null;
-  } else {
-    isVolunteer = true;
-  }
+  const session = await auth();
+  const isVolunteer = !!session?.user;
+  const sessionAssociationId = isVolunteer
+    ? ((session?.user as { associationId?: string }).associationId ?? null)
+    : null;
 
   if (!isVolunteer && reason !== 'CUSTOMER') {
     return Response.json(

@@ -1,19 +1,18 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetStore, orderRepo, ticketRepo } from '@/test/store-setup';
 import { POST as ordersPost, GET as ordersGet } from '../[slug]/orders/route';
 
 // Stub NextAuth so we don't need a real session
-vi.mock('@/lib/auth', () => ({ auth: vi.fn().mockResolvedValue({ user: { id: 'v1' } }) }));
+vi.mock('@/lib/auth', () => ({
+  auth: vi
+    .fn()
+    .mockResolvedValue({ user: { id: 'v1', associationId: 'assoc-1', role: 'VOLUNTEER' } }),
+}));
 // Stub SSE broadcast
 vi.mock('@/lib/sse', () => ({ broadcast: vi.fn() }));
 
 beforeEach(() => {
   resetStore();
-  vi.stubEnv('PROTO_MODE', 'true');
-});
-
-afterEach(() => {
-  vi.unstubAllEnvs();
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -105,10 +104,13 @@ describe('POST /api/txosnak/[slug]/orders', () => {
   });
 
   it('returns 422 for a sold-out product', async () => {
-    // demo-prod-4 (Pintxo nahasia) is sold out in demo-janaria
+    // demo-prod-4 (Pintxo nahasia) is sold out in demo-janaria (demo-assoc-1).
+    // Use SELF_SERVICE channel so the association check is skipped and we reach
+    // the sold-out validation.
     const res = await ordersPost(
       makePost({
         ...VALID_ORDER,
+        channel: 'SELF_SERVICE',
         lines: [
           {
             productId: 'demo-prod-4',
