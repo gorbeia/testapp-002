@@ -9,13 +9,6 @@ const DEFAULT_CONFIG = { providerType: 'MOCK' as TicketBaiProviderType, series: 
 async function resolveSession(
   associationId: string
 ): Promise<{ associationId: string; role: string } | Response> {
-  if (process.env.PROTO_MODE === 'true') {
-    return {
-      associationId:
-        ((global as Record<string, unknown>).__TEST_ASSOCIATION_ID__ as string) ?? 'assoc-1',
-      role: ((global as Record<string, unknown>).__TEST_ROLE__ as string) ?? 'ADMIN',
-    };
-  }
   const session = await auth();
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
   const { role, associationId: sessionAssocId } = session.user as {

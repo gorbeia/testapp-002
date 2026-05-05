@@ -10,16 +10,11 @@ export async function POST(
 ) {
   const { associationId, providerId } = await params;
 
-  let sessionAssociationId: string;
-  if (process.env.PROTO_MODE === 'true') {
-    sessionAssociationId = (global as any).__TEST_ASSOCIATION_ID__ ?? 'assoc-1';
-  } else {
-    const session = await auth();
-    if (!session?.user) return new Response('Unauthorized', { status: 401 });
-    const user = session.user as any;
-    if (user.role !== 'ADMIN') return new Response('Forbidden', { status: 403 });
-    sessionAssociationId = user.associationId;
-  }
+  const session = await auth();
+  if (!session?.user) return new Response('Unauthorized', { status: 401 });
+  const user = session.user as any;
+  if (user.role !== 'ADMIN') return new Response('Forbidden', { status: 403 });
+  const sessionAssociationId = user.associationId;
 
   if (sessionAssociationId !== associationId) {
     return new Response('Forbidden', { status: 403 });

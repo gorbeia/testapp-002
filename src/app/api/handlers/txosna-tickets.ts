@@ -6,14 +6,9 @@ import type { CounterType, TicketStatus } from '@/lib/store/types';
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  let sessionAssociationId: string;
-  if (process.env.PROTO_MODE === 'true') {
-    sessionAssociationId = (global as any).__TEST_ASSOCIATION_ID__ ?? 'assoc-1';
-  } else {
-    const session = await auth();
-    if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    ({ associationId: sessionAssociationId } = session.user as any);
-  }
+  const session = await auth();
+  if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const { associationId: sessionAssociationId } = session.user as any;
 
   const txosna = await txosnaRepo.findBySlug(slug);
   if (!txosna) return Response.json({ error: 'Not found' }, { status: 404 });

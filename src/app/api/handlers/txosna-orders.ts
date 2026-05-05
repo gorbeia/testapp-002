@@ -53,15 +53,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const isSelfService = body.channel === 'SELF_SERVICE' || body.channel === 'PHONE_TO_COUNTER';
   let registeredById: string | null = null;
   if (!isSelfService) {
-    if (process.env.PROTO_MODE !== 'true') {
-      const session = await auth();
-      if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-      const sessionAssociationId =
-        (session.user as { associationId?: string }).associationId ?? null;
-      if (txosna.associationId !== sessionAssociationId)
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
-      registeredById = (session.user as { id?: string }).id ?? null;
-    }
+    const session = await auth();
+    if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const sessionAssociationId = (session.user as { associationId?: string }).associationId ?? null;
+    if (txosna.associationId !== sessionAssociationId)
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    registeredById = (session.user as { id?: string }).id ?? null;
   }
 
   const grouped = await catalogRepo.listProductViews(txosna.id);
@@ -228,10 +225,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  if (process.env.PROTO_MODE !== 'true') {
-    const session = await auth();
-    if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const session = await auth();
+  if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const txosna = await txosnaRepo.findBySlug(slug);
   if (!txosna) return Response.json({ error: 'Not found' }, { status: 404 });

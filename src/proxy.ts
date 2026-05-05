@@ -41,18 +41,15 @@ export async function proxy(request: NextRequest) {
   const isAdminPath = adminPaths.some((p) => pathname.includes(p));
 
   if (isVolunteerPath || isAdminPath) {
-    // Skip auth in prototype mode
-    if (process.env.PROTO_MODE !== 'true') {
-      const { auth } = await import('@/lib/auth');
-      const session = await auth();
-      if (!session) {
-        const loginUrl = new URL('/login', request.url);
-        loginUrl.searchParams.set('callbackUrl', pathname);
-        return NextResponse.redirect(loginUrl);
-      }
-      if (isAdminPath && (session.user as any)?.role !== 'ADMIN') {
-        return NextResponse.redirect(new URL('/counter', request.url));
-      }
+    const { auth } = await import('@/lib/auth');
+    const session = await auth();
+    if (!session) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    if (isAdminPath && (session.user as any)?.role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/counter', request.url));
     }
   }
 

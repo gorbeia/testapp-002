@@ -8,16 +8,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ volunteerId: string }> }
 ) {
-  let role: string;
-  let sessionAssociationId: string;
-  if (process.env.PROTO_MODE === 'true') {
-    role = (global as any).__TEST_ROLE__ ?? 'ADMIN';
-    sessionAssociationId = (global as any).__TEST_ASSOCIATION_ID__ ?? 'assoc-1';
-  } else {
-    const session = await auth();
-    if (!session?.user) return new Response('Unauthorized', { status: 401 });
-    ({ role, associationId: sessionAssociationId } = session.user as any);
-  }
+  const session = await auth();
+  if (!session?.user) return new Response('Unauthorized', { status: 401 });
+  const { role, associationId: sessionAssociationId } = session.user as any;
 
   if (role !== 'ADMIN') {
     return new Response('Forbidden', { status: 403 });
@@ -73,16 +66,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ volunteerId: string }> }
 ) {
-  let role: string;
-  let sessionAssociationId: string;
-  if (process.env.PROTO_MODE === 'true') {
-    role = (global as any).__TEST_ROLE__ ?? 'ADMIN';
-    sessionAssociationId = (global as any).__TEST_ASSOCIATION_ID__ ?? 'assoc-1';
-  } else {
-    const session = await auth();
-    if (!session?.user) return new Response('Unauthorized', { status: 401 });
-    ({ role, associationId: sessionAssociationId } = session.user as any);
-  }
+  const session = await auth();
+  if (!session?.user) return new Response('Unauthorized', { status: 401 });
+  const { role, associationId: sessionAssociationId } = session.user as any;
 
   if (role !== 'ADMIN') {
     return new Response('Forbidden', { status: 403 });
