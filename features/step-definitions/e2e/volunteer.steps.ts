@@ -24,7 +24,7 @@ Given(
   'I am on the food counter page via PIN {string}',
   async function (this: E2eWorld, pin: string) {
     await doPinFlow(this, 'Janaria', pin);
-    await this.page.waitForURL((url) => url.pathname.includes('/counter'), { timeout: 15_000 });
+    await this.page.waitForURL((url) => url.pathname.includes('/counter'), { timeout: 5_000 });
   }
 );
 
@@ -32,7 +32,7 @@ Given(
   'I am on the drinks counter page via PIN {string}',
   async function (this: E2eWorld, pin: string) {
     await doPinFlow(this, 'Edariak', pin);
-    await this.page.waitForURL((url) => url.pathname.includes('/drinks'), { timeout: 15_000 });
+    await this.page.waitForURL((url) => url.pathname.includes('/drinks'), { timeout: 5_000 });
   }
 );
 
@@ -41,9 +41,9 @@ Given(
   async function (this: E2eWorld, pin: string, post: string) {
     await doPinFlow(this, 'Sukaldea', pin);
     // Post selection screen appears
-    await this.page.waitForSelector(`text=Hautatu postua`, { timeout: 10_000 });
+    await this.page.waitForSelector(`text=Hautatu postua`, { timeout: 5_000 });
     await this.page.getByRole('button', { name: new RegExp(post, 'i') }).click();
-    await this.page.waitForURL((url) => url.pathname.includes('/kitchen'), { timeout: 15_000 });
+    await this.page.waitForURL((url) => url.pathname.includes('/kitchen'), { timeout: 5_000 });
   }
 );
 
@@ -52,14 +52,14 @@ Given(
   async function (this: E2eWorld, pin: string) {
     await doPinFlow(this, 'Kudeaketa', pin);
     await this.page.waitForURL((url) => url.pathname.includes('/kitchen-manager'), {
-      timeout: 15_000,
+      timeout: 5_000,
     });
   }
 );
 
 Given('I am on the overview page via PIN {string}', async function (this: E2eWorld, pin: string) {
   await doPinFlow(this, 'Janaria', pin);
-  await this.page.waitForURL((url) => url.pathname.includes('/counter'), { timeout: 15_000 });
+  await this.page.waitForURL((url) => url.pathname.includes('/counter'), { timeout: 5_000 });
   await this.page.goto(`${BASE_URL}/eu/overview`, { waitUntil: 'domcontentloaded' });
 });
 
@@ -86,7 +86,7 @@ Then(
   'the page shows four mode buttons: {string}, {string}, {string}, {string}',
   async function (this: E2eWorld, m1: string, m2: string, m3: string, m4: string) {
     for (const mode of [m1, m2, m3, m4]) {
-      await this.page.waitForSelector(`button:has-text("${mode}")`, { timeout: 10_000 });
+      await this.page.waitForSelector(`button:has-text("${mode}")`, { timeout: 5_000 });
     }
   }
 );
@@ -107,18 +107,18 @@ Then('the {string} button appears selected', async function (this: E2eWorld, mod
 Then(
   'the page shows a post selection screen with {string} and {string}',
   async function (this: E2eWorld, post1: string, post2: string) {
-    await this.page.waitForSelector('text=Hautatu postua', { timeout: 10_000 });
+    await this.page.waitForSelector('text=Hautatu postua', { timeout: 5_000 });
     await this.page.waitForSelector(`button:has-text("${post1}")`, { timeout: 5_000 });
     await this.page.waitForSelector(`button:has-text("${post2}")`, { timeout: 5_000 });
   }
 );
 
 Then('I am on the food counter page', async function (this: E2eWorld) {
-  await this.page.waitForURL((url) => url.pathname.includes('/counter'), { timeout: 10_000 });
+  await this.page.waitForURL((url) => url.pathname.includes('/counter'), { timeout: 5_000 });
 });
 
 Then('I am on the drinks counter page', async function (this: E2eWorld) {
-  await this.page.waitForURL((url) => url.pathname.includes('/drinks'), { timeout: 10_000 });
+  await this.page.waitForURL((url) => url.pathname.includes('/drinks'), { timeout: 5_000 });
 });
 
 Then('the page shows {string} error', async function (this: E2eWorld, errorText: string) {
@@ -134,7 +134,7 @@ When('I click {string}', async function (this: E2eWorld, label: string) {
 When(
   'I click the product {string} in the product grid',
   async function (this: E2eWorld, productName: string) {
-    await this.page.waitForSelector(`button:has-text("${productName}")`, { timeout: 10_000 });
+    await this.page.waitForSelector(`button:has-text("${productName}")`, { timeout: 5_000 });
     await this.page.getByRole('button', { name: productName }).click();
   }
 );
@@ -160,13 +160,13 @@ Then('the product appears in the new order summary', async function (this: E2eWo
 // ── KDS / overview steps ──────────────────────────────────────────────────────
 
 Then('the page header contains {string}', async function (this: E2eWorld, text: string) {
-  await this.page.waitForSelector(`text=${text}`, { timeout: 10_000 });
+  await this.page.waitForSelector(`text=${text}`, { timeout: 5_000 });
 });
 
 Then(
   'the page shows a stat card labelled {string}',
   async function (this: E2eWorld, label: string) {
-    await this.page.waitForSelector(`text=${label}`, { timeout: 10_000 });
+    await this.page.waitForSelector(`text=${label}`, { timeout: 5_000 });
   }
 );
 

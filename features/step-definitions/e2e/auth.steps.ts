@@ -15,12 +15,12 @@ async function loginAsAdmin(world: E2eWorld, association: string, email: string,
   await assocInput.pressSequentially(association, { delay: 30 });
   await world.page.getByRole('button', { name: /Jarraitu/ }).click();
 
-  await world.page.waitForSelector('input[type="email"]', { timeout: 10_000 });
+  await world.page.waitForSelector('input[type="email"]', { timeout: 5_000 });
   await world.page.fill('input[type="email"]', email);
   await world.page.fill('input[type="password"]', password);
   await world.page.getByRole('button', { name: 'Saioa hasi →' }).click();
 
-  await world.page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 15_000 });
+  await world.page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 5_000 });
 }
 
 // ── Given ─────────────────────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ When(
     await this.page.fill('input[type="email"]', email);
     await this.page.fill('input[type="password"]', password);
     await this.page.getByRole('button', { name: 'Saioa hasi →' }).click();
-    await this.page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 15_000 });
+    await this.page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 5_000 });
   }
 );
 
@@ -57,7 +57,7 @@ When('I select association {string}', async function (this: E2eWorld, name: stri
   await assocInput.click();
   await assocInput.pressSequentially(name, { delay: 30 });
   await this.page.getByRole('button', { name: /Jarraitu/ }).click();
-  await this.page.waitForSelector('input[type="email"]', { timeout: 10_000 });
+  await this.page.waitForSelector('input[type="email"]', { timeout: 5_000 });
 });
 
 // ── Then ──────────────────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ Then('I am redirected to the txosna dashboard', async function (this: E2eWorld) 
 
 Then('the txosna list shows at least one txosna', async function (this: E2eWorld) {
   // The txosna list is client-rendered — wait for a known txosna name to appear
-  await this.page.waitForSelector('text=Aste Nagusia', { timeout: 15_000 });
+  await this.page.waitForSelector('text=Aste Nagusia', { timeout: 5_000 });
   const body = await this.page.evaluate(() => document.body.innerText);
   assert.ok(
     body.includes('Irekita') || body.includes('Geldituta') || body.includes('Itxita'),
