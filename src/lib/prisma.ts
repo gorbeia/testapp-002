@@ -1,20 +1,22 @@
 // Mock prisma for UI prototyping when no database is available
 // This allows the app to run without requiring DATABASE_URL
+import type { PrismaClient } from '@prisma/client';
 
 const hasDatabaseUrl = !!process.env.DATABASE_URL;
 
 // Only create PrismaClient if we have a database URL
-let prisma: unknown = null;
+let prisma: PrismaClient | null = null;
 
 if (hasDatabaseUrl) {
   try {
     // Use require to avoid TypeScript import issues
-    const { PrismaClient } = require('@prisma/client');
-    const globalForPrisma = globalThis as unknown as { prisma: unknown };
+
+    const { PrismaClient: PC } = require('@prisma/client');
+    const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | null };
 
     prisma =
       globalForPrisma.prisma ??
-      new PrismaClient({
+      new PC({
         log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
       });
 
