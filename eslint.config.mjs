@@ -7,6 +7,7 @@ export default [
   {
     files: ["**/*.{js,jsx}"],
     languageOptions: {
+      sourceType: "commonjs",
       parserOptions: {
         ecmaFeatures: {
           jsx: true,
@@ -14,6 +15,11 @@ export default [
       },
       globals: {
         console: "readonly",
+        module: "readonly",
+        require: "readonly",
+        process: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
       },
     },
   },
