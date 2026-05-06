@@ -14,27 +14,25 @@ const MODES = [
 export default function PinPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const slug = searchParams.get('slug');
   const [selectedMode, setSelectedMode] = useState(MODES[0]);
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [txosnaName, setTxosnaName] = useState('Txosna');
-  const [slug, setSlug] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   // Post selection step: non-null when PIN validated and kitchen mode + posts configured
   const [pendingKitchenPosts, setPendingKitchenPosts] = useState<string[] | null>(null);
 
   useEffect(() => {
-    const urlSlug = searchParams.get('slug');
-    if (urlSlug) {
-      setSlug(urlSlug);
-      fetch(`/api/txosnak/${urlSlug}`)
+    if (slug) {
+      fetch(`/api/txosnak/${slug}`)
         .then((r) => r.json())
         .then((data) => {
           if (data.name) setTxosnaName(data.name);
         })
         .catch(() => {});
     }
-  }, [searchParams]);
+  }, [slug]);
 
   function pressDigit(d: string) {
     if (pin.length < 4) setPin((p) => p + d);

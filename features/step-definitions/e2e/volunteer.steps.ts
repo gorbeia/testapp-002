@@ -9,7 +9,7 @@ import { loginAsVolunteer } from './auth.steps';
 async function doPinFlow(world: E2eWorld, mode: string, pin: string, slug = 'aste-nagusia-2026') {
   // Establish a session first so protected API calls from counter/drinks/kitchen succeed
   await loginAsVolunteer(world);
-  await world.page.goto(`${BASE_URL}/eu/pin?slug=${slug}`, { waitUntil: 'domcontentloaded' });
+  await world.page.goto(`${BASE_URL}/eu/pin?slug=${slug}`, { waitUntil: 'networkidle' });
   // Select mode and wait for the button to visibly change state
   await world.page.getByRole('button', { name: mode }).click();
   // Wait for the mode button to appear selected (UI state change, not network)
