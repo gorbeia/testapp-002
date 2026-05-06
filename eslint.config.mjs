@@ -1,22 +1,23 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: {},
-});
-
-/** @type {import('eslint').Linter.FlatConfig[]} */
-const eslintConfig = [
-  // Base config
-  ...compat.extends("eslint:recommended"),
-  
-  // TypeScript configuration
+export default [
+  js.configs.recommended,
+  // JavaScript/JSX configuration
+  {
+    files: ["**/*.{js,jsx}"],
+    languageOptions: {
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+      globals: {
+        console: "readonly",
+      },
+    },
+  },
+  ...tseslint.configs.recommended,
   {
     files: ["**/*.{ts,tsx}"],
     languageOptions: {
@@ -29,7 +30,6 @@ const eslintConfig = [
       "@typescript-eslint": tseslint.plugin,
     },
     rules: {
-      ...tseslint.configs.recommended.rules,
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
@@ -40,18 +40,6 @@ const eslintConfig = [
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-var-requires": "off",
       "@typescript-eslint/no-require-imports": "off",
-    },
-  },
-  
-  // JavaScript/JSX configuration
-  {
-    files: ["**/*.{js,jsx}"],
-    languageOptions: {
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
     },
   },
   
@@ -72,5 +60,3 @@ const eslintConfig = [
     ignores: [".next/", "node_modules/", "dist/", "out/", ".husky/", "prototypes/", ".claude/"],
   },
 ];
-
-export default eslintConfig;

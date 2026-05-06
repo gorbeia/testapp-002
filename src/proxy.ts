@@ -48,7 +48,7 @@ export async function proxy(request: NextRequest) {
       loginUrl.searchParams.set('callbackUrl', pathname);
       return NextResponse.redirect(loginUrl);
     }
-    if (isAdminPath && (session.user as any)?.role !== 'ADMIN') {
+    if (isAdminPath && session.user?.role !== 'ADMIN') {
       return NextResponse.redirect(new URL('/counter', request.url));
     }
   }

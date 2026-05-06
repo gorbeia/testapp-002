@@ -4,13 +4,13 @@
 const hasDatabaseUrl = !!process.env.DATABASE_URL;
 
 // Only create PrismaClient if we have a database URL
-let prisma: any = null;
+let prisma: unknown = null;
 
 if (hasDatabaseUrl) {
   try {
     // Use require to avoid TypeScript import issues
     const { PrismaClient } = require('@prisma/client');
-    const globalForPrisma = globalThis as unknown as { prisma: any };
+    const globalForPrisma = globalThis as unknown as { prisma: unknown };
 
     prisma =
       globalForPrisma.prisma ??
