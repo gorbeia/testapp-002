@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEMO_ORDERS, DEMO_PIN, DEMO_PRIMARY_SLUG, DEMO_SECONDARY_SLUG } from '@/lib/fixtures/demo';
-import { orderRepo, resetStore, ticketRepo, txosnaRepo } from '@/test/store-setup';
+import {
+  orderRepo,
+  resetStore,
+  seedMockData,
+  seedDemoData,
+  ticketRepo,
+  txosnaRepo,
+} from '@/test/store-setup';
 import { GET as statusGET } from '../status/route';
 import { POST as resetPOST } from '../reset/route';
 
@@ -8,6 +15,8 @@ const SECRET = 'test-secret-abc';
 
 beforeEach(() => {
   resetStore();
+  seedMockData();
+  seedDemoData();
   vi.stubEnv('DEMO_RESET_SECRET', SECRET);
 });
 

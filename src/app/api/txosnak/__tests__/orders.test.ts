@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { resetStore, orderRepo, ticketRepo } from '@/test/store-setup';
+import { resetStore, seedMockData, seedDemoData, orderRepo, ticketRepo } from '@/test/store-setup';
 import { POST as ordersPost, GET as ordersGet } from '../[slug]/orders/route';
 
 // Stub NextAuth so we don't need a real session
@@ -13,6 +13,8 @@ vi.mock('@/lib/sse', () => ({ broadcast: vi.fn() }));
 
 beforeEach(() => {
   resetStore();
+  seedMockData();
+  seedDemoData();
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
