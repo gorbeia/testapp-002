@@ -10,7 +10,8 @@ Feature: TicketBAI invoice ledger
   @e2e @smoke
   Scenario: Invoice ledger renders with heading and invoice table
     When I navigate to "/eu/ticketbai"
-    Then the page shows "TicketBAI Fakturak" heading
+    Then the page loads successfully not redirected to login
+    And the page shows "TicketBAI Fakturak" heading
     And the page shows an invoice table with columns for invoice number, order, date, total, status
     And there are no JavaScript errors in the console
     When I take a screenshot "40-ticketbai-invoice-ledger"
@@ -18,6 +19,7 @@ Feature: TicketBAI invoice ledger
   @e2e
   Scenario: Invoice table has at least one row with a TB- reference
     When I navigate to "/eu/ticketbai"
+    Then the page loads successfully not redirected to login
     Then the invoice table has at least one row
     And the first invoice shows a series reference starting with "TB-"
     And there are no JavaScript errors in the console

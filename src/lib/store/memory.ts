@@ -259,6 +259,53 @@ function seed() {
       updatedAt: t,
     });
   }
+
+  // TicketBaiInvoice for e2e tests - order-1 (JO42) has a TB- prefixed invoice
+  const order1 = orders.get('order-1');
+  if (order1) {
+    const invoice: StoredTicketBaiInvoice = {
+      id: 'invoice-1',
+      associationId: MOCK_ASSOCIATION.id,
+      orderId: order1.id,
+      orderNumber: order1.orderNumber,
+      series: 'TB-',
+      invoiceNumber: 42,
+      issuedAt: t,
+      sellerName: MOCK_ASSOCIATION.name,
+      sellerCif: 'A12345678',
+      lines: [
+        {
+          description: 'Burgerra x2',
+          quantity: 2,
+          unitPrice: 8.5,
+          total: 17.0,
+          vatRate: 10,
+          vatAmount: 1.7,
+        },
+      ],
+      total: 17.0,
+      vatBreakdown: [
+        {
+          rate: 10,
+          base: 17.0,
+          vatAmount: 1.7,
+        },
+      ],
+      chainId: 'chain-1',
+      providerRef: 'mock-ref-1',
+      qrUrl: null,
+      xmlPayload: null,
+      status: 'ACCEPTED',
+      createdAt: t,
+      updatedAt: t,
+    };
+    ticketBaiInvoices.set(invoice.id, invoice);
+    ticketBaiInvoiceCounters.set(`${MOCK_ASSOCIATION.id}:TB-`, 42);
+
+    // Link order to invoice
+    order1.fiscalReceiptRef = invoice.id;
+    orders.set(order1.id, order1);
+  }
 }
 
 // ── TxosnaRepository ──────────────────────────────────────────────────────────
@@ -824,6 +871,53 @@ function seedDemoAssociation() {
       createdAt: t,
       updatedAt: t,
     });
+  }
+
+  // TicketBaiInvoice for Demo Elkartea - demo-order-3 has a TB- prefixed invoice
+  const demoOrder3 = orders.get('demo-order-3');
+  if (demoOrder3) {
+    const demoInvoice: StoredTicketBaiInvoice = {
+      id: 'demo-invoice-1',
+      associationId: DEMO_ASSOCIATION.id,
+      orderId: demoOrder3.id,
+      orderNumber: demoOrder3.orderNumber,
+      series: 'TB-',
+      invoiceNumber: 3,
+      issuedAt: t,
+      sellerName: DEMO_ASSOCIATION.name,
+      sellerCif: 'B98765432',
+      lines: [
+        {
+          description: 'Burgerra',
+          quantity: 1,
+          unitPrice: 8.5,
+          total: 8.5,
+          vatRate: 10,
+          vatAmount: 0.85,
+        },
+      ],
+      total: 8.5,
+      vatBreakdown: [
+        {
+          rate: 10,
+          base: 8.5,
+          vatAmount: 0.85,
+        },
+      ],
+      chainId: 'demo-chain-1',
+      providerRef: 'demo-mock-ref-1',
+      qrUrl: null,
+      xmlPayload: null,
+      status: 'ACCEPTED',
+      createdAt: t,
+      updatedAt: t,
+    };
+    ticketBaiInvoices.set(demoInvoice.id, demoInvoice);
+    ticketBaiInvoiceCounters.set(`${DEMO_ASSOCIATION.id}:TB-`, 3);
+
+    // Link demo order to invoice
+    demoOrder3.fiscalReceiptRef = demoInvoice.id;
+    orders.set(demoOrder3.id, demoOrder3);
   }
 }
 
