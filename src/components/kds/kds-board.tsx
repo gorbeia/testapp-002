@@ -6,6 +6,7 @@ import { InstructionsOverlay } from './instructions-overlay';
 import { StockPanel } from './stock-panel';
 import { OverflowMenu } from './overflow-menu';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { LogoutButton } from '@/components/auth/logout-button';
 import { useSSE } from '@/hooks/useSSE';
 
 const NEW_ORDER_POOL = [
@@ -394,6 +395,7 @@ export default function KdsBoard() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+          <LogoutButton variant="ops" />
           <ThemeToggle variant="ops" />
           <button
             onClick={() => setShowStock(true)}

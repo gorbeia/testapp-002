@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ReactNode, useState, useEffect } from 'react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { LogoutButton } from '@/components/auth/logout-button';
 
 const TXOSNA_NAV = [
   { segment: '', label: 'Hasiera', icon: '📊' },
@@ -323,6 +324,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           >
             ← Mostradorera itzuli
           </Link>
+          <LogoutButton variant="sidebar" />
         </div>
       </aside>
 

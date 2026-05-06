@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { LogoutButton } from '@/components/auth/logout-button';
 
 const MODES = [
   { id: 'food', label: 'Janaria', icon: '🍽', route: '/eu/counter' },
@@ -163,7 +164,17 @@ export default function PinPage() {
 
   return (
     <div className="ops-theme min-h-screen flex items-center justify-center px-4 py-8">
-      <div style={{ position: 'absolute', top: 12, right: 12 }}>
+      <div
+        style={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}
+      >
+        <LogoutButton variant="ops" />
         <ThemeToggle variant="ops" />
       </div>
       <div style={{ width: '100%', maxWidth: 360 }}>

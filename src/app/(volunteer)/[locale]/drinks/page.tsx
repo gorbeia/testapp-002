@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { OpsHeader } from '@/components/layout/ops-header';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { LogoutButton } from '@/components/auth/logout-button';
 import { HandoffCard } from '@/components/counter/handoff-card';
 import { QrCode } from '@/components/qr-code';
 import { useSSE } from '@/hooks/useSSE';
@@ -1020,6 +1021,7 @@ export default function DrinksPage() {
           right={
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <ThemeToggle variant="ops" />
+              <LogoutButton variant="ops" />
               <Link
                 href="/eu/overview"
                 style={{ fontSize: 12, color: 'var(--ops-text-dim)', textDecoration: 'none' }}
