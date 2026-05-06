@@ -18,9 +18,17 @@ export default [
         module: "readonly",
         require: "readonly",
         process: "readonly",
+        global: "readonly",
         __dirname: "readonly",
         __filename: "readonly",
       },
+    },
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
     },
   },
   ...tseslint.configs.recommended,
@@ -58,6 +66,15 @@ export default [
       "no-console": ["warn", { allow: ["warn", "error"] }],
       "prefer-const": "error",
       "no-var": "error",
+    },
+  },
+
+  // JS-specific overrides — must come after tseslint spread to take precedence
+  {
+    files: ["**/*.{js,jsx}"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-var-requires": "off",
     },
   },
   
