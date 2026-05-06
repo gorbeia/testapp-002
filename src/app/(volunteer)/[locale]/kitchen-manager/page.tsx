@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { StockPanel } from '@/components/kds/stock-panel';
 import { KdsProduct } from '@/components/kds/types';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { LogoutButton } from '@/components/auth/logout-button';
 import { useSSE } from '@/hooks/useSSE';
 
 interface RawTicket {
@@ -195,6 +196,7 @@ export default function KitchenManagerPage() {
           >
             📦 Stock
           </button>
+          <LogoutButton variant="ops" />
           <ThemeToggle variant="ops" />
         </div>
       </div>

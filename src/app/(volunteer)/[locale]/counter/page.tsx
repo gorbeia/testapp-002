@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { OpsHeader } from '@/components/layout/ops-header';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { LogoutButton } from '@/components/auth/logout-button';
 import { HandoffCard } from '@/components/counter/handoff-card';
 import { QrCode } from '@/components/qr-code';
 import type { StoredOrder } from '@/lib/store/types';
@@ -793,19 +794,7 @@ export default function CounterPage() {
         right={
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <ThemeToggle variant="ops" />
-            <button
-              style={{
-                fontSize: 12,
-                color: 'var(--ops-text-dim)',
-                background: 'none',
-                border: '1px solid var(--ops-border)',
-                borderRadius: 6,
-                padding: '4px 10px',
-                cursor: 'pointer',
-              }}
-            >
-              Gelditu
-            </button>
+            <LogoutButton variant="ops" />
             <Link
               href="/eu/overview"
               style={{ fontSize: 12, color: 'var(--ops-text-dim)', textDecoration: 'none' }}
