@@ -227,9 +227,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
 
   const session = await auth();
   if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const sessionAssociationId = (session.user as { associationId?: string }).associationId ?? null;
 
   const txosna = await txosnaRepo.findBySlug(slug);
   if (!txosna) return Response.json({ error: 'Not found' }, { status: 404 });
+
+  if (txosna.associationId !== sessionAssociationId)
+    return Response.json({ error: 'Forbidden' }, { status: 403 });
 
   const { expirePendingOrders } = await import('@/lib/expire-pending-orders');
   await expirePendingOrders(txosna.id);
