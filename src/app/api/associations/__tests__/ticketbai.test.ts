@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { resetStore, orderRepo } from '@/test/store-setup';
+import { resetStore, seedMockData, orderRepo } from '@/test/store-setup';
 import { associationRepo, ticketBaiConfigRepo, ticketBaiInvoiceRepo } from '@/lib/store';
 import * as authModule from '@/lib/auth';
 import {
@@ -262,6 +262,7 @@ describe('GET /api/orders/[orderId]/ticketbai-invoice', () => {
 // ── Invoice issuance integration ──────────────────────────────────────────────
 
 describe('Invoice issuance on order confirmation', () => {
+  beforeEach(seedMockData);
   it('issues a TicketBAI invoice when ticketBaiEnabled and config exists', async () => {
     await associationRepo.update('assoc-1', { ticketBaiEnabled: true });
     await ticketBaiConfigRepo.upsert('assoc-1', { series: 'TB', providerType: 'MOCK' });

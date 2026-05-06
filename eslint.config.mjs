@@ -15,7 +15,8 @@ export default [
       },
       globals: {
         console: "readonly",
-        module: "readonly",
+        module: "writable",
+        exports: "writable",
         require: "readonly",
         process: "readonly",
         global: "readonly",
@@ -78,6 +79,24 @@ export default [
     },
   },
   
+  // Node.js CJS support files — disable TypeScript-specific rules
+  {
+    files: ["features/support/register-mocks.js"],
+    languageOptions: {
+      globals: {
+        global: "writable",
+        arguments: "readonly",
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
+    },
+  },
+
   // Ignored files
   {
     ignores: [".next/", "node_modules/", "dist/", "out/", ".husky/", "prototypes/", ".claude/"],

@@ -91,7 +91,7 @@ function applyTxosnaOverride(product: StoredProduct, txosnaId: string): StoredPr
 
 // ── Seed ──────────────────────────────────────────────────────────────────────
 
-function seed() {
+export function seedMockData() {
   const t = now();
 
   // Association
@@ -258,53 +258,6 @@ function seed() {
       createdAt: t,
       updatedAt: t,
     });
-  }
-
-  // TicketBaiInvoice for e2e tests - order-1 (JO42) has a TB- prefixed invoice
-  const order1 = orders.get('order-1');
-  if (order1) {
-    const invoice: StoredTicketBaiInvoice = {
-      id: 'invoice-1',
-      associationId: MOCK_ASSOCIATION.id,
-      orderId: order1.id,
-      orderNumber: order1.orderNumber,
-      series: 'TB-',
-      invoiceNumber: 42,
-      issuedAt: t,
-      sellerName: MOCK_ASSOCIATION.name,
-      sellerCif: 'A12345678',
-      lines: [
-        {
-          description: 'Burgerra x2',
-          quantity: 2,
-          unitPrice: 8.5,
-          total: 17.0,
-          vatRate: 10,
-          vatAmount: 1.7,
-        },
-      ],
-      total: 17.0,
-      vatBreakdown: [
-        {
-          rate: 10,
-          base: 17.0,
-          vatAmount: 1.7,
-        },
-      ],
-      chainId: 'chain-1',
-      providerRef: 'mock-ref-1',
-      qrUrl: null,
-      xmlPayload: null,
-      status: 'ACCEPTED',
-      createdAt: t,
-      updatedAt: t,
-    };
-    ticketBaiInvoices.set(invoice.id, invoice);
-    ticketBaiInvoiceCounters.set(`${MOCK_ASSOCIATION.id}:TB-`, 42);
-
-    // Link order to invoice
-    order1.fiscalReceiptRef = invoice.id;
-    orders.set(order1.id, order1);
   }
 }
 
@@ -700,7 +653,7 @@ function generateVerificationCode(): string {
 
 // ── Demo association seed / reset ─────────────────────────────────────────────
 
-function seedDemoAssociation() {
+export function seedDemoData() {
   const t = now();
 
   associations.set(DEMO_ASSOCIATION.id, {
@@ -939,7 +892,7 @@ export function resetDemoAssociation() {
   for (const id of [...volunteers.keys()].filter(isDemo)) volunteers.delete(id);
   for (const id of [...orderCounters.keys()].filter(isDemo)) orderCounters.delete(id);
 
-  seedDemoAssociation();
+  seedDemoData();
 }
 
 // ── Reset (for tests) ─────────────────────────────────────────────────────────
@@ -958,8 +911,6 @@ export function resetStore() {
   ticketBaiConfigs.clear();
   ticketBaiInvoices.clear();
   ticketBaiInvoiceCounters.clear();
-  seed();
-  seedDemoAssociation();
 }
 
 // ── TicketBaiConfigRepository ─────────────────────────────────────────────────
@@ -1163,8 +1114,8 @@ function seedTicketBaiDemo() {
 }
 
 // Seed on module load so the store is ready in dev without explicit setup.
-seed();
-seedDemoAssociation();
+seedMockData();
+seedDemoData();
 // TicketBAI demo data is dev-only; tests call resetStore() which skips this.
 if (!process.env.VITEST) {
   seedTicketBaiDemo();

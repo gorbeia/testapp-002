@@ -1,97 +1,23 @@
-// Mock prisma for UI prototyping when no database is available
-// This allows the app to run without requiring DATABASE_URL
-import type { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
-const hasDatabaseUrl = !!process.env.DATABASE_URL;
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 
-// Only create PrismaClient if we have a database URL
-let prisma: PrismaClient | null = null;
-
-if (hasDatabaseUrl) {
+function createPrisma(): PrismaClient | null {
+  if (!process.env.DATABASE_URL) return null;
   try {
-    // Use require to avoid TypeScript import issues
-
-    const { PrismaClient: PC } = require('@prisma/client');
-    const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | null };
-
-    prisma =
+    return (
       globalForPrisma.prisma ??
-      new PC({
+      new PrismaClient({
         log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-      });
-
-    if (process.env.NODE_ENV !== 'production') {
-      globalForPrisma.prisma = prisma;
-    }
-  } catch (error) {
-    console.warn('Failed to initialize Prisma client:', error);
-    prisma = null;
+      })
+    );
+  } catch {
+    return null;
   }
 }
 
-// Mock prisma for UI prototyping when no database is available
-export const mockPrisma = {
-  // Add mock methods as needed for UI development
-  user: {
-    findMany: () => Promise.resolve([]),
-    findUnique: () => Promise.resolve(null),
-    create: () => Promise.resolve(null),
-    update: () => Promise.resolve(null),
-    delete: () => Promise.resolve(null),
-  },
-  // Add other models as needed
-  association: {
-    findMany: () => Promise.resolve([]),
-    findUnique: () => Promise.resolve(null),
-    create: () => Promise.resolve(null),
-    update: () => Promise.resolve(null),
-    delete: () => Promise.resolve(null),
-  },
-  volunteer: {
-    findMany: () => Promise.resolve([]),
-    findUnique: () => Promise.resolve(null),
-    create: () => Promise.resolve(null),
-    update: () => Promise.resolve(null),
-    delete: () => Promise.resolve(null),
-  },
-  // Add more models as needed for your UI
-  event: {
-    findMany: () => Promise.resolve([]),
-    findUnique: () => Promise.resolve(null),
-    create: () => Promise.resolve(null),
-    update: () => Promise.resolve(null),
-    delete: () => Promise.resolve(null),
-  },
-  txosna: {
-    findMany: () => Promise.resolve([]),
-    findUnique: () => Promise.resolve(null),
-    create: () => Promise.resolve(null),
-    update: () => Promise.resolve(null),
-    delete: () => Promise.resolve(null),
-  },
-  order: {
-    findMany: () => Promise.resolve([]),
-    findUnique: () => Promise.resolve(null),
-    create: () => Promise.resolve(null),
-    update: () => Promise.resolve(null),
-    delete: () => Promise.resolve(null),
-  },
-  product: {
-    findMany: () => Promise.resolve([]),
-    findUnique: () => Promise.resolve(null),
-    create: () => Promise.resolve(null),
-    update: () => Promise.resolve(null),
-    delete: () => Promise.resolve(null),
-  },
-  category: {
-    findMany: () => Promise.resolve([]),
-    findUnique: () => Promise.resolve(null),
-    create: () => Promise.resolve(null),
-    update: () => Promise.resolve(null),
-    delete: () => Promise.resolve(null),
-  },
-};
+export const prisma: PrismaClient | null = createPrisma();
 
-// Export a safe prisma instance that falls back to mock
-export { prisma };
-export const safePrisma = prisma || mockPrisma;
+if (process.env.NODE_ENV !== 'production' && prisma) {
+  globalForPrisma.prisma = prisma;
+}

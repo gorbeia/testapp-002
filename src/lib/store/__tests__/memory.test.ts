@@ -4,12 +4,16 @@ import {
   catalogRepo,
   orderRepo,
   resetStore,
+  seedMockData,
   ticketRepo,
   txosnaRepo,
   volunteerRepo,
 } from '@/test/store-setup';
 
-beforeEach(resetStore);
+beforeEach(() => {
+  resetStore();
+  seedMockData();
+});
 
 // ── TxosnaRepository ──────────────────────────────────────────────────────────
 
@@ -308,6 +312,7 @@ describe('orderRepo', () => {
     expect(beforeReset.length).toBe(MOCK_ORDERS.length + 1);
 
     resetStore();
+    seedMockData();
 
     const afterReset = await orderRepo.listByTxosna('txosna-1');
     expect(afterReset.length).toBe(MOCK_ORDERS.length);
