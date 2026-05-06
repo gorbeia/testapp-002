@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { When, Then } from '@cucumber/cucumber';
+import { Then, When } from '@cucumber/cucumber';
 import { BASE_URL } from './world';
 import type { E2eWorld } from './world';
 
@@ -125,3 +125,13 @@ Then(
     );
   }
 );
+
+Then('the page loads successfully not redirected to login', async function (this: E2eWorld) {
+  const url = this.page.url();
+  assert.ok(
+    !url.includes('/login'),
+    `Expected to stay on admin page, but was redirected to login: ${url}`
+  );
+  // Wait a moment for any client-side loading to complete
+  await this.page.waitForTimeout(500);
+});
