@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resetStore } from '@/test/store-setup';
+import { resetStore, seedMockData, seedDemoData } from '@/test/store-setup';
 import { GET as txosnaGET } from '../[slug]/route';
 import { GET as catalogGET } from '../[slug]/catalog/route';
 
@@ -9,6 +9,8 @@ function makeParams(slug: string) {
 
 beforeEach(() => {
   resetStore();
+  seedMockData();
+  seedDemoData();
 });
 
 // ── GET /api/txosnak/[slug] ───────────────────────────────────────────────────

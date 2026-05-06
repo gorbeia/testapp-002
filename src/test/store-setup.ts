@@ -16,6 +16,8 @@ export {
   volunteerRepo,
 } from '@/lib/store';
 
+export { seedMockData, seedDemoData } from '@/lib/store/memory';
+
 export {
   _test_insertOrder,
   _test_insertProduct,
