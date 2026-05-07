@@ -138,7 +138,8 @@ When(
   'I click the product {string} in the product grid',
   async function (this: E2eWorld, productName: string) {
     await this.page.waitForSelector(`button:has-text("${productName}")`, { timeout: 5_000 });
-    await this.page.getByRole('button', { name: productName }).click();
+    // Match "+ ProductName" followed immediately by the price digit to avoid partial name matches
+    await this.page.getByRole('button', { name: new RegExp(`\\+ ${productName} \\d`) }).click();
   }
 );
 
