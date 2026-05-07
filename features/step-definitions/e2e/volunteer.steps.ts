@@ -149,7 +149,7 @@ When('I select variant option {string}', async function (this: E2eWorld, optionN
 });
 
 When('I confirm adding the product', async function (this: E2eWorld) {
-  await this.page.getByRole('button', { name: /Gehitu|Add/i }).click();
+  await this.page.getByRole('button', { name: /Gehitu —|Add —/i }).click();
   await this.page.waitForTimeout(500);
 });
 
