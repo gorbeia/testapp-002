@@ -80,7 +80,21 @@ Then('the {string} toggle is already on', async function (this: E2eWorld, toggle
     body.includes(toggleLabel),
     `Expected toggle "${toggleLabel}" on page. Got: ${body.slice(0, 400)}`
   );
-  // If toggle is off this scenario would fail further — that's expected behaviour
+  // If the config panel is not visible the toggle is off — click to enable it
+  const panelVisible = await this.page
+    .locator('text=TicketBAI konfigurazioa')
+    .isVisible()
+    .catch(() => false);
+  if (!panelVisible) {
+    // Find the outermost toggle row by locating a div that directly contains the label text
+    const toggleBtn = this.page
+      .locator('div')
+      .filter({ hasText: new RegExp(`^${toggleLabel}`) })
+      .locator('button')
+      .first();
+    await toggleBtn.click();
+    await this.page.waitForSelector('text=TicketBAI konfigurazioa', { timeout: 5_000 });
+  }
 });
 
 Then('the page shows a {string} input', async function (this: E2eWorld, inputLabel: string) {

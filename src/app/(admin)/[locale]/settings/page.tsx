@@ -1512,7 +1512,7 @@ function VatTab() {
           </div>
 
           <div>
-            <FormLabel>Faktura serie</FormLabel>
+            <FormLabel>Faktura seriea</FormLabel>
             <FormHint>Faktura zenbakien aurrizki gisa erabiliko da (adib. &quot;TB&quot;)</FormHint>
             <input
               type="text"
@@ -1581,7 +1581,7 @@ function VatTab() {
                 cursor: tbaiTesting ? 'not-allowed' : 'pointer',
               }}
             >
-              {tbaiTesting ? '⏳ Probatzen...' : '⚡ Probatu'}
+              {tbaiTesting ? '⏳ Probatzen...' : 'Konexioa probatu'}
             </button>
             <SaveButton saved={tbaiSaved} onClick={handleSaveTbaiConfig} />
           </div>
