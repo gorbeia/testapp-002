@@ -11,11 +11,11 @@ export async function GET() {
     const { catalogRepo } = await import('@/lib/store');
     const cats = await catalogRepo.listCategories(associationId);
     const categories = await Promise.all(
-      cats.map(async (cat) => {
+      cats.map(async (cat: any) => {
         const products = await catalogRepo.listProducts(cat.id);
         return {
           ...cat,
-          products: products.map((p) => ({
+          products: products.map((p: any) => ({
             ...p,
             defaultPrice: p.defaultPrice,
             customerImageUrl: p.imageUrl,

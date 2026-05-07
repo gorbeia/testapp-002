@@ -170,34 +170,379 @@ export class ORMStorageAdapter implements StorageInterface {
     };
   }
 
-  // Stub implementations for other repositories
-  // These would be fully implemented in a real scenario
   get catalog(): CatalogRepository {
-    throw new Error('Catalog repository not yet implemented in ORM adapter');
+    const self = this;
+    return {
+      async listCategories(associationId: string) {
+        const categories = await self.prisma.category.findMany({
+          where: { associationId },
+          orderBy: { name: 'asc' },
+        });
+        return categories.map(self.mapCategoryToStored.bind(self));
+      },
+
+      async listProducts(categoryId: string) {
+        const products = await self.prisma.product.findMany({
+          where: { categoryId },
+          include: {
+            variants: {
+              include: { options: true },
+            },
+          },
+          orderBy: { name: 'asc' },
+        });
+        return products.map(self.mapProductToStored.bind(self));
+      },
+
+      async getProduct(productId: string) {
+        const product = await self.prisma.product.findUnique({
+          where: { id: productId },
+          include: {
+            variants: {
+              include: { options: true },
+            },
+          },
+        });
+        return product ? self.mapProductToStored(product) : null;
+      },
+
+      async getProductView(productId: string, _txosnaId: string) {
+        const product = await self.prisma.product.findUnique({
+          where: { id: productId },
+          include: {
+            variants: {
+              include: { options: true },
+            },
+          },
+        });
+        return product ? self.mapProductToStored(product) : null;
+      },
+
+      async listProductViews(txosnaId: string) {
+        const categories = await self.prisma.category.findMany({
+          where: { 
+            txosna: { some: { id: txosnaId } }
+          },
+          include: {
+            products: {
+              include: {
+                variants: {
+                  include: { options: true },
+                },
+              },
+            },
+          },
+          orderBy: { name: 'asc' },
+        });
+        return categories.map((cat: any) => ({
+          category: self.mapCategoryToStored(cat),
+          products: cat.products.map(self.mapProductToStored.bind(self)),
+        }));
+      },
+    };
   }
 
   get orders(): OrderRepository {
-    throw new Error('Order repository not yet implemented in ORM adapter');
+    const self = this;
+    return {
+      async create(data: any) {
+        const order = await self.prisma.order.create({
+          data: {
+            ...data,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+        return self.mapOrderToStored(order);
+      },
+
+      async findById(id: string) {
+        const order = await self.prisma.order.findUnique({
+          where: { id },
+        });
+        return order ? self.mapOrderToStored(order) : null;
+      },
+
+      async findByNumber(txosnaId: string, orderNumber: number) {
+        const order = await self.prisma.order.findFirst({
+          where: { txosnaId, orderNumber },
+        });
+        return order ? self.mapOrderToStored(order) : null;
+      },
+
+      async update(id: string, patch: any) {
+        const order = await self.prisma.order.update({
+          where: { id },
+          data: { ...patch, updatedAt: new Date() },
+        });
+        return self.mapOrderToStored(order);
+      },
+
+      async nextOrderNumber(txosnaId: string) {
+        const lastOrder = await self.prisma.order.findFirst({
+          where: { txosnaId },
+          orderBy: { orderNumber: 'desc' },
+        });
+        return (lastOrder?.orderNumber || 0) + 1;
+      },
+
+      async findByPaymentSessionId(paymentSessionId: string) {
+        const order = await self.prisma.order.findFirst({
+          where: { paymentSessionId },
+        });
+        return order ? self.mapOrderToStored(order) : null;
+      },
+
+      async findByVerificationCode(verificationCode: string) {
+        const order = await self.prisma.order.findFirst({
+          where: { verificationCode },
+        });
+        return order ? self.mapOrderToStored(order) : null;
+      },
+
+      async listByTxosna(txosnaId: string, _filter?: any) {
+        const orders = await self.prisma.order.findMany({
+          where: { txosnaId },
+          orderBy: { createdAt: 'desc' },
+        });
+        return orders.map(self.mapOrderToStored.bind(self));
+      },
+    };
   }
 
   get tickets(): TicketRepository {
-    throw new Error('Ticket repository not yet implemented in ORM adapter');
+    const self = this;
+    return {
+      async create(orderId: string, txosnaId: string, data: any) {
+        const ticket = await self.prisma.ticket.create({
+          data: {
+            ...data,
+            orderId,
+            txosnaId,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+        return self.mapTicketToStored(ticket);
+      },
+
+      async findById(id: string) {
+        const ticket = await self.prisma.ticket.findUnique({
+          where: { id },
+        });
+        return ticket ? self.mapTicketToStored(ticket) : null;
+      },
+
+      async listByTxosna(txosnaId: string, _filter?: any) {
+        const tickets = await self.prisma.ticket.findMany({
+          where: { txosnaId },
+          orderBy: { createdAt: 'desc' },
+        });
+        return tickets.map(self.mapTicketToStored.bind(self));
+      },
+
+      async listByOrder(orderId: string) {
+        const tickets = await self.prisma.ticket.findMany({
+          where: { orderId },
+          orderBy: { createdAt: 'asc' },
+        });
+        return tickets.map(self.mapTicketToStored.bind(self));
+      },
+
+      async update(id: string, patch: any) {
+        const ticket = await self.prisma.ticket.update({
+          where: { id },
+          data: { ...patch, updatedAt: new Date() },
+        });
+        return self.mapTicketToStored(ticket);
+      },
+    };
   }
 
   get volunteers(): VolunteerRepository {
-    throw new Error('Volunteer repository not yet implemented in ORM adapter');
+    const self = this;
+    return {
+      async findByEmail(email: string) {
+        const volunteer = await self.prisma.volunteer.findUnique({
+          where: { email },
+        });
+        return volunteer ? self.mapVolunteerToStored(volunteer) : null;
+      },
+
+      async findById(id: string) {
+        const volunteer = await self.prisma.volunteer.findUnique({
+          where: { id },
+        });
+        return volunteer ? self.mapVolunteerToStored(volunteer) : null;
+      },
+
+      async findByResetToken(token: string) {
+        const volunteer = await self.prisma.volunteer.findFirst({
+          where: { resetToken: token },
+        });
+        return volunteer ? self.mapVolunteerToStored(volunteer) : null;
+      },
+
+      async create(data: any) {
+        const volunteer = await self.prisma.volunteer.create({
+          data: {
+            ...data,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+        return self.mapVolunteerToStored(volunteer);
+      },
+
+      async update(id: string, patch: any) {
+        const volunteer = await self.prisma.volunteer.update({
+          where: { id },
+          data: { ...patch, updatedAt: new Date() },
+        });
+        return self.mapVolunteerToStored(volunteer);
+      },
+
+      async listByAssociation(associationId: string) {
+        const volunteers = await self.prisma.volunteer.findMany({
+          where: { associationId },
+          orderBy: { name: 'asc' },
+        });
+        return volunteers.map(self.mapVolunteerToStored.bind(self));
+      },
+    };
   }
 
   get ticketBaiConfig(): TicketBaiConfigRepository {
-    throw new Error('TicketBai config repository not yet implemented in ORM adapter');
+    const self = this;
+    return {
+      async findByAssociation(associationId: string) {
+        const config = await self.prisma.ticketBaiConfig.findUnique({
+          where: { associationId },
+        });
+        return config ? self.mapTicketBaiConfigToStored(config) : null;
+      },
+
+      async upsert(associationId: string, data: any) {
+        const config = await self.prisma.ticketBaiConfig.upsert({
+          where: { associationId },
+          update: { ...data, updatedAt: new Date() },
+          create: { ...data, associationId, createdAt: new Date(), updatedAt: new Date() },
+        });
+        return self.mapTicketBaiConfigToStored(config);
+      },
+    };
   }
 
   get ticketBaiInvoices(): TicketBaiInvoiceRepository {
-    throw new Error('TicketBai invoices repository not yet implemented in ORM adapter');
+    const self = this;
+    return {
+      async create(data: any) {
+        const invoice = await self.prisma.ticketBaiInvoice.create({
+          data: {
+            ...data,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+        return self.mapTicketBaiInvoiceToStored(invoice);
+      },
+
+      async findById(id: string) {
+        const invoice = await self.prisma.ticketBaiInvoice.findUnique({
+          where: { id },
+        });
+        return invoice ? self.mapTicketBaiInvoiceToStored(invoice) : null;
+      },
+
+      async listByAssociation(associationId: string) {
+        const invoices = await self.prisma.ticketBaiInvoice.findMany({
+          where: { 
+            order: {
+              txosna: { associationId }
+            }
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+        return invoices.map(self.mapTicketBaiInvoiceToStored.bind(self));
+      },
+
+      async nextInvoiceNumber(associationId: string, series: string) {
+        const lastInvoice = await self.prisma.ticketBaiInvoice.findFirst({
+          where: { 
+            order: {
+              txosna: { associationId }
+            },
+            series,
+          },
+          orderBy: { invoiceNumber: 'desc' },
+        });
+        return (lastInvoice?.invoiceNumber || 0) + 1;
+      },
+
+      async findByOrder(orderId: string) {
+        const invoice = await self.prisma.ticketBaiInvoice.findFirst({
+          where: { orderId },
+        });
+        return invoice ? self.mapTicketBaiInvoiceToStored(invoice) : null;
+      },
+
+      async getLastByAssociation(associationId: string) {
+        const invoice = await self.prisma.ticketBaiInvoice.findFirst({
+          where: { 
+            order: {
+              txosna: { associationId }
+            }
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+        return invoice ? self.mapTicketBaiInvoiceToStored(invoice) : null;
+      },
+    };
   }
 
   get paymentProviders(): PaymentProviderRepository {
-    throw new Error('Payment providers repository not yet implemented in ORM adapter');
+    const self = this;
+    return {
+      async listByAssociation(associationId: string) {
+        const providers = await self.prisma.paymentProvider.findMany({
+          where: { associationId },
+          orderBy: { name: 'asc' },
+        });
+        return providers.map(self.mapPaymentProviderToStored.bind(self));
+      },
+
+      async findById(id: string) {
+        const provider = await self.prisma.paymentProvider.findUnique({
+          where: { id },
+        });
+        return provider ? self.mapPaymentProviderToStored(provider) : null;
+      },
+
+      async create(data: any) {
+        const provider = await self.prisma.paymentProvider.create({
+          data: {
+            ...data,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+        return self.mapPaymentProviderToStored(provider);
+      },
+
+      async update(id: string, patch: any) {
+        const provider = await self.prisma.paymentProvider.update({
+          where: { id },
+          data: { ...patch, updatedAt: new Date() },
+        });
+        return self.mapPaymentProviderToStored(provider);
+      },
+
+      async delete(id: string) {
+        await self.prisma.paymentProvider.delete({
+          where: { id },
+        });
+      },
+    };
   }
 
   // Helper methods to map Prisma entities to stored types
@@ -230,6 +575,111 @@ export class ORMStorageAdapter implements StorageInterface {
       associationId: txosna.associationId,
       createdAt: txosna.createdAt,
       updatedAt: txosna.updatedAt,
+    };
+  }
+
+  private mapCategoryToStored(category: any): any {
+    return {
+      id: category.id,
+      name: category.name,
+      type: category.type,
+      associationId: category.associationId,
+      createdAt: category.createdAt,
+      updatedAt: category.updatedAt,
+    };
+  }
+
+  private mapProductToStored(product: any): any {
+    return {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      imageUrl: product.imageUrl,
+      defaultPrice: product.defaultPrice,
+      categoryId: product.categoryId,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
+      variants: product.variants || [],
+    };
+  }
+
+  private mapOrderToStored(order: any): any {
+    return {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      verificationCode: order.verificationCode,
+      cancellationReason: order.cancellationReason,
+      txosnaId: order.txosnaId,
+      paymentSessionId: order.paymentSessionId,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+    };
+  }
+
+  private mapTicketToStored(ticket: any): any {
+    return {
+      id: ticket.id,
+      status: ticket.status,
+      counterType: ticket.counterType,
+      orderId: ticket.orderId,
+      txosnaId: ticket.txosnaId,
+      createdAt: ticket.createdAt,
+      updatedAt: ticket.updatedAt,
+    };
+  }
+
+  private mapVolunteerToStored(volunteer: any): any {
+    return {
+      id: volunteer.id,
+      email: volunteer.email,
+      name: volunteer.name,
+      role: volunteer.role,
+      associationId: volunteer.associationId,
+      resetToken: volunteer.resetToken,
+      resetTokenExpiresAt: volunteer.resetTokenExpiresAt,
+      createdAt: volunteer.createdAt,
+      updatedAt: volunteer.updatedAt,
+    };
+  }
+
+  private mapTicketBaiConfigToStored(config: any): any {
+    return {
+      id: config.id,
+      associationId: config.associationId,
+      enabled: config.enabled,
+      nif: config.nif,
+      iban: config.iban,
+      licenseKey: config.licenseKey,
+      developmentMode: config.developmentMode,
+      createdAt: config.createdAt,
+      updatedAt: config.updatedAt,
+    };
+  }
+
+  private mapTicketBaiInvoiceToStored(invoice: any): any {
+    return {
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      series: invoice.series,
+      amount: invoice.amount,
+      vatBreakdown: invoice.vatBreakdown || [],
+      status: invoice.status,
+      orderId: invoice.orderId,
+      createdAt: invoice.createdAt,
+      updatedAt: invoice.updatedAt,
+    };
+  }
+
+  private mapPaymentProviderToStored(provider: any): any {
+    return {
+      id: provider.id,
+      name: provider.name,
+      type: provider.type,
+      associationId: provider.associationId,
+      credentials: provider.credentials,
+      createdAt: provider.createdAt,
+      updatedAt: provider.updatedAt,
     };
   }
 }
