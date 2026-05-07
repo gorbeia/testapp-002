@@ -88,9 +88,10 @@ Then('the page shows a large order number', async function (this: E2eWorld) {
 });
 
 Then('the page shows a verification code in monospace', async function (this: E2eWorld) {
-  const body = await this.page.evaluate(() => document.body.innerText);
-  // Verification codes are short alphanumeric: JO42, MI38, etc.
-  assert.match(body, /[A-Z]{2}\d+/, 'Expected a verification code (e.g. JO42)');
+  // Wait for async fetch to populate the verification code
+  await this.page.waitForFunction(() => /[A-Z]{2}\d+/.test(document.body.innerText), {
+    timeout: 5_000,
+  });
 });
 
 // ── Order tracking ────────────────────────────────────────────────────────────
