@@ -86,6 +86,7 @@ export function MenuClient({ txosna, categories }: MenuClientProps) {
           {activeProducts.map((p) => (
             <button
               key={p.id}
+              data-testid="product-card"
               onClick={() => !p.soldOut && setSelected(p)}
               disabled={p.soldOut}
               style={{
