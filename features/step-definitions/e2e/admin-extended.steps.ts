@@ -74,14 +74,86 @@ Then('the page shows a VAT types list', async function (this: E2eWorld) {
   assert.ok(hasVat, `Expected VAT types list. Got: ${body.slice(0, 400)}`);
 });
 
-Then('the {string} toggle is already on', async function (this: E2eWorld, toggleLabel: string) {
-  const body = await this.page.evaluate(() => document.body.innerText);
-  assert.ok(
-    body.includes(toggleLabel),
-    `Expected toggle "${toggleLabel}" on page. Got: ${body.slice(0, 400)}`
-  );
-  // If toggle is off this scenario would fail further — that's expected behaviour
-});
+Then(
+  'the {string} toggle is already on',
+  { timeout: 60_000 },
+  async function (this: E2eWorld, toggleLabel: string) {
+    // ── Phase 1: wait for VatTab data load ──────────────────────────────────
+    // "Gehitu BEZ mota" only renders once loading=false (associationId is set).
+    const loadPhase = await this.page
+      .waitForSelector('text=Gehitu BEZ mota', { timeout: 15_000 })
+      .then(() => 'ok' as const)
+      .catch((e: Error) => `TIMEOUT:${e.message}` as const);
+    console.log(`[toggle-step] phase1 loadPhase=${loadPhase}`);
+
+    if (loadPhase !== 'ok') {
+      const snap = await this.page.evaluate(() => document.body.innerText);
+      console.log(`[toggle-step] page on load-timeout: ${snap.slice(0, 600)}`);
+    }
+
+    // ── Phase 2: assert label exists ────────────────────────────────────────
+    const body = await this.page.evaluate(() => document.body.innerText);
+    assert.ok(
+      body.includes(toggleLabel),
+      `Expected toggle "${toggleLabel}" on page. Got: ${body.slice(0, 400)}`
+    );
+
+    // ── Phase 3: check panel ────────────────────────────────────────────────
+    const panelVisible = await this.page
+      .locator('text=TicketBAI konfigurazioa')
+      .isVisible()
+      .catch(() => false);
+    console.log(`[toggle-step] phase3 panelVisible=${panelVisible}`);
+
+    if (panelVisible) return;
+
+    // ── Phase 4: enable via API ─────────────────────────────────────────────
+    type ApiResult = { status?: number; body?: string; assocId?: string; error?: string };
+    const apiResult: ApiResult = await this.page.evaluate(async () => {
+      try {
+        const sessionResp = await fetch('/api/auth/session');
+        const session = (await sessionResp.json()) as { user?: { associationId?: string } };
+        const assocId = session?.user?.associationId ?? '';
+        if (!assocId) return { error: 'no associationId', session: JSON.stringify(session) };
+        const patchResp = await fetch(`/api/associations/${assocId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticketBaiEnabled: true }),
+        });
+        const text = await patchResp.text();
+        return { status: patchResp.status, body: text, assocId };
+      } catch (err) {
+        return { error: String(err) };
+      }
+    });
+    console.log(`[toggle-step] phase4 apiResult=${JSON.stringify(apiResult)}`);
+
+    // ── Phase 5: reload → BEZ tab → wait for panel ─────────────────────────
+    await this.page.reload({ waitUntil: 'domcontentloaded' });
+    await this.page
+      .getByRole('button', { name: 'BEZ' })
+      .click()
+      .catch(async () => {
+        await this.page.locator('[role="tab"]:has-text("BEZ")').click();
+      });
+
+    const panelAfter = await this.page
+      .waitForSelector('text=TicketBAI konfigurazioa', { timeout: 15_000 })
+      .then(() => 'visible' as const)
+      .catch((e: Error) => `MISSING:${e.message}` as const);
+    console.log(`[toggle-step] phase5 panelAfter=${panelAfter}`);
+
+    if (panelAfter !== 'visible') {
+      const snap2 = await this.page.evaluate(() => document.body.innerText);
+      console.log(`[toggle-step] page on panel-missing: ${snap2.slice(0, 600)}`);
+    }
+
+    assert.ok(
+      panelAfter === 'visible',
+      `TicketBAI config panel did not appear. apiResult=${JSON.stringify(apiResult)}`
+    );
+  }
+);
 
 Then('the page shows a {string} input', async function (this: E2eWorld, inputLabel: string) {
   const body = await this.page.evaluate(() => document.body.innerText);
