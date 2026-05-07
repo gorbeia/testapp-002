@@ -1,38 +1,44 @@
-// Storage backend selector.
+// Configurable storage system.
 //
 // All API route handlers import repositories from here — never directly from
-// memory.ts or a future prisma.ts. This keeps handlers storage-agnostic and
-// lets the test suite swap backends without touching handler code.
+// memory.ts or adapters. This keeps handlers storage-agnostic and
+// lets test suite swap backends without touching handler code.
 //
-// STORAGE_BACKEND=memory  (default in dev and test)
-// STORAGE_BACKEND=prisma  (Phase 10 — not yet implemented)
+// STORAGE_MODE=memory  (default in dev and test)
+// STORAGE_MODE=orm     (production with database)
 
-import {
-  associationRepo,
-  catalogRepo,
-  orderRepo,
-  paymentProviderRepo,
-  resetDemoAssociation,
-  resetStore,
-  ticketBaiConfigRepo,
-  ticketBaiInvoiceRepo,
-  ticketRepo,
-  txosnaRepo,
-  volunteerRepo,
-} from './memory';
+import { getRepositories, initializeStorage, DEFAULT_STORAGE_CONFIG } from './storage-manager';
+import { resetStore as resetMemoryStore } from './memory';
 
-export {
-  associationRepo,
-  catalogRepo,
-  orderRepo,
-  paymentProviderRepo,
-  resetDemoAssociation,
-  resetStore,
-  ticketBaiConfigRepo,
-  ticketBaiInvoiceRepo,
-  ticketRepo,
-  txosnaRepo,
-  volunteerRepo,
+// Initialize storage with default configuration
+const repositories = getRepositories();
+
+// Initialize storage asynchronously
+initializeStorage(DEFAULT_STORAGE_CONFIG).catch((error) => {
+  console.error('Failed to initialize storage:', error);
+});
+
+// Export repositories from the current storage backend
+export const associationRepo = repositories.associations;
+export const catalogRepo = repositories.catalog;
+export const orderRepo = repositories.orders;
+export const paymentProviderRepo = repositories.paymentProviders;
+export const ticketBaiConfigRepo = repositories.ticketBaiConfig;
+export const ticketBaiInvoiceRepo = repositories.ticketBaiInvoices;
+export const ticketRepo = repositories.tickets;
+export const txosnaRepo = repositories.txosnak;
+export const volunteerRepo = repositories.volunteers;
+
+// For backward compatibility, export reset functions
+export const resetStore = () => {
+  // Only reset memory store for now
+  // ORM storage reset would need different implementation
+  resetMemoryStore();
+};
+
+export const resetDemoAssociation = () => {
+  // This would need to be implemented for both storage types
+  console.warn('resetDemoAssociation not yet implemented for configurable storage');
 };
 
 export type {
