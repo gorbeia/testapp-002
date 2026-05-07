@@ -702,7 +702,7 @@ export const MOCK_ORDERS: MockOrder[] = [
     verificationCode: 'MI38',
     channel: 'PHONE_TO_COUNTER',
     createdAt: '2026-04-13T18:40:00Z',
-    expiresAt: '2026-04-13T19:00:00Z',
+    expiresAt: null,
     tickets: [MOCK_TICKETS[1]],
   },
   {
