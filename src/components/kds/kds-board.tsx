@@ -45,8 +45,9 @@ const NEW_ORDER_POOL = [
 ];
 
 function useWidth() {
-  const [w, setW] = useState(typeof window !== 'undefined' ? window.innerWidth : 900);
+  const [w, setW] = useState(900);
   useEffect(() => {
+    setW(window.innerWidth);
     const f = () => setW(window.innerWidth);
     window.addEventListener('resize', f);
     return () => window.removeEventListener('resize', f);
