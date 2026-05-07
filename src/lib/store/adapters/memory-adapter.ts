@@ -30,10 +30,12 @@ import {
 export class MemoryStorageAdapter implements StorageInterface {
   private initialized = false;
 
+  constructor() {}
+
   async initialize(): Promise<void> {
-    if (this.initialized) return;
-    
-    // Initialize with seed data
+    if (this.initialized) {
+      return;
+    }
     seedDemoData();
     this.initialized = true;
   }

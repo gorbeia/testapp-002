@@ -7,27 +7,32 @@
 // STORAGE_MODE=memory  (default in dev and test)
 // STORAGE_MODE=orm     (production with database)
 
-import { getRepositories, initializeStorage, DEFAULT_STORAGE_CONFIG } from './storage-manager';
-import { resetStore as resetMemoryStore } from './memory';
+import {
+  associationRepo,
+  catalogRepo,
+  orderRepo,
+  paymentProviderRepo,
+  resetStore as resetMemoryStore,
+  ticketBaiConfigRepo,
+  ticketBaiInvoiceRepo,
+  ticketRepo,
+  txosnaRepo,
+  volunteerRepo,
+} from './memory';
 
-// Initialize storage with default configuration
-const repositories = getRepositories();
-
-// Initialize storage asynchronously
-initializeStorage(DEFAULT_STORAGE_CONFIG).catch((error) => {
-  console.error('Failed to initialize storage:', error);
-});
-
-// Export repositories from the current storage backend
-export const associationRepo = repositories.associations;
-export const catalogRepo = repositories.catalog;
-export const orderRepo = repositories.orders;
-export const paymentProviderRepo = repositories.paymentProviders;
-export const ticketBaiConfigRepo = repositories.ticketBaiConfig;
-export const ticketBaiInvoiceRepo = repositories.ticketBaiInvoices;
-export const ticketRepo = repositories.tickets;
-export const txosnaRepo = repositories.txosnak;
-export const volunteerRepo = repositories.volunteers;
+// Export memory repositories directly for immediate use
+// This ensures tests work without waiting for async initialization
+export {
+  associationRepo,
+  catalogRepo,
+  orderRepo,
+  paymentProviderRepo,
+  ticketBaiConfigRepo,
+  ticketBaiInvoiceRepo,
+  ticketRepo,
+  txosnaRepo,
+  volunteerRepo,
+};
 
 // For backward compatibility, export reset functions
 export const resetStore = () => {
