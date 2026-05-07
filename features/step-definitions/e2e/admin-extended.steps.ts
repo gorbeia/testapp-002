@@ -75,25 +75,45 @@ Then('the page shows a VAT types list', async function (this: E2eWorld) {
 });
 
 Then('the {string} toggle is already on', async function (this: E2eWorld, toggleLabel: string) {
+  // Wait for the BEZ tab data to finish loading — the "Gehitu BEZ mota" button only renders
+  // once loading=false, which also means associationId is set in React state. Without this
+  // the toggle PATCH fires with an empty associationId and fails silently.
+  await this.page.waitForSelector('text=Gehitu BEZ mota', { timeout: 10_000 });
+
   const body = await this.page.evaluate(() => document.body.innerText);
   assert.ok(
     body.includes(toggleLabel),
     `Expected toggle "${toggleLabel}" on page. Got: ${body.slice(0, 400)}`
   );
-  // If the config panel is not visible the toggle is off — click to enable it
+
   const panelVisible = await this.page
     .locator('text=TicketBAI konfigurazioa')
     .isVisible()
     .catch(() => false);
+
   if (!panelVisible) {
-    // Find the outermost toggle row by locating a div that directly contains the label text
-    const toggleBtn = this.page
-      .locator('div')
-      .filter({ hasText: new RegExp(`^${toggleLabel}`) })
-      .locator('button')
-      .first();
-    await toggleBtn.click();
-    await this.page.waitForSelector('text=TicketBAI konfigurazioa', { timeout: 5_000 });
+    // Enable via direct API call (avoids relying on the toggle click hitting a loaded
+    // React state) then reload so the page renders with the toggle already on.
+    await this.page.evaluate(async () => {
+      const session = await fetch('/api/auth/session').then((r) => r.json());
+      const assocId: string =
+        (session as { user?: { associationId?: string } })?.user?.associationId ?? '';
+      if (assocId) {
+        await fetch(`/api/associations/${assocId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticketBaiEnabled: true }),
+        });
+      }
+    });
+    await this.page.reload({ waitUntil: 'networkidle' });
+    await this.page
+      .getByRole('button', { name: 'BEZ' })
+      .click()
+      .catch(async () => {
+        await this.page.locator('[role="tab"]:has-text("BEZ")').click();
+      });
+    await this.page.waitForSelector('text=TicketBAI konfigurazioa', { timeout: 10_000 });
   }
 });
 
