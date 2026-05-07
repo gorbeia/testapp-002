@@ -55,7 +55,7 @@ Given(
     this.currentTicket = tickets[0];
 
     // If status is not RECEIVED, advance the ticket
-    if (status !== 'RECEIVED') {
+    if (status !== 'RECEIVED' && this.currentTicket) {
       const ticketStatus = status as TicketStatus;
       this.currentTicket = await ticketRepo.update(this.currentTicket.id, {
         status: ticketStatus,
@@ -137,8 +137,8 @@ Given(
     assert.equal(tickets.length, 2, 'order should have 2 tickets (FOOD and DRINKS)');
 
     // Advance each ticket to the appropriate status
-    const foodTicket = tickets.find((t) => t.counterType === 'FOOD');
-    const drinksTicket = tickets.find((t) => t.counterType === 'DRINKS');
+    const foodTicket = tickets.find((t: any) => t.counterType === 'FOOD');
+    const drinksTicket = tickets.find((t: any) => t.counterType === 'DRINKS');
 
     assert.ok(foodTicket, 'should have a FOOD ticket');
     assert.ok(drinksTicket, 'should have a DRINKS ticket');

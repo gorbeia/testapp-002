@@ -16,17 +16,28 @@ import type {
   StoredAssociation,
   StoredTxosna,
 } from '../types';
-import { PrismaClient } from '@prisma/client';
+
+// Dynamic import to handle missing Prisma client gracefully
+let PrismaClient: any;
+try {
+  PrismaClient = require('@prisma/client').PrismaClient;
+} catch (error) {
+  console.warn('Prisma client not available, ORM adapter will not work');
+}
 
 export class ORMStorageAdapter implements StorageInterface {
-  private prisma: PrismaClient;
+  private prisma: any;
   private initialized = false;
 
   constructor(config: StorageConfig) {
+    if (!PrismaClient) {
+      throw new Error('Prisma client not available. Cannot initialize ORM storage adapter.');
+    }
+    
     this.prisma = new PrismaClient({
       datasources: {
         db: {
-          url: config.ormConfig?.databaseUrl || process.env.DATABASE_URL,
+          url: config.ormConfig?.databaseUrl || (typeof process !== 'undefined' ? process.env.DATABASE_URL : undefined),
         },
       },
     });
