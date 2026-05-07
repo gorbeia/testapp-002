@@ -33,7 +33,6 @@ describe('GET /api/orders/[orderId]', () => {
       registeredById: 'v1',
       status: 'CONFIRMED',
       total: 25.0,
-      expiresAt: null,
       tickets: [
         {
           counterType: 'FOOD',
@@ -86,7 +85,6 @@ describe('GET /api/orders/[orderId]', () => {
       registeredById: 'v1',
       status: 'CONFIRMED',
       total: 10.0,
-      expiresAt: null,
       tickets: [
         {
           counterType: 'FOOD',
@@ -127,7 +125,6 @@ describe('GET /api/orders/[orderId]', () => {
       registeredById: 'v1',
       status: 'CONFIRMED',
       total: 10.0,
-      expiresAt: null,
       tickets: [
         {
           counterType: 'FOOD',
@@ -165,7 +162,6 @@ describe('GET /api/orders/[orderId]', () => {
       registeredById: 'v1',
       status: 'CONFIRMED',
       total: 10.0,
-      expiresAt: null,
       tickets: [
         {
           counterType: 'FOOD',

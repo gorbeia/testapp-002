@@ -89,9 +89,8 @@ Given(
 
     if (this.lastResponse.status === 201) {
       const order = this.lastBody as StoredOrder;
-      // Set expiresAt to the past
       const expiredOrder = await orderRepo.update(order.id, {
-        expiresAt: new Date(0),
+        createdAt: new Date(0),
       });
       this.currentOrder = expiredOrder;
     }

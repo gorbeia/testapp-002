@@ -28,7 +28,6 @@ function makeOrder(
     registeredById: null,
     paymentSessionId: null,
     confirmedAt: new Date(),
-    expiresAt: null,
     pendingLines: null,
     fiscalReceiptRef: null,
     createdAt: new Date(),

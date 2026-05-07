@@ -173,7 +173,6 @@ describe('orderRepo', () => {
       registeredById: null,
       status: 'CONFIRMED',
       total: 8.5,
-      expiresAt: null,
       tickets: [
         {
           counterType: 'FOOD',
@@ -217,7 +216,6 @@ describe('orderRepo', () => {
       registeredById: null,
       status: 'CONFIRMED',
       total: 10.0,
-      expiresAt: null,
       tickets: [
         {
           counterType: 'FOOD',
@@ -305,7 +303,6 @@ describe('orderRepo', () => {
       registeredById: null,
       status: 'CONFIRMED',
       total: 1,
-      expiresAt: null,
       tickets: [],
     });
     const beforeReset = await orderRepo.listByTxosna('txosna-1');

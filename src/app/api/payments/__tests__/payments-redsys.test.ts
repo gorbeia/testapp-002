@@ -64,7 +64,6 @@ async function seedPendingOrder() {
     registeredById: null,
     status: 'PENDING_PAYMENT',
     total: 12.5,
-    expiresAt: new Date(Date.now() + 15 * 60_000),
     tickets: [],
     pendingLines: [TICKET_LINE],
   });

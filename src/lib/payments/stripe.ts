@@ -22,11 +22,7 @@ export class StripePaymentProvider implements IPaymentProvider {
 
   async createSession(order: StoredOrder, returnUrl: string): Promise<PaymentSession> {
     const now = new Date();
-    let expiresAt = order.expiresAt;
-
-    if (!expiresAt || expiresAt.getTime() - now.getTime() < 30 * 60_000) {
-      expiresAt = new Date(now.getTime() + 30 * 60_000);
-    }
+    const expiresAt = new Date(now.getTime() + 30 * 60_000);
 
     const session = await this.stripe.checkout.sessions.create({
       payment_method_types: ['card'],

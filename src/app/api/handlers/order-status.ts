@@ -1,4 +1,4 @@
-import { orderRepo, ticketRepo } from '@/lib/store';
+import { orderRepo, ticketRepo, txosnaRepo } from '@/lib/store';
 
 export async function GET(request: Request, { params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = await params;
@@ -28,6 +28,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ orde
 
   const tickets = await ticketRepo.listByOrder(orderId);
 
+  let expiresAt: Date | null = null;
+  if (order.status === 'PENDING_PAYMENT') {
+    const txosna = await txosnaRepo.findById(order.txosnaId);
+    if (txosna) {
+      expiresAt = new Date(order.createdAt.getTime() + txosna.pendingPaymentTimeout * 60_000);
+    }
+  }
+
   return Response.json({
     id: order.id,
     orderNumber: order.orderNumber,
@@ -39,7 +47,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ orde
     channel: order.channel,
     paymentMethod: order.paymentMethod,
     notes: order.notes,
-    expiresAt: order.expiresAt,
+    expiresAt,
     fiscalReceiptRef: order.fiscalReceiptRef,
     createdAt: order.createdAt,
     tickets: tickets.map((t) => ({

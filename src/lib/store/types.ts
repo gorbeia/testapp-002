@@ -172,7 +172,6 @@ export interface StoredOrder {
   registeredById: string | null;
   paymentSessionId: string | null;
   confirmedAt: Date | null;
-  expiresAt: Date | null;
   /** Ticket structure for PENDING_PAYMENT orders; cleared on confirm. */
   pendingLines: CreateTicketInput[] | null;
   /** ID of the TicketBAI invoice issued for this order, once confirmed. */
@@ -304,7 +303,6 @@ export interface CreateOrderInput {
   registeredById: string | null;
   status: OrderStatus;
   total: number;
-  expiresAt: Date | null;
   tickets: CreateTicketInput[];
   /** For PENDING_PAYMENT orders: store pending ticket structure for later confirmation. */
   pendingLines?: CreateTicketInput[] | null;

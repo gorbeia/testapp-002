@@ -35,7 +35,6 @@ function makeOnlineOrder(
     registeredById: null,
     paymentSessionId: null,
     confirmedAt: null,
-    expiresAt: new Date(Date.now() + 30 * 60_000), // 30 minutes from now
     pendingLines: [
       {
         counterType: 'FOOD',

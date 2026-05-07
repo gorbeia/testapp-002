@@ -312,7 +312,6 @@ export const DEMO_ORDERS: MockOrder[] = [
     verificationCode: 'AB-0001',
     channel: 'PHONE_TO_COUNTER',
     createdAt: '2026-04-19T10:00:00Z',
-    expiresAt: '2026-04-19T10:15:00Z',
     tickets: [],
   },
   {
@@ -326,7 +325,6 @@ export const DEMO_ORDERS: MockOrder[] = [
     verificationCode: 'CD-0002',
     channel: 'PHONE_TO_COUNTER',
     createdAt: '2026-04-19T10:05:00Z',
-    expiresAt: '2026-04-19T10:20:00Z',
     tickets: [],
   },
   {
@@ -340,7 +338,6 @@ export const DEMO_ORDERS: MockOrder[] = [
     verificationCode: 'EF-0003',
     channel: 'COUNTER',
     createdAt: '2026-04-19T10:10:00Z',
-    expiresAt: null,
     tickets: [],
   },
   {
@@ -354,7 +351,6 @@ export const DEMO_ORDERS: MockOrder[] = [
     verificationCode: 'GH-0004',
     channel: 'COUNTER',
     createdAt: '2026-04-19T10:15:00Z',
-    expiresAt: null,
     tickets: [],
   },
   {
@@ -368,7 +364,6 @@ export const DEMO_ORDERS: MockOrder[] = [
     verificationCode: 'JK-0005',
     channel: 'SELF_SERVICE',
     createdAt: '2026-04-19T10:20:00Z',
-    expiresAt: null,
     tickets: [],
   },
   {
@@ -382,7 +377,6 @@ export const DEMO_ORDERS: MockOrder[] = [
     verificationCode: 'NP-0007',
     channel: 'COUNTER',
     createdAt: '2026-04-19T09:45:00Z',
-    expiresAt: null,
     tickets: [],
   },
   {
@@ -396,7 +390,6 @@ export const DEMO_ORDERS: MockOrder[] = [
     verificationCode: 'QR-0008',
     channel: 'SELF_SERVICE',
     createdAt: '2026-04-19T09:50:00Z',
-    expiresAt: null,
     tickets: [],
   },
   {
@@ -410,7 +403,6 @@ export const DEMO_ORDERS: MockOrder[] = [
     verificationCode: 'LM-0006',
     channel: 'COUNTER',
     createdAt: '2026-04-19T10:25:00Z',
-    expiresAt: null,
     tickets: [],
   },
 ];

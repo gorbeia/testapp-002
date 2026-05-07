@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { resetStore, orderRepo } from '@/test/store-setup';
+import { resetStore, seedMockData, orderRepo } from '@/test/store-setup';
 import { FakePaymentProvider } from '@/lib/payments/fake';
 import type { CreateTicketInput } from '@/lib/store/types';
 
@@ -16,6 +16,7 @@ vi.mock('@/lib/sse', () => ({
 
 beforeEach(() => {
   resetStore();
+  seedMockData();
   fakeProvider.sessions = [];
   fakeProvider.webhookEvents = [];
 });
@@ -47,7 +48,6 @@ async function seedPendingOrder() {
     registeredById: null,
     status: 'PENDING_PAYMENT',
     total: 12.5,
-    expiresAt: new Date(Date.now() + 15 * 60_000),
     tickets: [],
     pendingLines: [ticketInput],
   });
@@ -132,7 +132,6 @@ describe('POST /api/payments/session', () => {
       registeredById: null,
       status: 'PENDING_PAYMENT',
       total: 12.5,
-      expiresAt: new Date(Date.now() + 15 * 60_000),
       tickets: [],
       pendingLines: [ticketInput],
     });

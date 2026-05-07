@@ -67,7 +67,6 @@ describe('Reports API', () => {
         registeredById: 'v1',
         status: 'CONFIRMED',
         total: 10.0,
-        expiresAt: null,
         tickets: [
           {
             counterType: 'FOOD',
@@ -119,7 +118,6 @@ describe('Reports API', () => {
           registeredById: 'v1',
           status: 'CONFIRMED',
           total: 10.0,
-          expiresAt: null,
           tickets: [
             {
               counterType: 'FOOD',
@@ -152,7 +150,6 @@ describe('Reports API', () => {
           registeredById: null,
           status: 'CANCELLED',
           total: 10.0,
-          expiresAt: null,
           tickets: [
             {
               counterType: 'FOOD',
@@ -202,7 +199,6 @@ describe('Reports API', () => {
           registeredById: 'v1',
           status: 'CONFIRMED',
           total: 10.0,
-          expiresAt: null,
           tickets: [
             {
               counterType: 'FOOD',
@@ -238,7 +234,6 @@ describe('Reports API', () => {
           registeredById: 'v1',
           status: 'CONFIRMED',
           total: 10.0,
-          expiresAt: null,
           tickets: [
             {
               counterType: 'FOOD',
@@ -293,7 +288,6 @@ describe('Reports API', () => {
           registeredById: 'v1',
           status: 'CONFIRMED',
           total: 10.0,
-          expiresAt: null,
           tickets: [
             {
               counterType: 'FOOD',
@@ -326,7 +320,6 @@ describe('Reports API', () => {
         registeredById: 'v1',
         status: 'CONFIRMED',
         total: 10.0,
-        expiresAt: null,
         tickets: [
           {
             counterType: 'FOOD',
@@ -372,7 +365,6 @@ describe('Reports API', () => {
           registeredById: 'v1',
           status: 'CONFIRMED',
           total: 25.0,
-          expiresAt: null,
           tickets: [
             {
               counterType: 'FOOD',
@@ -433,7 +425,6 @@ describe('Reports API', () => {
           registeredById: 'v1',
           status: 'CONFIRMED',
           total: 10.0,
-          expiresAt: null,
           tickets: [
             {
               counterType: 'FOOD',
@@ -465,7 +456,6 @@ describe('Reports API', () => {
         registeredById: null,
         status: 'CANCELLED',
         total: 10.0,
-        expiresAt: null,
         tickets: [
           {
             counterType: 'FOOD',

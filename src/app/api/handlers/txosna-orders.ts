@@ -186,9 +186,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const total = resolved.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
 
   const status = isSelfService ? 'PENDING_PAYMENT' : 'CONFIRMED';
-  const expiresAt = isSelfService
-    ? new Date(Date.now() + txosna.pendingPaymentTimeout * 60_000)
-    : null;
 
   const input: CreateOrderInput = {
     txosnaId: txosna.id,
@@ -199,7 +196,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     registeredById,
     status,
     total,
-    expiresAt,
     tickets,
     pendingLines: isSelfService ? tickets : undefined,
   };

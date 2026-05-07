@@ -102,7 +102,7 @@ Given(
     const order = await createOrder(slug, 'SELF_SERVICE');
     assert.ok(order, 'SELF_SERVICE order creation failed');
     await orderRepo.update(order.id, {
-      expiresAt: new Date(Date.now() - hours * 60 * 60 * 1000),
+      createdAt: new Date(Date.now() - hours * 60 * 60 * 1000 - 16 * 60 * 1000),
     });
     this.savedOrders.push(order);
   }

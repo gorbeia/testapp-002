@@ -95,7 +95,6 @@ export interface MockOrder {
   verificationCode: string;
   channel: OrderingChannel;
   createdAt: string;
-  expiresAt: string | null;
 }
 
 export interface MockTxosna {
@@ -689,7 +688,6 @@ export const MOCK_ORDERS: MockOrder[] = [
     verificationCode: 'JO42',
     channel: 'PHONE_TO_COUNTER',
     createdAt: '2026-04-13T18:34:00Z',
-    expiresAt: null,
     tickets: [MOCK_TICKETS[0]],
   },
   {
@@ -702,7 +700,6 @@ export const MOCK_ORDERS: MockOrder[] = [
     verificationCode: 'MI38',
     channel: 'PHONE_TO_COUNTER',
     createdAt: '2026-04-13T18:40:00Z',
-    expiresAt: '2026-04-13T19:00:00Z',
     tickets: [MOCK_TICKETS[1]],
   },
   {
@@ -715,7 +712,6 @@ export const MOCK_ORDERS: MockOrder[] = [
     verificationCode: 'AN35',
     channel: 'PHONE_TO_COUNTER',
     createdAt: '2026-04-13T18:20:00Z',
-    expiresAt: null,
     tickets: [MOCK_TICKETS[2]],
   },
   {
@@ -728,7 +724,6 @@ export const MOCK_ORDERS: MockOrder[] = [
     verificationCode: 'XX29',
     channel: 'COUNTER',
     createdAt: '2026-04-13T18:10:00Z',
-    expiresAt: null,
     tickets: [MOCK_TICKETS[3]],
   },
 ];
