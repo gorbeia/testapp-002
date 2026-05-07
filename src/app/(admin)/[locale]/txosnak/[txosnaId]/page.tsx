@@ -214,6 +214,7 @@ export default function TxosnaDashboard() {
           border: '1px solid var(--adm-border)',
           borderRadius: 12,
           padding: '16px 18px',
+          marginBottom: 16,
         }}
       >
         <div
@@ -252,6 +253,62 @@ export default function TxosnaDashboard() {
             >
               <span>{a.icon}</span>
               <span>{a.label}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Operational screens */}
+      <div
+        style={{
+          background: 'var(--adm-surface)',
+          border: '1px solid var(--adm-border)',
+          borderRadius: 12,
+          padding: '16px 18px',
+        }}
+      >
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 700,
+            color: 'var(--adm-text-pri)',
+            marginBottom: 4,
+          }}
+        >
+          Pantaila operazionalak
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--adm-text-sec)', marginBottom: 12 }}>
+          Leiho berrian irekitzen dira
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {[
+            { label: 'Mostradore', href: '/eu/counter', icon: '🧾' },
+            { label: 'Sukalde kudeaketa', href: '/eu/kitchen-manager', icon: '👨‍🍳' },
+            { label: 'Sukalde pantaila (KDS)', href: '/eu/kitchen', icon: '📺' },
+            { label: 'Edariak', href: '/eu/drinks', icon: '🍹' },
+          ].map((a) => (
+            <Link
+              key={a.href}
+              href={a.href}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '9px 12px',
+                borderRadius: 8,
+                border: '1px solid #e85d2f44',
+                background: 'var(--adm-surface-hi)',
+                textDecoration: 'none',
+                fontSize: 13,
+                color: 'var(--adm-text-pri)',
+                fontWeight: 500,
+              }}
+            >
+              <span>{a.icon}</span>
+              <span style={{ flex: 1 }}>{a.label}</span>
+              <span style={{ fontSize: 11, color: 'var(--adm-text-sec)' }}>↗</span>
             </Link>
           ))}
         </div>
