@@ -7,6 +7,13 @@
 // resetStore() clears all maps and re-seeds from mock data, so each test
 // starts from a known state regardless of what previous tests did.
 
+import { initializeStorage, DEFAULT_STORAGE_CONFIG } from '@/lib/store/storage-manager';
+
+// Initialize storage for tests
+initializeStorage(DEFAULT_STORAGE_CONFIG).catch((error) => {
+  console.error('Failed to initialize storage for tests:', error);
+});
+
 export {
   catalogRepo,
   orderRepo,
