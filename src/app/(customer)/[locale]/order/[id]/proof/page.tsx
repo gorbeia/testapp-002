@@ -1,11 +1,23 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function ProofPage() {
   const params = useParams();
+  const [orderNumber, setOrderNumber] = useState<number | null>(null);
+  const [verificationCode, setVerificationCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/orders/${params.id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.orderNumber) setOrderNumber(data.orderNumber);
+        if (data.verificationCode) setVerificationCode(data.verificationCode);
+      })
+      .catch(() => {});
+  }, [params.id]);
 
   // Request screen wake lock so device stays on
   useEffect(() => {
@@ -70,7 +82,7 @@ export default function ProofPage() {
           marginBottom: 24,
         }}
       >
-        #42
+        {orderNumber !== null ? `#${orderNumber}` : '#—'}
       </div>
 
       <div
@@ -93,7 +105,7 @@ export default function ProofPage() {
             letterSpacing: '0.2em',
           }}
         >
-          GH-7421
+          {verificationCode ?? '—'}
         </div>
       </div>
 
