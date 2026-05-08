@@ -3,7 +3,7 @@
 export interface FiscalInvoiceData {
   series: string;
   invoiceNumber: number;
-  issuedAt: string;
+  issuedAtFormatted: string;
   qrUrl: string | null;
 }
 
@@ -51,10 +51,7 @@ export function FiscalInvoiceCard({ invoice }: { invoice: FiscalInvoiceData }) {
           marginBottom: invoice.qrUrl ? 8 : 0,
         }}
       >
-        {new Date(invoice.issuedAt).toLocaleString('eu-ES', {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        })}
+        {invoice.issuedAtFormatted}
       </div>
       {invoice.qrUrl && (
         <a
