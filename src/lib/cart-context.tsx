@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { CartItem } from './mock-data';
 
 interface CartContextValue {
@@ -14,10 +14,38 @@ interface CartContextValue {
   count: number;
 }
 
+const STORAGE_KEY = 'txosna_cart';
+
+function loadCart(): CartItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as CartItem[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+
+  // Hydrate from sessionStorage once on mount (avoids SSR mismatch)
+  useEffect(() => {
+    const saved = loadCart();
+    if (saved.length > 0) setItems(saved);
+  }, []);
+
+  // Persist to sessionStorage on every change
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      // storage quota or private mode — degrade silently
+    }
+  }, [items]);
 
   function addItem(item: CartItem) {
     setItems((prev) => {
@@ -52,6 +80,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   function clear() {
     setItems([]);
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
   }
 
   const total = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);

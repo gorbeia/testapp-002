@@ -114,6 +114,13 @@ Then('the cart bar is visible with a checkout link', async function (this: E2eWo
 When('I proceed to checkout', async function (this: E2eWorld) {
   await this.page.getByText('Saskia ikusi').click();
   await this.page.waitForURL((url) => url.pathname.includes('/checkout'), { timeout: 5_000 });
+  // Wait for the checkout page content to stabilise (form or empty-cart view)
+  await this.page.waitForFunction(
+    () =>
+      document.body.innerText.includes('Eskaeraren laburpena') ||
+      document.body.innerText.includes('Saskia hutsik dago'),
+    { timeout: 4_000 }
+  );
 });
 
 When('I fill in customer name {string}', async function (this: E2eWorld, name: string) {
