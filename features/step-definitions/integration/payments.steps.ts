@@ -93,8 +93,10 @@ Given(
     assert.ok(order, `order ${orderName} must exist`);
 
     order = await orderRepo.update(order.id, { paymentSessionId: sessionId });
-    this.namedOrders.set(orderName, order);
-    this.currentOrder = order;
+    if (order) {
+      this.namedOrders.set(orderName, order);
+      this.currentOrder = order;
+    }
   }
 );
 

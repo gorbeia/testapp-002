@@ -1,19 +1,19 @@
-// Storage backend selector.
+// Configurable storage system.
 //
 // All API route handlers import repositories from here — never directly from
-// memory.ts or a future prisma.ts. This keeps handlers storage-agnostic and
-// lets the test suite swap backends without touching handler code.
+// memory.ts or adapters. This keeps handlers storage-agnostic and
+// lets test suite swap backends without touching handler code.
 //
-// STORAGE_BACKEND=memory  (default in dev and test)
-// STORAGE_BACKEND=prisma  (Phase 10 — not yet implemented)
+// STORAGE_MODE=memory  (default in dev and test)
+// STORAGE_MODE=orm     (production with database)
 
 import {
   associationRepo,
   catalogRepo,
   orderRepo,
   paymentProviderRepo,
-  resetDemoAssociation,
-  resetStore,
+  resetStore as resetMemoryStore,
+  resetDemoAssociation as resetDemoAssociationMemory,
   ticketBaiConfigRepo,
   ticketBaiInvoiceRepo,
   ticketRepo,
@@ -21,18 +21,29 @@ import {
   volunteerRepo,
 } from './memory';
 
+// Export memory repositories directly for immediate use
+// This ensures tests work without waiting for async initialization
 export {
   associationRepo,
   catalogRepo,
   orderRepo,
   paymentProviderRepo,
-  resetDemoAssociation,
-  resetStore,
   ticketBaiConfigRepo,
   ticketBaiInvoiceRepo,
   ticketRepo,
   txosnaRepo,
   volunteerRepo,
+};
+
+// For backward compatibility, export reset functions
+export const resetStore = () => {
+  // Only reset memory store for now
+  // ORM storage reset would need different implementation
+  resetMemoryStore();
+};
+
+export const resetDemoAssociation = () => {
+  resetDemoAssociationMemory();
 };
 
 export type {

@@ -295,7 +295,7 @@ Then(
   async function (this: IntegrationWorld, counterType: string) {
     assert.ok(this.currentOrder, 'currentOrder must be set');
     const tickets = await ticketRepo.listByOrder(this.currentOrder.id);
-    const found = tickets.some((t) => t.counterType === counterType);
+    const found = tickets.some((t: any) => t.counterType === counterType);
     assert.ok(found, `one ticket should have counterType ${counterType}`);
   }
 );
