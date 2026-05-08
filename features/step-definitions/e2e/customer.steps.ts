@@ -139,8 +139,12 @@ Then('I am on the order confirmation or status page', async function (this: E2eW
     url.includes('/order/') || url.includes('/success'),
     `Expected order confirmation page, got: ${url}`
   );
-  const body = await this.page.evaluate(() => document.body.innerText);
-  assert.match(body, /#\d+/, `Expected an order number on the page. Got: ${body.slice(0, 300)}`);
+  // The order page fetches data in useEffect — wait for "Kargatzen..." to disappear and order number to appear
+  await this.page.waitForFunction(
+    () =>
+      !document.body.innerText.includes('Kargatzen...') && /^#\d+/m.test(document.body.innerText),
+    { timeout: 8_000 }
+  );
 });
 
 // ── Order tracking ────────────────────────────────────────────────────────────
