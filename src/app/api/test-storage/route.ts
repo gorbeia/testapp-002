@@ -5,18 +5,18 @@ import { getStorageManager, DEFAULT_STORAGE_CONFIG } from '@/lib/store/storage-m
 export async function GET(_request: NextRequest) {
   try {
     const manager = getStorageManager();
-    
+
     // Initialize if not already done
     if (!manager.currentMode) {
       await manager.initialize(DEFAULT_STORAGE_CONFIG);
     }
-    
+
     manager.getStorage();
     const repos = manager.repositories;
-    
+
     // Test basic operations
     const healthCheck = await manager.healthCheck();
-    
+
     return NextResponse.json({
       success: true,
       storageMode: manager.currentMode,

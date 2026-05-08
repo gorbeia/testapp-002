@@ -21,7 +21,7 @@ export interface StorageInterface {
   initialize(): Promise<void>;
   reset(): Promise<void>;
   healthCheck(): Promise<boolean>;
-  
+
   // Transaction support (optional for in-memory)
   transaction<T>(fn: () => Promise<T>): Promise<T>;
 }

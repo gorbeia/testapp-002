@@ -13,6 +13,7 @@ import {
   orderRepo,
   paymentProviderRepo,
   resetStore as resetMemoryStore,
+  resetDemoAssociation as resetDemoAssociationMemory,
   ticketBaiConfigRepo,
   ticketBaiInvoiceRepo,
   ticketRepo,
@@ -42,8 +43,7 @@ export const resetStore = () => {
 };
 
 export const resetDemoAssociation = () => {
-  // This would need to be implemented for both storage types
-  console.warn('resetDemoAssociation not yet implemented for configurable storage');
+  resetDemoAssociationMemory();
 };
 
 export type {

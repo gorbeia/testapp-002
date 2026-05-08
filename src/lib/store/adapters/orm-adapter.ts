@@ -18,14 +18,16 @@ import type {
 } from '../types';
 
 // Dynamic import to handle missing Prisma client gracefully
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let PrismaClient: any;
 try {
   PrismaClient = require('@prisma/client').PrismaClient;
-} catch (error) {
+} catch {
   console.warn('Prisma client not available, ORM adapter will not work');
 }
 
 export class ORMStorageAdapter implements StorageInterface {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private prisma: any;
   private initialized = false;
 
@@ -33,11 +35,13 @@ export class ORMStorageAdapter implements StorageInterface {
     if (!PrismaClient) {
       throw new Error('Prisma client not available. Cannot initialize ORM storage adapter.');
     }
-    
+
     this.prisma = new PrismaClient({
       datasources: {
         db: {
-          url: config.ormConfig?.databaseUrl || (typeof process !== 'undefined' ? process.env.DATABASE_URL : undefined),
+          url:
+            config.ormConfig?.databaseUrl ||
+            (typeof process !== 'undefined' ? process.env.DATABASE_URL : undefined),
         },
       },
     });
@@ -45,7 +49,7 @@ export class ORMStorageAdapter implements StorageInterface {
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
-    
+
     // Test database connection
     await this.prisma.$connect();
     this.initialized = true;
@@ -80,69 +84,67 @@ export class ORMStorageAdapter implements StorageInterface {
     return await this.prisma.$transaction(fn);
   }
 
-  // Repository getters would be implemented here
-  // For now, I'll create stub implementations
-  
   get associations(): AssociationRepository {
-    const self = this;
     return {
-      async create(name: string): Promise<StoredAssociation> {
-        const association = await self.prisma.association.create({
+      create: async (name: string): Promise<StoredAssociation> => {
+        const association = await this.prisma.association.create({
           data: { name },
         });
-        return self.mapAssociationToStored(association);
+        return this.mapAssociationToStored(association);
       },
-      
-      async findById(id: string): Promise<StoredAssociation | null> {
-        const association = await self.prisma.association.findUnique({
+
+      findById: async (id: string): Promise<StoredAssociation | null> => {
+        const association = await this.prisma.association.findUnique({
           where: { id },
         });
-        return association ? self.mapAssociationToStored(association) : null;
+        return association ? this.mapAssociationToStored(association) : null;
       },
-      
-      async findByName(query: string): Promise<StoredAssociation | null> {
-        const association = await self.prisma.association.findFirst({
+
+      findByName: async (query: string): Promise<StoredAssociation | null> => {
+        const association = await this.prisma.association.findFirst({
           where: { name: { contains: query, mode: 'insensitive' } },
         });
-        return association ? self.mapAssociationToStored(association) : null;
+        return association ? this.mapAssociationToStored(association) : null;
       },
-      
-      async update(id: string, patch: Partial<Omit<StoredAssociation, 'id' | 'createdAt'>>): Promise<StoredAssociation> {
-        const association = await self.prisma.association.update({
+
+      update: async (
+        id: string,
+        patch: Partial<Omit<StoredAssociation, 'id' | 'createdAt'>>
+      ): Promise<StoredAssociation> => {
+        const association = await this.prisma.association.update({
           where: { id },
           data: patch,
         });
-        return self.mapAssociationToStored(association);
+        return this.mapAssociationToStored(association);
       },
     };
   }
 
   get txosnak(): TxosnaRepository {
-    const self = this;
     return {
-      async findBySlug(slug: string): Promise<StoredTxosna | null> {
-        const txosna = await self.prisma.txosna.findUnique({
+      findBySlug: async (slug: string): Promise<StoredTxosna | null> => {
+        const txosna = await this.prisma.txosna.findUnique({
           where: { slug },
         });
-        return txosna ? self.mapTxosnaToStored(txosna) : null;
+        return txosna ? this.mapTxosnaToStored(txosna) : null;
       },
-      
-      async findById(id: string): Promise<StoredTxosna | null> {
-        const txosna = await self.prisma.txosna.findUnique({
+
+      findById: async (id: string): Promise<StoredTxosna | null> => {
+        const txosna = await this.prisma.txosna.findUnique({
           where: { id },
         });
-        return txosna ? self.mapTxosnaToStored(txosna) : null;
+        return txosna ? this.mapTxosnaToStored(txosna) : null;
       },
-      
-      async list(associationId: string): Promise<StoredTxosna[]> {
-        const txosnak = await self.prisma.txosna.findMany({
+
+      list: async (associationId: string): Promise<StoredTxosna[]> => {
+        const txosnak = await this.prisma.txosna.findMany({
           where: { associationId },
         });
-        return txosnak.map((t) => self.mapTxosnaToStored(t));
+        return txosnak.map(this.mapTxosnaToStored.bind(this));
       },
-      
-      async create(data: CreateTxosnaInput): Promise<StoredTxosna> {
-        const txosna = await self.prisma.txosna.create({
+
+      create: async (data: CreateTxosnaInput): Promise<StoredTxosna> => {
+        const txosna = await this.prisma.txosna.create({
           data: {
             ...data,
             status: 'OPEN',
@@ -157,32 +159,34 @@ export class ORMStorageAdapter implements StorageInterface {
             mobileTrackingEnabled: false,
           },
         });
-        return self.mapTxosnaToStored(txosna);
+        return this.mapTxosnaToStored(txosna);
       },
-      
-      async update(id: string, patch: Partial<Omit<StoredTxosna, 'id' | 'createdAt'>>): Promise<StoredTxosna> {
-        const txosna = await self.prisma.txosna.update({
+
+      update: async (
+        id: string,
+        patch: Partial<Omit<StoredTxosna, 'id' | 'createdAt'>>
+      ): Promise<StoredTxosna> => {
+        const txosna = await this.prisma.txosna.update({
           where: { id },
           data: patch,
         });
-        return self.mapTxosnaToStored(txosna);
+        return this.mapTxosnaToStored(txosna);
       },
     };
   }
 
   get catalog(): CatalogRepository {
-    const self = this;
     return {
-      async listCategories(associationId: string) {
-        const categories = await self.prisma.category.findMany({
+      listCategories: async (associationId: string) => {
+        const categories = await this.prisma.category.findMany({
           where: { associationId },
           orderBy: { name: 'asc' },
         });
-        return categories.map(self.mapCategoryToStored.bind(self));
+        return categories.map(this.mapCategoryToStored.bind(this));
       },
 
-      async listProducts(categoryId: string) {
-        const products = await self.prisma.product.findMany({
+      listProducts: async (categoryId: string) => {
+        const products = await this.prisma.product.findMany({
           where: { categoryId },
           include: {
             variants: {
@@ -191,11 +195,11 @@ export class ORMStorageAdapter implements StorageInterface {
           },
           orderBy: { name: 'asc' },
         });
-        return products.map(self.mapProductToStored.bind(self));
+        return products.map(this.mapProductToStored.bind(this));
       },
 
-      async getProduct(productId: string) {
-        const product = await self.prisma.product.findUnique({
+      getProduct: async (productId: string) => {
+        const product = await this.prisma.product.findUnique({
           where: { id: productId },
           include: {
             variants: {
@@ -203,11 +207,11 @@ export class ORMStorageAdapter implements StorageInterface {
             },
           },
         });
-        return product ? self.mapProductToStored(product) : null;
+        return product ? this.mapProductToStored(product) : null;
       },
 
-      async getProductView(productId: string, _txosnaId: string) {
-        const product = await self.prisma.product.findUnique({
+      getProductView: async (productId: string, _txosnaId: string) => {
+        const product = await this.prisma.product.findUnique({
           where: { id: productId },
           include: {
             variants: {
@@ -215,13 +219,13 @@ export class ORMStorageAdapter implements StorageInterface {
             },
           },
         });
-        return product ? self.mapProductToStored(product) : null;
+        return product ? this.mapProductToStored(product) : null;
       },
 
-      async listProductViews(txosnaId: string) {
-        const categories = await self.prisma.category.findMany({
-          where: { 
-            txosna: { some: { id: txosnaId } }
+      listProductViews: async (txosnaId: string) => {
+        const categories = await this.prisma.category.findMany({
+          where: {
+            txosna: { some: { id: txosnaId } },
           },
           include: {
             products: {
@@ -234,87 +238,90 @@ export class ORMStorageAdapter implements StorageInterface {
           },
           orderBy: { name: 'asc' },
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return categories.map((cat: any) => ({
-          category: self.mapCategoryToStored(cat),
-          products: cat.products.map(self.mapProductToStored.bind(self)),
+          category: this.mapCategoryToStored(cat),
+          products: cat.products.map(this.mapProductToStored.bind(this)),
         }));
       },
     };
   }
 
   get orders(): OrderRepository {
-    const self = this;
     return {
-      async create(data: any) {
-        const order = await self.prisma.order.create({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      create: async (data: any) => {
+        const order = await this.prisma.order.create({
           data: {
             ...data,
             createdAt: new Date(),
             updatedAt: new Date(),
           },
         });
-        return self.mapOrderToStored(order);
+        return this.mapOrderToStored(order);
       },
 
-      async findById(id: string) {
-        const order = await self.prisma.order.findUnique({
+      findById: async (id: string) => {
+        const order = await this.prisma.order.findUnique({
           where: { id },
         });
-        return order ? self.mapOrderToStored(order) : null;
+        return order ? this.mapOrderToStored(order) : null;
       },
 
-      async findByNumber(txosnaId: string, orderNumber: number) {
-        const order = await self.prisma.order.findFirst({
+      findByNumber: async (txosnaId: string, orderNumber: number) => {
+        const order = await this.prisma.order.findFirst({
           where: { txosnaId, orderNumber },
         });
-        return order ? self.mapOrderToStored(order) : null;
+        return order ? this.mapOrderToStored(order) : null;
       },
 
-      async update(id: string, patch: any) {
-        const order = await self.prisma.order.update({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      update: async (id: string, patch: any) => {
+        const order = await this.prisma.order.update({
           where: { id },
           data: { ...patch, updatedAt: new Date() },
         });
-        return self.mapOrderToStored(order);
+        return this.mapOrderToStored(order);
       },
 
-      async nextOrderNumber(txosnaId: string) {
-        const lastOrder = await self.prisma.order.findFirst({
+      nextOrderNumber: async (txosnaId: string) => {
+        const lastOrder = await this.prisma.order.findFirst({
           where: { txosnaId },
           orderBy: { orderNumber: 'desc' },
         });
         return (lastOrder?.orderNumber || 0) + 1;
       },
 
-      async findByPaymentSessionId(paymentSessionId: string) {
-        const order = await self.prisma.order.findFirst({
+      findByPaymentSessionId: async (paymentSessionId: string) => {
+        const order = await this.prisma.order.findFirst({
           where: { paymentSessionId },
         });
-        return order ? self.mapOrderToStored(order) : null;
+        return order ? this.mapOrderToStored(order) : null;
       },
 
-      async findByVerificationCode(verificationCode: string) {
-        const order = await self.prisma.order.findFirst({
+      findByVerificationCode: async (verificationCode: string) => {
+        const order = await this.prisma.order.findFirst({
           where: { verificationCode },
         });
-        return order ? self.mapOrderToStored(order) : null;
+        return order ? this.mapOrderToStored(order) : null;
       },
 
-      async listByTxosna(txosnaId: string, _filter?: any) {
-        const orders = await self.prisma.order.findMany({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listByTxosna: async (txosnaId: string, _filter?: any) => {
+        const orders = await this.prisma.order.findMany({
           where: { txosnaId },
           orderBy: { createdAt: 'desc' },
         });
-        return orders.map(self.mapOrderToStored.bind(self));
+        return orders.map(this.mapOrderToStored.bind(this));
       },
     };
   }
 
   get tickets(): TicketRepository {
-    const self = this;
     return {
-      async create(orderId: string, txosnaId: string, data: any) {
-        const ticket = await self.prisma.ticket.create({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      create: async (orderId: string, txosnaId: string, data: any) => {
+        const ticket = await this.prisma.ticket.create({
           data: {
             ...data,
             orderId,
@@ -323,154 +330,157 @@ export class ORMStorageAdapter implements StorageInterface {
             updatedAt: new Date(),
           },
         });
-        return self.mapTicketToStored(ticket);
+        return this.mapTicketToStored(ticket);
       },
 
-      async findById(id: string) {
-        const ticket = await self.prisma.ticket.findUnique({
+      findById: async (id: string) => {
+        const ticket = await this.prisma.ticket.findUnique({
           where: { id },
         });
-        return ticket ? self.mapTicketToStored(ticket) : null;
+        return ticket ? this.mapTicketToStored(ticket) : null;
       },
 
-      async listByTxosna(txosnaId: string, _filter?: any) {
-        const tickets = await self.prisma.ticket.findMany({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listByTxosna: async (txosnaId: string, _filter?: any) => {
+        const tickets = await this.prisma.ticket.findMany({
           where: { txosnaId },
           orderBy: { createdAt: 'desc' },
         });
-        return tickets.map(self.mapTicketToStored.bind(self));
+        return tickets.map(this.mapTicketToStored.bind(this));
       },
 
-      async listByOrder(orderId: string) {
-        const tickets = await self.prisma.ticket.findMany({
+      listByOrder: async (orderId: string) => {
+        const tickets = await this.prisma.ticket.findMany({
           where: { orderId },
           orderBy: { createdAt: 'asc' },
         });
-        return tickets.map(self.mapTicketToStored.bind(self));
+        return tickets.map(this.mapTicketToStored.bind(this));
       },
 
-      async update(id: string, patch: any) {
-        const ticket = await self.prisma.ticket.update({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      update: async (id: string, patch: any) => {
+        const ticket = await this.prisma.ticket.update({
           where: { id },
           data: { ...patch, updatedAt: new Date() },
         });
-        return self.mapTicketToStored(ticket);
+        return this.mapTicketToStored(ticket);
       },
     };
   }
 
   get volunteers(): VolunteerRepository {
-    const self = this;
     return {
-      async findByEmail(email: string) {
-        const volunteer = await self.prisma.volunteer.findUnique({
+      findByEmail: async (email: string) => {
+        const volunteer = await this.prisma.volunteer.findUnique({
           where: { email },
         });
-        return volunteer ? self.mapVolunteerToStored(volunteer) : null;
+        return volunteer ? this.mapVolunteerToStored(volunteer) : null;
       },
 
-      async findById(id: string) {
-        const volunteer = await self.prisma.volunteer.findUnique({
+      findById: async (id: string) => {
+        const volunteer = await this.prisma.volunteer.findUnique({
           where: { id },
         });
-        return volunteer ? self.mapVolunteerToStored(volunteer) : null;
+        return volunteer ? this.mapVolunteerToStored(volunteer) : null;
       },
 
-      async findByResetToken(token: string) {
-        const volunteer = await self.prisma.volunteer.findFirst({
+      findByResetToken: async (token: string) => {
+        const volunteer = await this.prisma.volunteer.findFirst({
           where: { resetToken: token },
         });
-        return volunteer ? self.mapVolunteerToStored(volunteer) : null;
+        return volunteer ? this.mapVolunteerToStored(volunteer) : null;
       },
 
-      async create(data: any) {
-        const volunteer = await self.prisma.volunteer.create({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      create: async (data: any) => {
+        const volunteer = await this.prisma.volunteer.create({
           data: {
             ...data,
             createdAt: new Date(),
             updatedAt: new Date(),
           },
         });
-        return self.mapVolunteerToStored(volunteer);
+        return this.mapVolunteerToStored(volunteer);
       },
 
-      async update(id: string, patch: any) {
-        const volunteer = await self.prisma.volunteer.update({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      update: async (id: string, patch: any) => {
+        const volunteer = await this.prisma.volunteer.update({
           where: { id },
           data: { ...patch, updatedAt: new Date() },
         });
-        return self.mapVolunteerToStored(volunteer);
+        return this.mapVolunteerToStored(volunteer);
       },
 
-      async listByAssociation(associationId: string) {
-        const volunteers = await self.prisma.volunteer.findMany({
+      listByAssociation: async (associationId: string) => {
+        const volunteers = await this.prisma.volunteer.findMany({
           where: { associationId },
           orderBy: { name: 'asc' },
         });
-        return volunteers.map(self.mapVolunteerToStored.bind(self));
+        return volunteers.map(this.mapVolunteerToStored.bind(this));
       },
     };
   }
 
   get ticketBaiConfig(): TicketBaiConfigRepository {
-    const self = this;
     return {
-      async findByAssociation(associationId: string) {
-        const config = await self.prisma.ticketBaiConfig.findUnique({
+      findByAssociation: async (associationId: string) => {
+        const config = await this.prisma.ticketBaiConfig.findUnique({
           where: { associationId },
         });
-        return config ? self.mapTicketBaiConfigToStored(config) : null;
+        return config ? this.mapTicketBaiConfigToStored(config) : null;
       },
 
-      async upsert(associationId: string, data: any) {
-        const config = await self.prisma.ticketBaiConfig.upsert({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      upsert: async (associationId: string, data: any) => {
+        const config = await this.prisma.ticketBaiConfig.upsert({
           where: { associationId },
           update: { ...data, updatedAt: new Date() },
           create: { ...data, associationId, createdAt: new Date(), updatedAt: new Date() },
         });
-        return self.mapTicketBaiConfigToStored(config);
+        return this.mapTicketBaiConfigToStored(config);
       },
     };
   }
 
   get ticketBaiInvoices(): TicketBaiInvoiceRepository {
-    const self = this;
     return {
-      async create(data: any) {
-        const invoice = await self.prisma.ticketBaiInvoice.create({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      create: async (data: any) => {
+        const invoice = await this.prisma.ticketBaiInvoice.create({
           data: {
             ...data,
             createdAt: new Date(),
             updatedAt: new Date(),
           },
         });
-        return self.mapTicketBaiInvoiceToStored(invoice);
+        return this.mapTicketBaiInvoiceToStored(invoice);
       },
 
-      async findById(id: string) {
-        const invoice = await self.prisma.ticketBaiInvoice.findUnique({
+      findById: async (id: string) => {
+        const invoice = await this.prisma.ticketBaiInvoice.findUnique({
           where: { id },
         });
-        return invoice ? self.mapTicketBaiInvoiceToStored(invoice) : null;
+        return invoice ? this.mapTicketBaiInvoiceToStored(invoice) : null;
       },
 
-      async listByAssociation(associationId: string) {
-        const invoices = await self.prisma.ticketBaiInvoice.findMany({
-          where: { 
+      listByAssociation: async (associationId: string) => {
+        const invoices = await this.prisma.ticketBaiInvoice.findMany({
+          where: {
             order: {
-              txosna: { associationId }
-            }
+              txosna: { associationId },
+            },
           },
           orderBy: { createdAt: 'desc' },
         });
-        return invoices.map(self.mapTicketBaiInvoiceToStored.bind(self));
+        return invoices.map(this.mapTicketBaiInvoiceToStored.bind(this));
       },
 
-      async nextInvoiceNumber(associationId: string, series: string) {
-        const lastInvoice = await self.prisma.ticketBaiInvoice.findFirst({
-          where: { 
+      nextInvoiceNumber: async (associationId: string, series: string) => {
+        const lastInvoice = await this.prisma.ticketBaiInvoice.findFirst({
+          where: {
             order: {
-              txosna: { associationId }
+              txosna: { associationId },
             },
             series,
           },
@@ -479,66 +489,67 @@ export class ORMStorageAdapter implements StorageInterface {
         return (lastInvoice?.invoiceNumber || 0) + 1;
       },
 
-      async findByOrder(orderId: string) {
-        const invoice = await self.prisma.ticketBaiInvoice.findFirst({
+      findByOrder: async (orderId: string) => {
+        const invoice = await this.prisma.ticketBaiInvoice.findFirst({
           where: { orderId },
         });
-        return invoice ? self.mapTicketBaiInvoiceToStored(invoice) : null;
+        return invoice ? this.mapTicketBaiInvoiceToStored(invoice) : null;
       },
 
-      async getLastByAssociation(associationId: string) {
-        const invoice = await self.prisma.ticketBaiInvoice.findFirst({
-          where: { 
+      getLastByAssociation: async (associationId: string) => {
+        const invoice = await this.prisma.ticketBaiInvoice.findFirst({
+          where: {
             order: {
-              txosna: { associationId }
-            }
+              txosna: { associationId },
+            },
           },
           orderBy: { createdAt: 'desc' },
         });
-        return invoice ? self.mapTicketBaiInvoiceToStored(invoice) : null;
+        return invoice ? this.mapTicketBaiInvoiceToStored(invoice) : null;
       },
     };
   }
 
   get paymentProviders(): PaymentProviderRepository {
-    const self = this;
     return {
-      async listByAssociation(associationId: string) {
-        const providers = await self.prisma.paymentProvider.findMany({
+      listByAssociation: async (associationId: string) => {
+        const providers = await this.prisma.paymentProvider.findMany({
           where: { associationId },
           orderBy: { name: 'asc' },
         });
-        return providers.map(self.mapPaymentProviderToStored.bind(self));
+        return providers.map(this.mapPaymentProviderToStored.bind(this));
       },
 
-      async findById(id: string) {
-        const provider = await self.prisma.paymentProvider.findUnique({
+      findById: async (id: string) => {
+        const provider = await this.prisma.paymentProvider.findUnique({
           where: { id },
         });
-        return provider ? self.mapPaymentProviderToStored(provider) : null;
+        return provider ? this.mapPaymentProviderToStored(provider) : null;
       },
 
-      async create(data: any) {
-        const provider = await self.prisma.paymentProvider.create({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      create: async (data: any) => {
+        const provider = await this.prisma.paymentProvider.create({
           data: {
             ...data,
             createdAt: new Date(),
             updatedAt: new Date(),
           },
         });
-        return self.mapPaymentProviderToStored(provider);
+        return this.mapPaymentProviderToStored(provider);
       },
 
-      async update(id: string, patch: any) {
-        const provider = await self.prisma.paymentProvider.update({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      update: async (id: string, patch: any) => {
+        const provider = await this.prisma.paymentProvider.update({
           where: { id },
           data: { ...patch, updatedAt: new Date() },
         });
-        return self.mapPaymentProviderToStored(provider);
+        return this.mapPaymentProviderToStored(provider);
       },
 
-      async delete(id: string) {
-        await self.prisma.paymentProvider.delete({
+      delete: async (id: string) => {
+        await this.prisma.paymentProvider.delete({
           where: { id },
         });
       },
@@ -546,6 +557,7 @@ export class ORMStorageAdapter implements StorageInterface {
   }
 
   // Helper methods to map Prisma entities to stored types
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapAssociationToStored(association: any): StoredAssociation {
     return {
       id: association.id,
@@ -557,17 +569,22 @@ export class ORMStorageAdapter implements StorageInterface {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapTxosnaToStored(txosna: any): StoredTxosna {
     return {
       id: txosna.id,
       slug: txosna.slug,
       name: txosna.name,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       status: txosna.status as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       counterSetup: txosna.counterSetup as any,
       kitchenPosts: txosna.kitchenPosts,
       waitMinutes: txosna.waitMinutes,
       pinHash: txosna.pinHash,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       enabledChannels: txosna.enabledChannels as any[],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       enabledPaymentMethods: txosna.enabledPaymentMethods as any[],
       pendingPaymentTimeout: txosna.pendingPaymentTimeout,
       printingEnabled: txosna.printingEnabled,
@@ -578,6 +595,7 @@ export class ORMStorageAdapter implements StorageInterface {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapCategoryToStored(category: any): any {
     return {
       id: category.id,
@@ -589,6 +607,7 @@ export class ORMStorageAdapter implements StorageInterface {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapProductToStored(product: any): any {
     return {
       id: product.id,
@@ -603,6 +622,7 @@ export class ORMStorageAdapter implements StorageInterface {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapOrderToStored(order: any): any {
     return {
       id: order.id,
@@ -617,6 +637,7 @@ export class ORMStorageAdapter implements StorageInterface {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapTicketToStored(ticket: any): any {
     return {
       id: ticket.id,
@@ -629,6 +650,7 @@ export class ORMStorageAdapter implements StorageInterface {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapVolunteerToStored(volunteer: any): any {
     return {
       id: volunteer.id,
@@ -643,6 +665,7 @@ export class ORMStorageAdapter implements StorageInterface {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapTicketBaiConfigToStored(config: any): any {
     return {
       id: config.id,
@@ -657,6 +680,7 @@ export class ORMStorageAdapter implements StorageInterface {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapTicketBaiInvoiceToStored(invoice: any): any {
     return {
       id: invoice.id,
@@ -671,6 +695,7 @@ export class ORMStorageAdapter implements StorageInterface {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapPaymentProviderToStored(provider: any): any {
     return {
       id: provider.id,

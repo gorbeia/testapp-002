@@ -1,7 +1,12 @@
 // Storage manager that handles configuration and switching between storage modes
 // This provides a unified interface for accessing storage regardless of the underlying implementation
 
-import { StorageInterface, StorageManager as IStorageManager, StorageConfig, StorageMode } from './storage-interface';
+import {
+  StorageInterface,
+  StorageManager as IStorageManager,
+  StorageConfig,
+  StorageMode,
+} from './storage-interface';
 import { MemoryStorageFactory } from './adapters/memory-adapter';
 import { ORMStorageFactory } from './adapters/orm-adapter';
 
@@ -72,10 +77,10 @@ export class StorageManager implements IStorageManager {
    */
   get repositories() {
     const storage = this.getStorage();
-    
+
     // Type assertion to access repository getters
     const adapter = storage as any;
-    
+
     return {
       associations: adapter.associations,
       txosnak: adapter.txosnak,
