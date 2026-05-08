@@ -91,7 +91,10 @@ export default async function TrackStatusPage({ params }: Props) {
           ? {
               series: fiscalInvoice.series,
               invoiceNumber: fiscalInvoice.invoiceNumber,
-              issuedAt: fiscalInvoice.issuedAt.toISOString(),
+              issuedAtFormatted: fiscalInvoice.issuedAt.toLocaleString('eu-ES', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              }),
               qrUrl: fiscalInvoice.qrUrl,
             }
           : null
