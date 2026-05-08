@@ -38,3 +38,15 @@ Feature: Food counter screen
     Then the product appears in the new order summary
     And there are no JavaScript errors in the console
     When I take a screenshot "12b-counter-new-order-with-item"
+
+  @e2e
+  Scenario: Volunteer submits the counter order and sees the main view again
+    When I click "+ Eskaera berria"
+    And I click the product "Burgerra" in the product grid
+    And I select variant option "Patata frijituak"
+    And I confirm adding the product
+    And I enter the counter customer name "Test"
+    And I submit the counter order
+    Then the counter main view is shown
+    And there are no JavaScript errors in the console
+    When I take a screenshot "12c-counter-order-confirmed"
