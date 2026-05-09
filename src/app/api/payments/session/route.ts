@@ -28,24 +28,30 @@ export async function POST(request: Request) {
 
   const returnUrl = body.returnUrl ?? `${process.env.NEXT_PUBLIC_BASE_URL}/orders/${order.id}`;
 
-  const txosna = await txosnaRepo.findById(order.txosnaId);
-  if (!txosna) {
-    return Response.json({ error: 'Txosna not found' }, { status: 500 });
-  }
-  const providers = await paymentProviderRepo.listByAssociation(txosna.associationId);
-
-  // Resolve which provider to use: explicit hint wins; otherwise use the first enabled provider.
-  const effectiveType =
-    body.providerType ?? (providers.find((p) => p.enabled)?.providerType as 'REDSYS' | undefined);
-
   let session;
 
-  if (effectiveType === 'REDSYS') {
+  if (body.providerType === 'REDSYS') {
+    const txosna = await txosnaRepo.findById(order.txosnaId);
+    if (!txosna) {
+      return Response.json({ error: 'Txosna not found' }, { status: 500 });
+    }
+    const providers = await paymentProviderRepo.listByAssociation(txosna.associationId);
     const stored = providers.find((p) => p.providerType === 'REDSYS' && p.enabled);
     if (!stored) {
       return Response.json({ error: 'No active Redsys provider configured' }, { status: 409 });
     }
     session = await createPaymentProvider(stored).createSession(order, returnUrl);
+  } else if (!body.providerType) {
+    // Auto-detect: use Redsys if one is configured for this txosna, else fall back to the global provider.
+    const txosna = await txosnaRepo.findById(order.txosnaId);
+    const redsysProvider = txosna
+      ? (await paymentProviderRepo.listByAssociation(txosna.associationId)).find(
+          (p) => p.providerType === 'REDSYS' && p.enabled
+        )
+      : null;
+    session = redsysProvider
+      ? await createPaymentProvider(redsysProvider).createSession(order, returnUrl)
+      : await getPaymentProvider().createSession(order, returnUrl);
   } else {
     session = await getPaymentProvider().createSession(order, returnUrl);
   }
