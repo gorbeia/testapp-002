@@ -39,10 +39,31 @@ Feature: Self-service order
     And the cancellation reason is "CUSTOMER"
     And a "order:cancelled" SSE event is broadcast to "aste-nagusia"
 
-  @e2e @smoke @wip
-  Scenario: Customer completes self-service order flow in browser
+  @e2e @smoke
+  Scenario: Customer completes cash self-service order in browser
     Given the txosna "aste-nagusia" is open
     When I navigate to the menu for "aste-nagusia"
     And I add "Burgerra" to my cart
     And I fill in my name "Amaia" and submit the order
     Then I see the order confirmation page with an order number
+    And the order status is "PENDING_PAYMENT"
+
+  @e2e @smoke
+  Scenario: Customer completes self-service order with Redsys online payment
+    Given the txosna "aste-nagusia" is open and accepts online payments via Redsys
+    When I navigate to the menu for "aste-nagusia"
+    And I add "Burgerra" to my cart
+    And I choose to pay online
+    Then I am redirected to the Redsys payment page
+    When the Redsys payment succeeds for my order
+    Then the order status page shows "CONFIRMED"
+
+  @e2e
+  Scenario: Customer sees cancelled state when Redsys payment is abandoned
+    Given the txosna "aste-nagusia" is open and accepts online payments via Redsys
+    When I navigate to the menu for "aste-nagusia"
+    And I add "Burgerra" to my cart
+    And I choose to pay online
+    Then I am redirected to the Redsys payment page
+    When the Redsys payment is cancelled for my order
+    Then I see the order has been cancelled

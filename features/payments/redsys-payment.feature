@@ -40,3 +40,11 @@ Feature: Online payment via Redsys
     And order "order-redsys-1" has paymentSessionId "0042ABCD"
     When I POST a Redsys webhook notification with an invalid signature for session "0042ABCD"
     Then the response status is 400
+
+  @e2e @smoke
+  Scenario: Redsys redirect page renders a correctly signed payment form
+    Given a PENDING_PAYMENT order "order-redsys-1" exists
+    And a Redsys payment provider is configured for the txosna
+    When I navigate to the Redsys redirect page for order "order-redsys-1"
+    Then the page contains a form targeting the Redsys TPV endpoint
+    And the form includes the fields "Ds_SignatureVersion", "Ds_MerchantParameters", and "Ds_Signature"
