@@ -94,6 +94,59 @@ Then('the page shows a verification code in monospace', async function (this: E2
   });
 });
 
+// ── Self-service checkout flow ────────────────────────────────────────────────
+
+When('I add the first available product to the cart', async function (this: E2eWorld) {
+  await this.page.waitForSelector('[data-testid="product-card"]:not([disabled])', {
+    timeout: 5_000,
+  });
+  await this.page.locator('[data-testid="product-card"]:not([disabled])').first().click();
+  // ProductSheet opens — click the "Saskira gehitu" add button
+  await this.page.waitForSelector('button:has-text("Saskira gehitu")', { timeout: 5_000 });
+  await this.page.getByRole('button', { name: /Saskira gehitu/i }).click();
+  await this.page.waitForTimeout(500);
+});
+
+Then('the cart bar is visible with a checkout link', async function (this: E2eWorld) {
+  await this.page.waitForSelector('text=Saskia ikusi', { timeout: 5_000 });
+});
+
+When('I proceed to checkout', async function (this: E2eWorld) {
+  await this.page.getByText('Saskia ikusi').click();
+  await this.page.waitForURL((url) => url.pathname.includes('/checkout'), { timeout: 5_000 });
+  // Wait for the checkout page content to stabilise (form or empty-cart view)
+  await this.page.waitForFunction(
+    () =>
+      document.body.innerText.includes('Eskaeraren laburpena') ||
+      document.body.innerText.includes('Saskia hutsik dago'),
+    { timeout: 4_000 }
+  );
+});
+
+When('I fill in customer name {string}', async function (this: E2eWorld, name: string) {
+  await this.page.waitForSelector('input[placeholder="Zure izena"]', { timeout: 5_000 });
+  await this.page.fill('input[placeholder="Zure izena"]', name);
+});
+
+When('I submit the order', async function (this: E2eWorld) {
+  await this.page.getByRole('button', { name: /Eskatu|Ordaindu/i }).click();
+  await this.page.waitForURL((url) => url.pathname.includes('/order/'), { timeout: 8_000 });
+});
+
+Then('I am on the order confirmation or status page', async function (this: E2eWorld) {
+  const url = this.page.url();
+  assert.ok(
+    url.includes('/order/') || url.includes('/success'),
+    `Expected order confirmation page, got: ${url}`
+  );
+  // The order page fetches data in useEffect — wait for "Kargatzen..." to disappear and order number to appear
+  await this.page.waitForFunction(
+    () =>
+      !document.body.innerText.includes('Kargatzen...') && /^#\d+/m.test(document.body.innerText),
+    { timeout: 8_000 }
+  );
+});
+
 // ── Order tracking ────────────────────────────────────────────────────────────
 
 Then('the page shows a text input for the tracking code', async function (this: E2eWorld) {

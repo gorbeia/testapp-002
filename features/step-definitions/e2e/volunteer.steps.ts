@@ -161,6 +161,21 @@ Then('the product appears in the new order summary', async function (this: E2eWo
   );
 });
 
+When('I enter the counter customer name {string}', async function (this: E2eWorld, name: string) {
+  await this.page.waitForSelector('input[placeholder="Izena"]', { timeout: 5_000 });
+  await this.page.fill('input[placeholder="Izena"]', name);
+});
+
+When('I submit the counter order', async function (this: E2eWorld) {
+  await this.page.getByRole('button', { name: /Sortu eta bidali/i }).click();
+  await this.page.waitForTimeout(2_000);
+});
+
+Then('the counter main view is shown', async function (this: E2eWorld) {
+  // After creating an order, the new-order panel closes and the main counter reappears
+  await this.page.waitForSelector('text=+ Eskaera berria', { timeout: 5_000 });
+});
+
 // ── KDS / overview steps ──────────────────────────────────────────────────────
 
 Then('the page header contains {string}', async function (this: E2eWorld, text: string) {
