@@ -65,8 +65,9 @@ When(
         returnUrl: `${BASE_URL}/eu/order/${orderId}`,
       }),
     });
-    assert.equal(sessionRes.status, 200, `Session creation failed: ${await sessionRes.text()}`);
-    const session = (await sessionRes.json()) as { url: string };
+    const sessionText = await sessionRes.text();
+    assert.equal(sessionRes.status, 200, `Session creation failed: ${sessionText}`);
+    const session = JSON.parse(sessionText) as { url: string };
     const redirectUrl = session.url;
     assert.ok(redirectUrl, 'session must return a redirect URL');
 
