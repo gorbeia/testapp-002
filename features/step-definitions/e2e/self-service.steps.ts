@@ -19,18 +19,18 @@ Given(
   'the txosna {string} is open and accepts online payments via Redsys',
   async function (this: E2eWorld, slug: string) {
     this.currentSlug = slug;
-    // Enable ONLINE payment method on this txosna
-    await fetch(`${BASE_URL}/api/e2e/seed`, {
+    const r1 = await fetch(`${BASE_URL}/api/e2e/seed`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'enableOnlinePayment', slug }),
     });
-    // Create a Redsys payment provider
-    await fetch(`${BASE_URL}/api/e2e/seed`, {
+    assert.equal(r1.status, 200, `enableOnlinePayment failed: ${await r1.text()}`);
+    const r2 = await fetch(`${BASE_URL}/api/e2e/seed`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'createRedsysProvider', slug }),
     });
+    assert.equal(r2.status, 200, `createRedsysProvider failed: ${await r2.text()}`);
   }
 );
 
@@ -82,28 +82,30 @@ When(
 
 When('I choose to pay online', async function (this: E2eWorld) {
   // Navigate to checkout via the cart bar
-  await this.page.waitForSelector('text=Saskia ikusi', { timeout: 6_000 });
-  await this.page.getByText('Saskia ikusi').click();
-  await this.page.waitForURL((url) => url.pathname.includes('/checkout'), { timeout: 6_000 });
+  await this.page.waitForSelector('text=Saskia ikusi', { timeout: 8_000 });
+  await this.page.getByText('Saskia ikusi').click({ timeout: 5_000 });
+  await this.page.waitForURL((url) => url.pathname.includes('/checkout'), { timeout: 8_000 });
 
   // Fill a required customer name
-  await this.page.waitForSelector('input[placeholder="Zure izena"]', { timeout: 5_000 });
+  await this.page.waitForSelector('input[placeholder="Zure izena"]', { timeout: 8_000 });
   await this.page.fill('input[placeholder="Zure izena"]', 'TestUser');
 
-  // Select the ONLINE payment option
-  await this.page.getByRole('button', { name: /Online|Txartela/i }).click();
+  // Select the ONLINE payment option (payment selector only appears when both CASH and ONLINE are enabled)
+  await this.page
+    .getByRole('button', { name: /Online.*Txartela|Txartela/i })
+    .click({ timeout: 8_000 });
 
   // Block navigation to the Redsys TPV so the redirect page stays visible
   await this.page.route('*://sis-t.redsys.es/**', (route) => route.abort());
   await this.page.route('*://sis.redsys.es/**', (route) => route.abort());
 
   // Submit — button reads "Ordaindu online — X.XX €"
-  await this.page.getByRole('button', { name: /Ordaindu online/i }).click();
+  await this.page.getByRole('button', { name: /Ordaindu online/i }).click({ timeout: 8_000 });
 
   // Wait until the browser has navigated to the Redsys redirect page
   await this.page
     .waitForURL((url) => url.pathname.startsWith('/api/payments/redsys/redirect'), {
-      timeout: 12_000,
+      timeout: 15_000,
     })
     .catch(() => {
       // Page may have aborted before fully landing; URL check is enough

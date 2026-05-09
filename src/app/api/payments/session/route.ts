@@ -41,6 +41,17 @@ export async function POST(request: Request) {
       return Response.json({ error: 'No active Redsys provider configured' }, { status: 409 });
     }
     session = await createPaymentProvider(stored).createSession(order, returnUrl);
+  } else if (!body.providerType) {
+    // Auto-detect: use Redsys if one is configured for this txosna, else fall back to the global provider.
+    const txosna = await txosnaRepo.findById(order.txosnaId);
+    const redsysProvider = txosna
+      ? (await paymentProviderRepo.listByAssociation(txosna.associationId)).find(
+          (p) => p.providerType === 'REDSYS' && p.enabled
+        )
+      : null;
+    session = redsysProvider
+      ? await createPaymentProvider(redsysProvider).createSession(order, returnUrl)
+      : await getPaymentProvider().createSession(order, returnUrl);
   } else {
     session = await getPaymentProvider().createSession(order, returnUrl);
   }

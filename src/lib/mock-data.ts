@@ -111,6 +111,7 @@ export interface MockTxosna {
   location?: string;
   ordersToday?: number;
   revenueToday?: number;
+  enabledPaymentMethods?: string[];
 }
 
 export interface MockAssociation {
@@ -207,6 +208,7 @@ export const MOCK_ASSOCIATION: MockAssociation = {
       waitMinutes: null,
       pin: '1234',
       eventName: 'Aste Nagusia',
+      enabledPaymentMethods: ['CASH', 'ONLINE'],
     },
   ],
 };

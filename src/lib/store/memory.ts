@@ -116,7 +116,8 @@ export function seedMockData() {
       waitMinutes: mt.waitMinutes,
       pinHash: mt.pin, // plain PIN; bcrypt added in Phase 6 / Phase 10
       enabledChannels: ['COUNTER', 'PHONE_TO_COUNTER', 'SELF_SERVICE'],
-      enabledPaymentMethods: ['CASH'],
+      enabledPaymentMethods:
+        (mt.enabledPaymentMethods as StoredTxosna['enabledPaymentMethods']) ?? ['CASH'],
       pendingPaymentTimeout: 15,
       printingEnabled: false,
       mobileTrackingEnabled: mt.id === 'txosna-1',

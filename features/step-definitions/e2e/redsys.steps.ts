@@ -40,8 +40,9 @@ Given(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'createOnlineOrder', slug, orderName }),
     });
-    assert.equal(res.status, 200, `Failed to create order: ${await res.text()}`);
-    const body = (await res.json()) as { id: string };
+    const text = await res.text();
+    assert.equal(res.status, 200, `Failed to create order: ${text}`);
+    const body = JSON.parse(text) as { id: string };
     this.namedOrders.set(orderName, body.id);
   }
 );
@@ -64,8 +65,9 @@ When(
         returnUrl: `${BASE_URL}/eu/order/${orderId}`,
       }),
     });
-    assert.equal(sessionRes.status, 200, `Session creation failed: ${await sessionRes.text()}`);
-    const session = (await sessionRes.json()) as { url: string };
+    const sessionText = await sessionRes.text();
+    assert.equal(sessionRes.status, 200, `Session creation failed: ${sessionText}`);
+    const session = JSON.parse(sessionText) as { url: string };
     const redirectUrl = session.url;
     assert.ok(redirectUrl, 'session must return a redirect URL');
 
@@ -81,8 +83,8 @@ When(
       : redirectUrl;
     await this.goto(path);
 
-    // Wait for the form to be present in the DOM
-    await this.page.waitForSelector('form', { timeout: 8_000 });
+    // Wait for the form to be present in the DOM (it may be hidden — the page auto-submits it)
+    await this.page.waitForSelector('form', { state: 'attached', timeout: 8_000 });
   }
 );
 
