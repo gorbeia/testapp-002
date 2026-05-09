@@ -43,6 +43,12 @@ export class E2eWorld extends World {
   /** Base URL of the current txosna dashboard, set after login */
   txosnaBaseUrl: string = '';
 
+  /** Slug of the txosna under test in self-service / payment scenarios */
+  currentSlug: string = '';
+
+  /** Named orders created during Redsys e2e scenarios: name → order id */
+  namedOrders: Map<string, string> = new Map();
+
   consoleErrors: string[] = [];
 
   trackConsoleErrors() {

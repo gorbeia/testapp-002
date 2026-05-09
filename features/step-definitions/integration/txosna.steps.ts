@@ -3,6 +3,7 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import { GET as txosnaGET } from '../../../src/app/api/handlers/txosna';
 import { GET as catalogGET } from '../../../src/app/api/handlers/catalog';
 import {
+  txosnaRepo,
   _test_insertTxosna,
   _test_insertProduct,
   _test_upsertTxosnaProduct,
@@ -16,6 +17,12 @@ function params(slug: string) {
 Given(
   'the txosna {string} exists and is OPEN',
   async function (this: IntegrationWorld, slug: string) {
+    // Reuse pre-seeded txosna (e.g. from seedMockData) when slug already exists
+    const existing = await txosnaRepo.findBySlug(slug);
+    if (existing) {
+      this.currentTxosna = existing;
+      return;
+    }
     const txosna = {
       id: `test-txosna-${slug}`,
       slug,
@@ -29,7 +36,6 @@ Given(
       pendingPaymentTimeout: 15,
       printingEnabled: false,
       kitchenPosts: [] as string[],
-      // Links to the seeded mock association so catalog queries find products
       associationId: 'assoc-1',
       createdAt: new Date(),
       updatedAt: new Date(),

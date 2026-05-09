@@ -4,7 +4,7 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import { NextRequest } from 'next/server';
 import { PATCH as settingsPATCH } from '../../../src/app/api/handlers/txosna-settings';
 import { GET as txosnaGET } from '../../../src/app/api/handlers/txosna';
-import { _test_insertTxosna } from '../../../src/test/store-setup';
+import { txosnaRepo, _test_insertTxosna } from '../../../src/test/store-setup';
 import type { IntegrationWorld } from './world';
 
 function slugParams(slug: string) {
@@ -18,7 +18,13 @@ Given('I am authenticated as an ADMIN', function (this: IntegrationWorld) {
   global.__TEST_ASSOCIATION_ID__ = 'assoc-1';
 });
 
-Given('the txosna {string} exists', function (this: IntegrationWorld, slug: string) {
+Given('the txosna {string} exists', async function (this: IntegrationWorld, slug: string) {
+  const existing = await txosnaRepo.findBySlug(slug);
+  if (existing) {
+    this.currentTxosna = existing;
+    return;
+  }
+
   const txosna = {
     id: `test-txosna-${slug}`,
     slug,
