@@ -83,8 +83,8 @@ When(
       : redirectUrl;
     await this.goto(path);
 
-    // Wait for the form to be present in the DOM
-    await this.page.waitForSelector('form', { timeout: 8_000 });
+    // Wait for the form to be present in the DOM (it may be hidden — the page auto-submits it)
+    await this.page.waitForSelector('form', { state: 'attached', timeout: 8_000 });
   }
 );
 

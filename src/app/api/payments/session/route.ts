@@ -28,14 +28,19 @@ export async function POST(request: Request) {
 
   const returnUrl = body.returnUrl ?? `${process.env.NEXT_PUBLIC_BASE_URL}/orders/${order.id}`;
 
+  const txosna = await txosnaRepo.findById(order.txosnaId);
+  if (!txosna) {
+    return Response.json({ error: 'Txosna not found' }, { status: 500 });
+  }
+  const providers = await paymentProviderRepo.listByAssociation(txosna.associationId);
+
+  // Resolve which provider to use: explicit hint wins; otherwise use the first enabled provider.
+  const effectiveType =
+    body.providerType ?? (providers.find((p) => p.enabled)?.providerType as 'REDSYS' | undefined);
+
   let session;
 
-  if (body.providerType === 'REDSYS') {
-    const txosna = await txosnaRepo.findById(order.txosnaId);
-    if (!txosna) {
-      return Response.json({ error: 'Txosna not found' }, { status: 500 });
-    }
-    const providers = await paymentProviderRepo.listByAssociation(txosna.associationId);
+  if (effectiveType === 'REDSYS') {
     const stored = providers.find((p) => p.providerType === 'REDSYS' && p.enabled);
     if (!stored) {
       return Response.json({ error: 'No active Redsys provider configured' }, { status: 409 });
