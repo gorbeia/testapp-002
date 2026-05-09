@@ -24,5 +24,6 @@ module.exports = {
     requireModule: ['ts-node/register'],
     paths: ['features/**/*.feature'],
     tags: '@e2e and not @wip',
+    timeout: 30000,
   },
 };

@@ -40,8 +40,9 @@ Given(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'createOnlineOrder', slug, orderName }),
     });
-    assert.equal(res.status, 200, `Failed to create order: ${await res.text()}`);
-    const body = (await res.json()) as { id: string };
+    const text = await res.text();
+    assert.equal(res.status, 200, `Failed to create order: ${text}`);
+    const body = JSON.parse(text) as { id: string };
     this.namedOrders.set(orderName, body.id);
   }
 );
