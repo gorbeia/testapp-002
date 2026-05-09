@@ -3,7 +3,7 @@ import assert from 'assert';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { NextRequest } from 'next/server';
 import { GET as reportsGET } from '../../../src/app/api/handlers/txosna-reports';
-import { _test_insertOrder, _test_insertTxosna } from '../../../src/test/store-setup';
+import { txosnaRepo, _test_insertOrder, _test_insertTxosna } from '../../../src/test/store-setup';
 import type { StoredOrder } from '../../../src/lib/store/types';
 import type { IntegrationWorld } from './world';
 
@@ -41,29 +41,39 @@ function makeOrder(
 
 Given(
   'the txosna {string} has {int} confirmed orders and {int} cancelled orders today',
-  function (this: IntegrationWorld, slug: string, confirmedCount: number, cancelledCount: number) {
-    // Create txosna if it doesn't exist
+  async function (
+    this: IntegrationWorld,
+    slug: string,
+    confirmedCount: number,
+    cancelledCount: number
+  ) {
+    // Use pre-seeded txosna if it exists, otherwise create one
     if (!this.currentTxosna) {
-      const txosna = {
-        id: `test-txosna-${slug}`,
-        slug,
-        name: `Test Txosna (${slug})`,
-        status: 'OPEN' as const,
-        counterSetup: 'SINGLE' as const,
-        waitMinutes: null,
-        pinHash: '0000',
-        enabledChannels: ['COUNTER', 'SELF_SERVICE'] as const,
-        enabledPaymentMethods: ['CASH'] as const,
-        pendingPaymentTimeout: 15,
-        printingEnabled: false,
-        associationId: 'assoc-1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const existing = await txosnaRepo.findBySlug(slug);
+      if (existing) {
+        this.currentTxosna = existing;
+      } else {
+        const txosna = {
+          id: `test-txosna-${slug}`,
+          slug,
+          name: `Test Txosna (${slug})`,
+          status: 'OPEN' as const,
+          counterSetup: 'SINGLE' as const,
+          waitMinutes: null,
+          pinHash: '0000',
+          enabledChannels: ['COUNTER', 'SELF_SERVICE'] as const,
+          enabledPaymentMethods: ['CASH'] as const,
+          pendingPaymentTimeout: 15,
+          printingEnabled: false,
+          associationId: 'assoc-1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-      _test_insertTxosna(txosna as any);
+        _test_insertTxosna(txosna as any);
 
-      this.currentTxosna = txosna as any;
+        this.currentTxosna = txosna as any;
+      }
     }
 
     const totalCount = confirmedCount + cancelledCount;

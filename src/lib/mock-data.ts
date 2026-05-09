@@ -198,6 +198,16 @@ export const MOCK_ASSOCIATION: MockAssociation = {
       ordersToday: 12,
       revenueToday: 60,
     },
+    {
+      id: 'txosna-aste',
+      slug: 'aste-nagusia',
+      name: 'Aste Nagusia',
+      status: 'OPEN',
+      counterSetup: 'SINGLE',
+      waitMinutes: null,
+      pin: '1234',
+      eventName: 'Aste Nagusia',
+    },
   ],
 };
 
