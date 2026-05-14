@@ -38,6 +38,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ orde
     total: order.total,
     channel: order.channel,
     paymentMethod: order.paymentMethod,
+    paymentSessionId: order.paymentSessionId,
     notes: order.notes,
     expiresAt: order.expiresAt,
     fiscalReceiptRef: order.fiscalReceiptRef,
