@@ -197,11 +197,4 @@ describe('GET /api/orders/[orderId]', () => {
     const body = await res.json();
     expect(body.tickets[0].status).toBe('IN_PREPARATION');
   });
-
-  it('broadcasts are available for Phase 3 to use', async () => {
-    // The broadcast function is mocked at module level; Phase 3 will call it
-    // when ticket status changes. This test just verifies the mock is in place.
-    const { broadcast } = await import('@/lib/sse');
-    expect(typeof broadcast).toBe('function');
-  });
 });

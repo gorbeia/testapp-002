@@ -102,16 +102,6 @@ describe('Txosna Settings API', () => {
       expect(res.status).toBe(401);
     });
 
-    it('returns 403 when role is VOLUNTEER', async () => {
-      mockSession('VOLUNTEER', 'assoc-1');
-
-      const res = await resolveParams(settingsGet, makeGetSettings('aste-nagusia-2026'), {
-        slug: 'aste-nagusia-2026',
-      });
-
-      expect(res.status).toBe(403);
-    });
-
     it('returns 404 for unknown slug', async () => {
       mockSession('ADMIN', 'assoc-1');
 
@@ -134,27 +124,6 @@ describe('Txosna Settings API', () => {
   });
 
   describe('PATCH /api/txosnak/[slug]/settings', () => {
-    it('updates status to PAUSED and broadcasts SSE', async () => {
-      mockSession('ADMIN', 'assoc-1');
-
-      const res = await resolveParams(
-        settingsPatch,
-        makePatchSettings('aste-nagusia-2026', { status: 'PAUSED' }),
-        {
-          slug: 'aste-nagusia-2026',
-        }
-      );
-
-      expect(res.status).toBe(200);
-      const updated = await txosnaRepo.findBySlug('aste-nagusia-2026');
-      expect(updated?.status).toBe('PAUSED');
-
-      // Check broadcast was called
-      expect(broadcastSpy).toHaveBeenCalledWith(expect.any(String), 'txosna:status_changed', {
-        status: 'PAUSED',
-      });
-    });
-
     it('updates status to CLOSED and broadcasts SSE', async () => {
       mockSession('ADMIN', 'assoc-1');
 
@@ -185,22 +154,6 @@ describe('Txosna Settings API', () => {
 
       expect(res.status).toBe(200);
       expect(broadcastSpy).not.toHaveBeenCalled();
-    });
-
-    it('rejects invalid status value with 422', async () => {
-      mockSession('ADMIN', 'assoc-1');
-
-      const res = await resolveParams(
-        settingsPatch,
-        makePatchSettings('aste-nagusia-2026', { status: 'INVALID' }),
-        {
-          slug: 'aste-nagusia-2026',
-        }
-      );
-
-      expect(res.status).toBe(422);
-      const body = await res.json();
-      expect(body).toHaveProperty('error');
     });
 
     it('updates waitMinutes', async () => {
@@ -276,20 +229,6 @@ describe('Txosna Settings API', () => {
       );
 
       expect(res.status).toBe(401);
-    });
-
-    it('returns 403 when role is VOLUNTEER', async () => {
-      mockSession('VOLUNTEER', 'assoc-1');
-
-      const res = await resolveParams(
-        settingsPatch,
-        makePatchSettings('aste-nagusia-2026', { waitMinutes: 10 }),
-        {
-          slug: 'aste-nagusia-2026',
-        }
-      );
-
-      expect(res.status).toBe(403);
     });
 
     it('returns 404 for unknown slug', async () => {

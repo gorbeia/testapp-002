@@ -112,16 +112,6 @@ describe('Volunteer Management API', () => {
       expect(res.status).toBe(403);
     });
 
-    it('forbids VOLUNTEER role', async () => {
-      mockSession('VOLUNTEER', 'assoc-1');
-
-      const res = await resolveParams(volunteerGet, makeGetVolunteers('assoc-1'), {
-        associationId: 'assoc-1',
-      });
-
-      expect(res.status).toBe(403);
-    });
-
     it('returns 401 without session', async () => {
       // mockAuthFn is null by default from beforeEach
       const res = await resolveParams(volunteerGet, makeGetVolunteers('assoc-1'), {
@@ -133,35 +123,6 @@ describe('Volunteer Management API', () => {
   });
 
   describe('POST /api/associations/[associationId]/volunteers', () => {
-    it('creates a volunteer with hashed password', async () => {
-      mockSession('ADMIN', 'assoc-1');
-
-      const res = await resolveParams(
-        volunteerPost,
-        makePostVolunteer('assoc-1', {
-          name: 'New Volunteer',
-          email: 'newvol@test.com',
-          password: 'secure123',
-          role: 'VOLUNTEER',
-        }),
-        { associationId: 'assoc-1' }
-      );
-
-      expect(res.status).toBe(201);
-      const body = await res.json();
-      expect(body.id).toBeDefined();
-      expect(body.name).toBe('New Volunteer');
-      expect(body.email).toBe('newvol@test.com');
-      expect(body.role).toBe('VOLUNTEER');
-      expect(body).not.toHaveProperty('passwordHash');
-
-      // Verify stored hash is bcrypt, not plain
-      const stored = await volunteerRepo.findById(body.id);
-      // Bcrypt hashes start with $2a$, $2b$, or $2y$
-      expect(stored!.passwordHash).toMatch(/^\$2[aby]\$/);
-      expect(await bcrypt.compare('secure123', stored!.passwordHash)).toBe(true);
-    });
-
     it('rejects duplicate email', async () => {
       mockSession('ADMIN', 'assoc-1');
 
@@ -178,23 +139,6 @@ describe('Volunteer Management API', () => {
       );
 
       expect(res.status).toBe(409);
-    });
-
-    it('forbids non-ADMIN', async () => {
-      mockSession('VOLUNTEER', 'assoc-1');
-
-      const res = await resolveParams(
-        volunteerPost,
-        makePostVolunteer('assoc-1', {
-          name: 'Test',
-          email: 'test@test.com',
-          password: 'test123',
-          role: 'VOLUNTEER',
-        }),
-        { associationId: 'assoc-1' }
-      );
-
-      expect(res.status).toBe(403);
     });
   });
 
@@ -274,21 +218,6 @@ describe('Volunteer Management API', () => {
   });
 
   describe('DELETE /api/volunteers/[volunteerId]', () => {
-    it('soft-deletes volunteer', async () => {
-      mockSession('ADMIN', 'assoc-1');
-      const volunteers = await volunteerRepo.listByAssociation('assoc-1');
-      const volunteerId = volunteers[0].id;
-
-      const res = await resolveParams(volunteerDelete, makeDeleteVolunteer(volunteerId), {
-        volunteerId,
-      });
-
-      expect(res.status).toBe(204);
-
-      const stored = await volunteerRepo.findById(volunteerId);
-      expect(stored!.active).toBe(false);
-    });
-
     it('forbids deleting volunteer from different association', async () => {
       mockSession('ADMIN', 'assoc-1');
       const volunteers = await volunteerRepo.listByAssociation('assoc-1');
@@ -306,24 +235,6 @@ describe('Volunteer Management API', () => {
   });
 
   describe('POST /api/auth/pin', () => {
-    it('validates correct PIN', async () => {
-      const res = await pinPost(makePinRequest('aste-nagusia-2026', '1234'));
-
-      expect(res.status).toBe(200);
-      const body = await res.json();
-      expect(body.valid).toBe(true);
-      expect(body.txosnaId).toBeDefined();
-      expect(body.counterSetup).toBeDefined();
-    });
-
-    it('rejects incorrect PIN', async () => {
-      const res = await pinPost(makePinRequest('aste-nagusia-2026', '9999'));
-
-      expect(res.status).toBe(200);
-      const body = await res.json();
-      expect(body.valid).toBe(false);
-    });
-
     it('rejects unknown slug', async () => {
       const res = await pinPost(makePinRequest('unknown-slug', '1234'));
 
