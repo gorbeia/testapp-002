@@ -99,6 +99,12 @@ When('I choose to pay online', async function (this: E2eWorld) {
   await this.page.route('*://sis-t.redsys.es/**', (route) => route.abort());
   await this.page.route('*://sis.redsys.es/**', (route) => route.abort());
 
+  // Prevent the redirect page from auto-submitting the form so the browser
+  // stays on localhost and localStorage remains accessible for webhook simulation.
+  await this.page.addInitScript(() => {
+    HTMLFormElement.prototype.submit = () => {};
+  });
+
   // Submit — button reads "Ordaindu online — X.XX €"
   await this.page.getByRole('button', { name: /Ordaindu online/i }).click({ timeout: 8_000 });
 
