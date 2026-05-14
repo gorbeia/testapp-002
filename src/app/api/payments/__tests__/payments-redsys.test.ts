@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { resetStore, seedMockData, orderRepo, txosnaRepo } from '@/test/store-setup';
+import { resetMockAssociation, orderRepo, txosnaRepo } from '@/test/store-setup';
 import { paymentProviderRepo } from '@/lib/store';
 import { FakePaymentProvider } from '@/lib/payments/fake';
 import type { CreateTicketInput } from '@/lib/store/types';
@@ -16,8 +16,7 @@ vi.mock('@/lib/sse', () => ({
 }));
 
 beforeEach(() => {
-  resetStore();
-  seedMockData();
+  resetMockAssociation();
   fakeProvider.sessions = [];
   fakeProvider.webhookEvents = [];
 });

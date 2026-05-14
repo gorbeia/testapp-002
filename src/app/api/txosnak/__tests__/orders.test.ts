@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { resetStore, seedMockData } from '@/test/store-setup';
+import { resetMockAssociation } from '@/test/store-setup';
 import { POST as ordersPost, GET as ordersGet } from '../[slug]/orders/route';
 
 // Stub NextAuth so we don't need a real session
@@ -8,10 +8,7 @@ vi.mock('@/lib/auth', () => ({
     .fn()
     .mockResolvedValue({ user: { id: 'v1', associationId: 'assoc-1', role: 'VOLUNTEER' } }),
 }));
-beforeEach(() => {
-  resetStore();
-  seedMockData();
-});
+beforeEach(resetMockAssociation);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

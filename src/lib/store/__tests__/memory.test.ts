@@ -3,17 +3,13 @@ import { MOCK_ASSOCIATION, MOCK_ORDERS, MOCK_PRODUCTS, MOCK_TICKETS } from '@/li
 import {
   catalogRepo,
   orderRepo,
-  resetStore,
-  seedMockData,
+  resetMockAssociation,
   ticketRepo,
   txosnaRepo,
   volunteerRepo,
 } from '@/test/store-setup';
 
-beforeEach(() => {
-  resetStore();
-  seedMockData();
-});
+beforeEach(resetMockAssociation);
 
 // ── TxosnaRepository ──────────────────────────────────────────────────────────
 
@@ -311,8 +307,7 @@ describe('orderRepo', () => {
     const beforeReset = await orderRepo.listByTxosna('txosna-1');
     expect(beforeReset.length).toBe(MOCK_ORDERS.length + 1);
 
-    resetStore();
-    seedMockData();
+    resetMockAssociation();
 
     const afterReset = await orderRepo.listByTxosna('txosna-1');
     expect(afterReset.length).toBe(MOCK_ORDERS.length);

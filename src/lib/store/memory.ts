@@ -876,8 +876,51 @@ export function seedDemoData() {
 }
 
 /**
+ * Wipe all entities belonging to the mock association and re-seed from the
+ * mock fixture. Tests that only touch mock data call this instead of the
+ * full resetStore() so demo data is left untouched.
+ */
+export function resetMockAssociation() {
+  const assocId = MOCK_ASSOCIATION.id;
+
+  // Collect dependent IDs before clearing so filters on child entities work.
+  const mockTxosnaIds = new Set(
+    [...txosnak.values()].filter((t) => t.associationId === assocId).map((t) => t.id)
+  );
+  const mockCategoryIds = new Set(
+    [...categories.values()].filter((c) => c.associationId === assocId).map((c) => c.id)
+  );
+
+  associations.delete(assocId);
+  for (const [id, t] of [...txosnak.entries()]) if (t.associationId === assocId) txosnak.delete(id);
+  for (const [id, c] of [...categories.entries()])
+    if (c.associationId === assocId) categories.delete(id);
+  for (const [id, p] of [...products.entries()])
+    if (mockCategoryIds.has(p.categoryId)) products.delete(id);
+  for (const key of [...txosnaProducts.keys()])
+    if (mockTxosnaIds.has(key.split(':')[0])) txosnaProducts.delete(key);
+  for (const [id, o] of [...orders.entries()]) if (mockTxosnaIds.has(o.txosnaId)) orders.delete(id);
+  for (const [id, t] of [...tickets.entries()])
+    if (mockTxosnaIds.has(t.txosnaId)) tickets.delete(id);
+  for (const [id, v] of [...volunteers.entries()])
+    if (v.associationId === assocId) volunteers.delete(id);
+  for (const id of mockTxosnaIds) orderCounters.delete(id);
+  for (const [id, pp] of [...paymentProviders.entries()])
+    if (pp.associationId === assocId) paymentProviders.delete(id);
+  for (const [id, tc] of [...ticketBaiConfigs.entries()])
+    if (tc.associationId === assocId) ticketBaiConfigs.delete(id);
+  for (const [id, ti] of [...ticketBaiInvoices.entries()])
+    if (ti.associationId === assocId) ticketBaiInvoices.delete(id);
+  const counterPrefix = `${assocId}:`;
+  for (const key of [...ticketBaiInvoiceCounters.keys()])
+    if (key.startsWith(counterPrefix)) ticketBaiInvoiceCounters.delete(key);
+
+  seedMockData();
+}
+
+/**
  * Wipe all demo-prefixed entities and re-seed from the demo fixture.
- * Called by POST /api/demo/reset and by resetStore() (full test reset).
+ * Called by POST /api/demo/reset.
  */
 export function resetDemoAssociation() {
   const isDemo = (id: string) => id.startsWith('demo-');
@@ -892,6 +935,9 @@ export function resetDemoAssociation() {
   for (const id of [...tickets.keys()].filter(isDemo)) tickets.delete(id);
   for (const id of [...volunteers.keys()].filter(isDemo)) volunteers.delete(id);
   for (const id of [...orderCounters.keys()].filter(isDemo)) orderCounters.delete(id);
+  for (const id of [...ticketBaiInvoices.keys()].filter(isDemo)) ticketBaiInvoices.delete(id);
+  for (const key of [...ticketBaiInvoiceCounters.keys()].filter(isDemoKey))
+    ticketBaiInvoiceCounters.delete(key);
 
   seedDemoData();
 }

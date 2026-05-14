@@ -13,6 +13,7 @@ import {
   orderRepo,
   paymentProviderRepo,
   resetStore as resetMemoryStore,
+  resetMockAssociation as resetMockAssociationMemory,
   resetDemoAssociation as resetDemoAssociationMemory,
   ticketBaiConfigRepo,
   ticketBaiInvoiceRepo,
@@ -35,11 +36,12 @@ export {
   volunteerRepo,
 };
 
-// For backward compatibility, export reset functions
 export const resetStore = () => {
-  // Only reset memory store for now
-  // ORM storage reset would need different implementation
   resetMemoryStore();
+};
+
+export const resetMockAssociation = () => {
+  resetMockAssociationMemory();
 };
 
 export const resetDemoAssociation = () => {
