@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { resetStore, seedMockData, orderRepo, txosnaRepo } from '@/test/store-setup';
+import { resetMockAssociation, orderRepo, txosnaRepo } from '@/test/store-setup';
 import * as authModule from '@/lib/auth';
 import { GET as reportsGet } from '../[slug]/reports/route';
 
@@ -14,8 +14,7 @@ vi.mock('@/lib/auth', () => ({
 const authMock = vi.mocked(authModule.auth);
 
 beforeEach(() => {
-  resetStore();
-  seedMockData();
+  resetMockAssociation();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   authMock.mockResolvedValue(null as any);
 });

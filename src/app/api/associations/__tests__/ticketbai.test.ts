@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { resetStore, seedMockData, orderRepo } from '@/test/store-setup';
+import { resetMockAssociation, orderRepo } from '@/test/store-setup';
 import { ticketBaiConfigRepo, ticketBaiInvoiceRepo } from '@/lib/store';
 import * as authModule from '@/lib/auth';
 import {
@@ -20,7 +20,7 @@ vi.mock('@/lib/auth', () => ({
 const authMock = vi.mocked(authModule.auth);
 
 beforeEach(() => {
-  resetStore();
+  resetMockAssociation();
   authMock.mockResolvedValue(null as never);
 });
 
@@ -235,7 +235,6 @@ describe('GET /api/orders/[orderId]/ticketbai-invoice', () => {
 // ── Invoice issuance integration ──────────────────────────────────────────────
 
 describe('Invoice issuance on order confirmation', () => {
-  beforeEach(seedMockData);
   it('does nothing when ticketBaiEnabled is false', async () => {
     await ticketBaiConfigRepo.upsert('assoc-1', { series: 'TB', providerType: 'MOCK' });
 
