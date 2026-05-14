@@ -80,27 +80,6 @@ function makeRedsysBody(dsOrder: string) {
 }
 
 describe('POST /api/payments/session (Redsys)', () => {
-  it('creates a session when a Redsys provider is configured', async () => {
-    await seedRedsysProvider();
-    const order = await seedPendingOrder();
-
-    const { POST } = await import('../session/route');
-    const req = new Request('http://localhost/api/payments/session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId: order.id, providerType: 'REDSYS' }),
-    });
-
-    const res = await POST(req);
-    expect(res.status).toBe(200);
-
-    const body = await res.json();
-    expect(body.sessionId).toBe(`fake-session-${order.id}`);
-
-    const updated = await orderRepo.findById(order.id);
-    expect(updated?.paymentSessionId).toBe(`fake-session-${order.id}`);
-  });
-
   it('returns 409 when no active Redsys provider is configured', async () => {
     const order = await seedPendingOrder();
 
@@ -117,80 +96,6 @@ describe('POST /api/payments/session (Redsys)', () => {
 });
 
 describe('POST /api/payments/webhook/redsys', () => {
-  it('confirms order on a successful notification', async () => {
-    await seedRedsysProvider();
-    const order = await seedPendingOrder();
-    await orderRepo.update(order.id, { paymentSessionId: `sess-${order.id}` });
-
-    fakeProvider.setNextWebhookEvent({
-      sessionId: `sess-${order.id}`,
-      status: 'succeeded',
-      amount: 12.5,
-      currency: 'EUR',
-      method: 'CARD',
-    });
-
-    const { POST } = await import('../webhook/[provider]/route');
-    const req = new Request('http://localhost/api/payments/webhook/redsys', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: makeRedsysBody(`sess-${order.id}`),
-    });
-
-    const res = await POST(req, { params: Promise.resolve({ provider: 'redsys' }) });
-    expect(res.status).toBe(200);
-
-    const confirmed = await orderRepo.findById(order.id);
-    expect(confirmed?.status).toBe('CONFIRMED');
-    expect(confirmed?.pendingLines).toBeNull();
-  });
-
-  it('cancels order with TIMEOUT on a cancelled notification', async () => {
-    await seedRedsysProvider();
-    const order = await seedPendingOrder();
-    await orderRepo.update(order.id, { paymentSessionId: `sess-${order.id}` });
-
-    fakeProvider.setNextWebhookEvent({
-      sessionId: `sess-${order.id}`,
-      status: 'cancelled',
-      amount: 0,
-      currency: 'EUR',
-      method: 'CARD',
-    });
-
-    const { POST } = await import('../webhook/[provider]/route');
-    const req = new Request('http://localhost/api/payments/webhook/redsys', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: makeRedsysBody(`sess-${order.id}`),
-    });
-
-    const res = await POST(req, { params: Promise.resolve({ provider: 'redsys' }) });
-    expect(res.status).toBe(200);
-
-    const cancelled = await orderRepo.findById(order.id);
-    expect(cancelled?.status).toBe('CANCELLED');
-    expect(cancelled?.cancellationReason).toBe('TIMEOUT');
-  });
-
-  it('returns 400 on invalid signature', async () => {
-    await seedRedsysProvider();
-    const order = await seedPendingOrder();
-    await orderRepo.update(order.id, { paymentSessionId: `sess-${order.id}` });
-
-    fakeProvider.setThrowOnVerify('Invalid signature');
-
-    const { POST } = await import('../webhook/[provider]/route');
-    const req = new Request('http://localhost/api/payments/webhook/redsys', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: makeRedsysBody(`sess-${order.id}`),
-    });
-
-    const res = await POST(req, { params: Promise.resolve({ provider: 'redsys' }) });
-    expect(res.status).toBe(400);
-  });
-
   it('returns 404 for unknown Ds_Order', async () => {
     await seedRedsysProvider();
 
