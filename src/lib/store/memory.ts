@@ -892,6 +892,9 @@ export function resetDemoAssociation() {
   for (const id of [...tickets.keys()].filter(isDemo)) tickets.delete(id);
   for (const id of [...volunteers.keys()].filter(isDemo)) volunteers.delete(id);
   for (const id of [...orderCounters.keys()].filter(isDemo)) orderCounters.delete(id);
+  for (const id of [...ticketBaiInvoices.keys()].filter(isDemo)) ticketBaiInvoices.delete(id);
+  for (const key of [...ticketBaiInvoiceCounters.keys()].filter(isDemoKey))
+    ticketBaiInvoiceCounters.delete(key);
 
   seedDemoData();
 }

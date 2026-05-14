@@ -634,11 +634,27 @@ export const DEMO_TICKETS: MockTicket[] = [
         selectedModifiers: [],
         splitInstructions: null,
       },
+    ],
+  },
+  {
+    // Order 7 — drinks ticket fully served (COMPLETED); 2 × 1.5 = 3.0; total 4.0 + 3.0 = 7.0
+    id: 'demo-ticket-11',
+    orderId: 'demo-order-7',
+    orderNumber: 7,
+    customerName: 'Nerea',
+    counterType: 'DRINKS',
+    status: 'COMPLETED',
+    elapsedMin: 9,
+    isSlowOrder: false,
+    hasAlert: false,
+    flagged: false,
+    notes: null,
+    lines: [
       {
         id: 'demo-l11',
         productId: 'demo-prod-8',
         productName: 'Freskagarria',
-        quantity: 1,
+        quantity: 2,
         unitPrice: 1.5,
         selectedVariant: null,
         selectedModifiers: [],
@@ -647,7 +663,7 @@ export const DEMO_TICKETS: MockTicket[] = [
     ],
   },
   {
-    // Order 8 — drinks ticket fully served (COMPLETED, self-service)
+    // Order 8 — drinks ticket fully served (COMPLETED, self-service); 2 × 2.5 = 5.0
     id: 'demo-ticket-10',
     orderId: 'demo-order-8',
     orderNumber: 8,
@@ -662,10 +678,10 @@ export const DEMO_TICKETS: MockTicket[] = [
     lines: [
       {
         id: 'demo-l12',
-        productId: 'demo-prod-8',
-        productName: 'Freskagarria',
+        productId: 'demo-prod-5',
+        productName: 'Garagardoa',
         quantity: 2,
-        unitPrice: 1.5,
+        unitPrice: 2.5,
         selectedVariant: null,
         selectedModifiers: [],
         splitInstructions: null,
