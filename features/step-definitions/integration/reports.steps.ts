@@ -209,6 +209,44 @@ Then('revenue reflects the variant price delta', function (this: IntegrationWorl
   assert.equal(body.revenue, expectedRevenue, `revenue should be ${expectedRevenue}`);
 });
 
+Given(
+  'there are {int} confirmed orders created {int} days ago',
+  function (this: IntegrationWorld, count: number, daysAgo: number) {
+    assert.ok(this.currentTxosna, 'currentTxosna must be set via Background');
+    const now = new Date();
+    const pastDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo);
+    let orderNumber = 200;
+    for (let i = 0; i < count; i++) {
+      const order = makeOrder({
+        id: `test-order-${daysAgo}days-${i}`,
+        txosnaId: this.currentTxosna!.id,
+        orderNumber: orderNumber++,
+        status: 'CONFIRMED',
+        total: 5.0,
+        createdAt: pastDate,
+      });
+      _test_insertOrder(order);
+    }
+  }
+);
+
+Then('the report response includes all required metrics', function (this: IntegrationWorld) {
+  const body = this.lastBody as Record<string, unknown>;
+  const required = [
+    'period',
+    'ordersTotal',
+    'ordersConfirmed',
+    'ordersCancelled',
+    'revenue',
+    'avgOrderValue',
+    'topProducts',
+    'ticketsByStatus',
+  ];
+  for (const field of required) {
+    assert.ok(field in body, `report response should include field "${field}"`);
+  }
+});
+
 Then("ordersTotal does not include yesterday's orders", function (this: IntegrationWorld) {
   const body = this.lastBody as { ordersTotal: number };
   const todayOrderCount = (this as any)._todayOrderCount;

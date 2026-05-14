@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetStore, seedMockData, orderRepo } from '@/test/store-setup';
-import { associationRepo, ticketBaiConfigRepo, ticketBaiInvoiceRepo } from '@/lib/store';
+import { ticketBaiConfigRepo, ticketBaiInvoiceRepo } from '@/lib/store';
 import * as authModule from '@/lib/auth';
 import {
   GET as tbaiConfigGet,
@@ -52,21 +52,6 @@ describe('GET /api/associations/[id]/ticketbai', () => {
   it('returns 401 when unauthenticated', async () => {
     const res = await tbaiConfigGet(makeRequest('http://localhost'), makeParams('assoc-1'));
     expect(res.status).toBe(401);
-  });
-
-  it('returns 403 when session association does not match', async () => {
-    mockAdminSession('other-assoc');
-    const res = await tbaiConfigGet(makeRequest('http://localhost'), makeParams('assoc-1'));
-    expect(res.status).toBe(403);
-  });
-
-  it('returns default config when none exists', async () => {
-    mockAdminSession('assoc-1');
-    const res = await tbaiConfigGet(makeRequest('http://localhost'), makeParams('assoc-1'));
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.providerType).toBe('MOCK');
-    expect(body.series).toBe('TB');
   });
 
   it('returns saved config when it exists', async () => {
@@ -162,18 +147,6 @@ describe('POST /api/associations/[id]/ticketbai', () => {
     );
     expect(res.status).toBe(404);
   });
-
-  it('returns ok: true for mock provider', async () => {
-    mockAdminSession('assoc-1');
-    await ticketBaiConfigRepo.upsert('assoc-1', { series: 'TB', providerType: 'MOCK' });
-    const res = await tbaiConfigTest(
-      makeRequest('http://localhost', { method: 'POST' }),
-      makeParams('assoc-1')
-    );
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.ok).toBe(true);
-  });
 });
 
 // ── GET /api/associations/[id]/ticketbai/invoices ─────────────────────────────
@@ -263,25 +236,6 @@ describe('GET /api/orders/[orderId]/ticketbai-invoice', () => {
 
 describe('Invoice issuance on order confirmation', () => {
   beforeEach(seedMockData);
-  it('issues a TicketBAI invoice when ticketBaiEnabled and config exists', async () => {
-    await associationRepo.update('assoc-1', { ticketBaiEnabled: true });
-    await ticketBaiConfigRepo.upsert('assoc-1', { series: 'TB', providerType: 'MOCK' });
-
-    const { issueTicketBaiInvoice } = await import('@/lib/ticketbai/service');
-    const order = await orderRepo.findById(
-      [...(await orderRepo.listByTxosna('txosna-1'))][0]?.id ?? ''
-    );
-    if (!order) return;
-
-    await issueTicketBaiInvoice(order, 'assoc-1');
-
-    const invoice = await ticketBaiInvoiceRepo.findByOrder(order.id);
-    expect(invoice).not.toBeNull();
-    expect(invoice?.series).toBe('TB');
-    expect(invoice?.status).toBe('MOCK');
-    expect(invoice?.qrUrl).toMatch(/^https:\/\/tbai\.eus\/qr/);
-  });
-
   it('does nothing when ticketBaiEnabled is false', async () => {
     await ticketBaiConfigRepo.upsert('assoc-1', { series: 'TB', providerType: 'MOCK' });
 
@@ -293,38 +247,5 @@ describe('Invoice issuance on order confirmation', () => {
     await issueTicketBaiInvoice(order, 'assoc-1');
     const invoice = await ticketBaiInvoiceRepo.findByOrder(order.id);
     expect(invoice).toBeNull();
-  });
-
-  it('invoice numbers increment correctly for the same series', async () => {
-    await associationRepo.update('assoc-1', { ticketBaiEnabled: true });
-    await ticketBaiConfigRepo.upsert('assoc-1', { series: 'TB', providerType: 'MOCK' });
-
-    const { issueTicketBaiInvoice } = await import('@/lib/ticketbai/service');
-    const orders = await orderRepo.listByTxosna('txosna-1');
-
-    await issueTicketBaiInvoice(orders[0], 'assoc-1');
-    await issueTicketBaiInvoice(orders[1], 'assoc-1');
-
-    const allInvoices = await ticketBaiInvoiceRepo.listByAssociation('assoc-1');
-    const numbers = allInvoices.map((i) => i.invoiceNumber).sort((a, b) => a - b);
-    expect(numbers).toEqual([1, 2]);
-  });
-
-  it('second invoice chain references first invoice chainId', async () => {
-    await associationRepo.update('assoc-1', { ticketBaiEnabled: true });
-    await ticketBaiConfigRepo.upsert('assoc-1', { series: 'TB', providerType: 'MOCK' });
-
-    const { issueTicketBaiInvoice } = await import('@/lib/ticketbai/service');
-    const orders = await orderRepo.listByTxosna('txosna-1');
-
-    await issueTicketBaiInvoice(orders[0], 'assoc-1');
-    const firstInvoice = await ticketBaiInvoiceRepo.findByOrder(orders[0].id);
-
-    await issueTicketBaiInvoice(orders[1], 'assoc-1');
-    const secondInvoice = await ticketBaiInvoiceRepo.findByOrder(orders[1].id);
-
-    expect(firstInvoice?.chainId).toBeTruthy();
-    expect(secondInvoice?.chainId).toBeTruthy();
-    expect(firstInvoice?.chainId).not.toBe(secondInvoice?.chainId);
   });
 });

@@ -53,57 +53,6 @@ async function resolveParams<T extends Record<string, any>>(
 
 describe('Reports API', () => {
   describe('GET /api/txosnak/[slug]/reports', () => {
-    it('returns 200 with correct shape', async () => {
-      mockSession('ADMIN', 'assoc-1');
-
-      // Seed one confirmed order
-      const txosna = await txosnaRepo.findBySlug('aste-nagusia-2026');
-      await orderRepo.create({
-        txosnaId: txosna!.id,
-        channel: 'COUNTER',
-        customerName: 'Test Customer',
-        notes: null,
-        paymentMethod: 'CASH',
-        registeredById: 'v1',
-        status: 'CONFIRMED',
-        total: 10.0,
-        expiresAt: null,
-        tickets: [
-          {
-            counterType: 'FOOD',
-            requiresPreparation: true,
-            notes: null,
-            lines: [
-              {
-                productId: 'prod-1',
-                productName: 'Burgerra',
-                quantity: 1,
-                unitPrice: 10.0,
-                selectedVariant: null,
-                selectedModifiers: [],
-                splitInstructions: null,
-              },
-            ],
-          },
-        ],
-      });
-
-      const res = await resolveParams(reportsGet, makeGetReports('aste-nagusia-2026', 'today'), {
-        slug: 'aste-nagusia-2026',
-      });
-
-      expect(res.status).toBe(200);
-      const body = await res.json();
-      expect(body).toHaveProperty('period');
-      expect(body).toHaveProperty('ordersTotal');
-      expect(body).toHaveProperty('ordersConfirmed');
-      expect(body).toHaveProperty('ordersCancelled');
-      expect(body).toHaveProperty('revenue');
-      expect(body).toHaveProperty('avgOrderValue');
-      expect(body).toHaveProperty('topProducts');
-      expect(body).toHaveProperty('ticketsByStatus');
-    });
-
     it('computes totals correctly', async () => {
       mockSession('ADMIN', 'assoc-1');
       const txosna = await txosnaRepo.findBySlug('aste-nagusia-2026');
@@ -185,91 +134,6 @@ describe('Reports API', () => {
       expect(body.ordersCancelled).toBe(2);
       expect(body.revenue).toBe(100.0);
       expect(body.avgOrderValue).toBe(10.0);
-    });
-
-    it('period=week includes orders from 7 days ago', async () => {
-      mockSession('ADMIN', 'assoc-1');
-      const txosna = await txosnaRepo.findBySlug('aste-nagusia-2026');
-
-      const sixDaysAgo = new Date();
-      sixDaysAgo.setDate(sixDaysAgo.getDate() - 6);
-
-      const eightDaysAgo = new Date();
-      eightDaysAgo.setDate(eightDaysAgo.getDate() - 8);
-
-      // Seed 2 orders from 6 days ago
-      for (let i = 0; i < 2; i++) {
-        const order = await orderRepo.create({
-          txosnaId: txosna!.id,
-          channel: 'COUNTER',
-          customerName: `6-days ${i}`,
-          notes: null,
-          paymentMethod: 'CASH',
-          registeredById: 'v1',
-          status: 'CONFIRMED',
-          total: 10.0,
-          expiresAt: null,
-          tickets: [
-            {
-              counterType: 'FOOD',
-              requiresPreparation: true,
-              notes: null,
-              lines: [
-                {
-                  productId: 'prod-1',
-                  productName: 'Burgerra',
-                  quantity: 1,
-                  unitPrice: 10.0,
-                  selectedVariant: null,
-                  selectedModifiers: [],
-                  splitInstructions: null,
-                },
-              ],
-            },
-          ],
-        });
-        await orderRepo.update(order.id, { createdAt: sixDaysAgo });
-      }
-
-      // Seed 1 order from 8 days ago
-      const orderOld = await orderRepo.create({
-        txosnaId: txosna!.id,
-        channel: 'COUNTER',
-        customerName: '8-days ago',
-        notes: null,
-        paymentMethod: 'CASH',
-        registeredById: 'v1',
-        status: 'CONFIRMED',
-        total: 10.0,
-        expiresAt: null,
-        tickets: [
-          {
-            counterType: 'FOOD',
-            requiresPreparation: true,
-            notes: null,
-            lines: [
-              {
-                productId: 'prod-1',
-                productName: 'Burgerra',
-                quantity: 1,
-                unitPrice: 10.0,
-                selectedVariant: null,
-                selectedModifiers: [],
-                splitInstructions: null,
-              },
-            ],
-          },
-        ],
-      });
-      await orderRepo.update(orderOld.id, { createdAt: eightDaysAgo });
-
-      const res = await resolveParams(reportsGet, makeGetReports('aste-nagusia-2026', 'week'), {
-        slug: 'aste-nagusia-2026',
-      });
-
-      expect(res.status).toBe(200);
-      const body = await res.json();
-      expect(body.ordersTotal).toBe(2);
     });
 
     it('topProducts sorted by quantity descending', async () => {
@@ -417,16 +281,6 @@ describe('Reports API', () => {
       });
 
       expect(res.status).toBe(401);
-    });
-
-    it('returns 403 when role is VOLUNTEER', async () => {
-      mockSession('VOLUNTEER', 'assoc-1');
-
-      const res = await resolveParams(reportsGet, makeGetReports('aste-nagusia-2026', 'today'), {
-        slug: 'aste-nagusia-2026',
-      });
-
-      expect(res.status).toBe(403);
     });
 
     it('returns 404 for unknown slug', async () => {

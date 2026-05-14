@@ -85,6 +85,49 @@ When(
 );
 
 When(
+  'I submit a COUNTER order for {string} with product {string} and variant {string}',
+  async function (
+    this: IntegrationWorld,
+    slug: string,
+    productId: string,
+    variantOptionId: string
+  ) {
+    const body = {
+      channel: 'COUNTER',
+      customerName: null,
+      notes: null,
+      paymentMethod: 'CASH',
+      lines: [
+        {
+          productId,
+          quantity: 1,
+          selectedVariantOptionId: variantOptionId,
+          selectedModifierIds: [],
+          splitInstructions: null,
+        },
+      ],
+    };
+
+    const req = new Request(`http://localhost/api/txosnak/${slug}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    this.lastResponse = await ordersPOST(req, params(slug));
+    this.lastBody = await this.lastResponse
+      .clone()
+      .json()
+      .catch(() => null);
+
+    if (this.lastResponse.status === 201) {
+      this.currentOrder = this.lastBody as StoredOrder;
+      this.savedOrders.push(this.currentOrder);
+    }
+  }
+);
+
+When(
   'I submit a COUNTER order for {string} with product {string}',
   async function (this: IntegrationWorld, slug: string, productId: string) {
     const body = {
@@ -297,6 +340,54 @@ Then(
     const tickets = await ticketRepo.listByOrder(this.currentOrder.id);
     const found = tickets.some((t: any) => t.counterType === counterType);
     assert.ok(found, `one ticket should have counterType ${counterType}`);
+  }
+);
+
+Then('the food ticket has kitchenPost null', async function (this: IntegrationWorld) {
+  assert.ok(this.currentOrder, 'currentOrder must be set');
+  const tickets = await ticketRepo.listByOrder(this.currentOrder.id);
+  const foodTickets = tickets.filter((t: any) => t.counterType === 'FOOD');
+  assert.ok(foodTickets.length > 0, 'order should have at least one FOOD ticket');
+  assert.equal(foodTickets.length, 1, `expected 1 food ticket, got ${foodTickets.length}`);
+  assert.equal(foodTickets[0].kitchenPost, null, 'food ticket kitchenPost should be null');
+});
+
+Then(
+  'the food ticket has kitchenPost {string}',
+  async function (this: IntegrationWorld, expectedPost: string) {
+    assert.ok(this.currentOrder, 'currentOrder must be set');
+    const tickets = await ticketRepo.listByOrder(this.currentOrder.id);
+    const foodTickets = tickets.filter((t: any) => t.counterType === 'FOOD');
+    assert.ok(foodTickets.length > 0, 'order should have at least one FOOD ticket');
+    assert.equal(foodTickets.length, 1, `expected 1 food ticket, got ${foodTickets.length}`);
+    assert.equal(
+      foodTickets[0].kitchenPost,
+      expectedPost,
+      `food ticket kitchenPost should be "${expectedPost}"`
+    );
+  }
+);
+
+Then('there are {int} food tickets', async function (this: IntegrationWorld, count: number) {
+  assert.ok(this.currentOrder, 'currentOrder must be set');
+  const tickets = await ticketRepo.listByOrder(this.currentOrder.id);
+  const foodTickets = tickets.filter((t: any) => t.counterType === 'FOOD');
+  assert.equal(
+    foodTickets.length,
+    count,
+    `expected ${count} food tickets, got ${foodTickets.length}`
+  );
+});
+
+Then(
+  'the food tickets include kitchenPosts {string} and {string}',
+  async function (this: IntegrationWorld, post1: string, post2: string) {
+    assert.ok(this.currentOrder, 'currentOrder must be set');
+    const tickets = await ticketRepo.listByOrder(this.currentOrder.id);
+    const foodTickets = tickets.filter((t: any) => t.counterType === 'FOOD');
+    const posts = new Set(foodTickets.map((t: any) => t.kitchenPost));
+    assert.ok(posts.has(post1), `food tickets should include kitchenPost "${post1}"`);
+    assert.ok(posts.has(post2), `food tickets should include kitchenPost "${post2}"`);
   }
 );
 
