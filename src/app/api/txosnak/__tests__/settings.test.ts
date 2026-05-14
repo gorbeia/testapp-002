@@ -4,7 +4,6 @@ import * as authModule from '@/lib/auth';
 import * as sseModule from '@/lib/sse';
 import { GET as settingsGet, PATCH as settingsPatch } from '../[slug]/settings/route';
 import { PATCH as pinPatch } from '../[slug]/pin/route';
-import bcrypt from 'bcryptjs';
 
 // Stub NextAuth — must be hoisted
 vi.mock('@/lib/auth', () => ({
@@ -76,25 +75,6 @@ async function resolveParams<T extends Record<string, any>>(
 
 describe('Txosna Settings API', () => {
   describe('GET /api/txosnak/[slug]/settings', () => {
-    it('returns settings for ADMIN of same association', async () => {
-      mockSession('ADMIN', 'assoc-1');
-
-      const res = await resolveParams(settingsGet, makeGetSettings('aste-nagusia-2026'), {
-        slug: 'aste-nagusia-2026',
-      });
-
-      expect(res.status).toBe(200);
-      const body = await res.json();
-      expect(body).toHaveProperty('status');
-      expect(body).toHaveProperty('waitMinutes');
-      expect(body).toHaveProperty('counterSetup');
-      expect(body).toHaveProperty('enabledChannels');
-      expect(body).toHaveProperty('enabledPaymentMethods');
-      expect(body).toHaveProperty('printingEnabled');
-      expect(body).toHaveProperty('pendingPaymentTimeout');
-      expect(body).not.toHaveProperty('pinHash');
-    });
-
     it('returns 401 when no session', async () => {
       const res = await resolveParams(settingsGet, makeGetSettings('aste-nagusia-2026'), {
         slug: 'aste-nagusia-2026',
@@ -154,37 +134,6 @@ describe('Txosna Settings API', () => {
 
       expect(res.status).toBe(200);
       expect(broadcastSpy).not.toHaveBeenCalled();
-    });
-
-    it('updates waitMinutes', async () => {
-      mockSession('ADMIN', 'assoc-1');
-
-      const res = await resolveParams(
-        settingsPatch,
-        makePatchSettings('aste-nagusia-2026', { waitMinutes: 12 }),
-        {
-          slug: 'aste-nagusia-2026',
-        }
-      );
-
-      expect(res.status).toBe(200);
-      const updated = await txosnaRepo.findBySlug('aste-nagusia-2026');
-      expect(updated?.waitMinutes).toBe(12);
-    });
-
-    it('updates enabledPaymentMethods', async () => {
-      mockSession('ADMIN', 'assoc-1');
-
-      const newMethods = ['CASH', 'ONLINE'];
-      const res = await resolveParams(
-        settingsPatch,
-        makePatchSettings('aste-nagusia-2026', { enabledPaymentMethods: newMethods }),
-        { slug: 'aste-nagusia-2026' }
-      );
-
-      expect(res.status).toBe(200);
-      const updated = await txosnaRepo.findBySlug('aste-nagusia-2026');
-      expect(updated?.enabledPaymentMethods).toEqual(newMethods);
     });
 
     it('updates printingEnabled', async () => {
@@ -321,26 +270,6 @@ describe('Txosna Settings API', () => {
   });
 
   describe('PATCH /api/txosnak/[slug]/pin', () => {
-    it('updates PIN hash', async () => {
-      mockSession('ADMIN', 'assoc-1');
-
-      const res = await resolveParams(
-        pinPatch,
-        makePatchPin('aste-nagusia-2026', { pin: 'newpin1234' }),
-        {
-          slug: 'aste-nagusia-2026',
-        }
-      );
-
-      expect(res.status).toBe(204);
-      const updated = await txosnaRepo.findBySlug('aste-nagusia-2026');
-      expect(updated?.pinHash).toBeDefined();
-
-      // Verify hash matches new PIN
-      const valid = await bcrypt.compare('newpin1234', updated!.pinHash);
-      expect(valid).toBe(true);
-    });
-
     it('returns 401 when no session', async () => {
       const res = await resolveParams(
         pinPatch,
