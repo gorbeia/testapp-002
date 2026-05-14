@@ -26,3 +26,21 @@ Feature: Txosna daily and weekly reports
     Given there are 5 orders created yesterday
     When I request reports for "aste-nagusia" with period "today"
     Then ordersTotal does not include yesterday's orders
+
+  @integration-only
+  Scenario: Report response includes all required metrics
+    When I request reports for "aste-nagusia" with period "today"
+    Then the response status is 200
+    And the report response includes all required metrics
+
+  @integration-only
+  Scenario: VOLUNTEER role is rejected with 403
+    Given I am authenticated as a VOLUNTEER
+    When I request reports for "aste-nagusia" with period "today"
+    Then the response status is 403
+
+  @integration-only
+  Scenario: Period "week" includes orders from earlier in the week
+    Given there are 3 confirmed orders created 6 days ago
+    When I request reports for "aste-nagusia" with period "week"
+    Then ordersTotal is 15

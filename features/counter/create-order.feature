@@ -43,3 +43,28 @@ Feature: Counter order creation
   Scenario: Order numbers are sequential and unique per txosna
     When I submit 2 COUNTER orders for "aste-nagusia"
     Then the second order has an order number greater than the first
+
+  @integration-only
+  Scenario: Food ticket has no kitchenPost when txosna has no posts configured
+    When I submit a COUNTER order for "pintxo-txokoa" with product "prod-1"
+    Then the response status is 201
+    And the food ticket has kitchenPost null
+
+  @integration-only
+  Scenario: Food product with kitchenPost routes its ticket to that post
+    When I submit a COUNTER order for "aste-nagusia-2026" with product "prod-1"
+    Then the response status is 201
+    And the food ticket has kitchenPost "plantxa"
+
+  @integration-only
+  Scenario: Variant with its own kitchenPost creates a second food ticket at that post
+    When I submit a COUNTER order for "aste-nagusia-2026" with product "prod-1" and variant "vo-1"
+    Then the response status is 201
+    And there are 2 food tickets
+    And the food tickets include kitchenPosts "plantxa" and "muntaia"
+
+  @integration-only
+  Scenario: Food product without kitchenPost creates a general ticket even when txosna has posts configured
+    When I submit a COUNTER order for "aste-nagusia-2026" with product "prod-1b"
+    Then the response status is 201
+    And the food ticket has kitchenPost null
