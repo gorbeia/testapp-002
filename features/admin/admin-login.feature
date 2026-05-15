@@ -8,7 +8,9 @@ Feature: Admin login
   Scenario: Admin logs in and reaches the txosna dashboard
     Given I navigate to "/login"
     And I select association "Erreka Gaztedi"
-    When I log in as admin with email "amaia@elkartea.eus" and password "test1234"
+    When I take a screenshot "13-login"
+    And I log in as admin with email "amaia@elkartea.eus" and password "test1234"
     Then I am redirected to the txosna dashboard
     And the txosna list shows at least one txosna
     And there are no JavaScript errors in the console
+    When I take a screenshot "01-txosnak-list"

@@ -82,9 +82,9 @@ Then('the page shows a {string} column', async function (this: E2eWorld, columnN
 // ── Pickup proof ──────────────────────────────────────────────────────────────
 
 Then('the page shows a large order number', async function (this: E2eWorld) {
-  await this.page.waitForSelector('text=#', { timeout: 5_000 });
-  const body = await this.page.evaluate(() => document.body.innerText);
-  assert.match(body, /#\d+/, 'Expected a large order number like #42');
+  await this.page.waitForFunction(() => /^#\d+/m.test(document.body.innerText), {
+    timeout: 8_000,
+  });
 });
 
 Then('the page shows a verification code in monospace', async function (this: E2eWorld) {
@@ -96,11 +96,41 @@ Then('the page shows a verification code in monospace', async function (this: E2
 
 // ── Self-service checkout flow ────────────────────────────────────────────────
 
+When('I click the first available product card', async function (this: E2eWorld) {
+  await this.page.waitForSelector('[data-testid="product-card"]:not([disabled])', {
+    timeout: 10_000,
+  });
+  // Ensure React has hydrated the click handlers (page is a Client Component)
+  await this.page.waitForLoadState('load');
+  // Retry click up to 3 times in case React hydration completes mid-click
+  for (let i = 0; i < 3; i++) {
+    await this.page.locator('[data-testid="product-card"]:not([disabled])').first().click();
+    const appeared = await this.page
+      .waitForSelector('button:has-text("Saskira gehitu")', { timeout: 4_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (appeared) break;
+    await this.page.waitForTimeout(300);
+  }
+  await this.page.waitForSelector('button:has-text("Saskira gehitu")', { timeout: 5_000 });
+});
+
 When('I add the first available product to the cart', async function (this: E2eWorld) {
   await this.page.waitForSelector('[data-testid="product-card"]:not([disabled])', {
-    timeout: 5_000,
+    timeout: 10_000,
   });
-  await this.page.locator('[data-testid="product-card"]:not([disabled])').first().click();
+  // Ensure React has hydrated the click handlers (page is a Client Component)
+  await this.page.waitForLoadState('load');
+  // Retry click up to 3 times in case React hydration completes mid-click
+  for (let i = 0; i < 3; i++) {
+    await this.page.locator('[data-testid="product-card"]:not([disabled])').first().click();
+    const appeared = await this.page
+      .waitForSelector('button:has-text("Saskira gehitu")', { timeout: 4_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (appeared) break;
+    await this.page.waitForTimeout(300);
+  }
   // ProductSheet opens — click the "Saskira gehitu" add button
   await this.page.waitForSelector('button:has-text("Saskira gehitu")', { timeout: 5_000 });
   await this.page.getByRole('button', { name: /Saskira gehitu/i }).click();
@@ -154,17 +184,23 @@ Then('the page shows a text input for the tracking code', async function (this: 
 });
 
 When('I enter tracking code {string} and submit', async function (this: E2eWorld, code: string) {
+  // TrackEntryClient is a Client Component — ensure React is hydrated before interacting
+  await this.page.waitForLoadState('load');
   const input = this.page.locator('input').first();
-  await input.fill(code);
+  await input.click();
+  await input.pressSequentially(code, { delay: 30 });
   await this.page.getByRole('button', { name: /Bilatu|Jarraitu|Begiratu/i }).click();
-  // Wait for navigation or response
-  await this.page.waitForTimeout(2_000);
+  // Wait for either navigation (valid code) or error message (invalid code)
+  await Promise.race([
+    this.page.waitForURL((url) => url.pathname.includes('/track/'), { timeout: 15_000 }),
+    this.page.waitForSelector('text=Koderik', { timeout: 15_000 }),
+  ]).catch(() => {});
 });
 
 Then(
   'I am on the tracking status page for code {string}',
   async function (this: E2eWorld, code: string) {
-    await this.page.waitForURL((url) => url.pathname.includes(code), { timeout: 5_000 });
+    await this.page.waitForURL((url) => url.pathname.includes(code), { timeout: 12_000 });
   }
 );
 

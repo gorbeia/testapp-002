@@ -48,7 +48,7 @@ Feature: Self-service order
     Then I see the order confirmation page with an order number
     And the order status is "PENDING_PAYMENT"
 
-  @e2e @smoke
+  @e2e @smoke @redsys
   Scenario: Customer completes self-service order with Redsys online payment
     Given the txosna "aste-nagusia" is open and accepts online payments via Redsys
     When I navigate to the menu for "aste-nagusia"
@@ -58,7 +58,7 @@ Feature: Self-service order
     When the Redsys payment succeeds for my order
     Then the order status page shows "CONFIRMED"
 
-  @e2e
+  @e2e @redsys
   Scenario: Customer sees cancelled state when Redsys payment is abandoned
     Given the txosna "aste-nagusia" is open and accepts online payments via Redsys
     When I navigate to the menu for "aste-nagusia"

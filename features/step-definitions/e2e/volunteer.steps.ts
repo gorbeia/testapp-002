@@ -10,14 +10,62 @@ async function doPinFlow(world: E2eWorld, mode: string, pin: string, slug = 'ast
   // Establish a session first so protected API calls from counter/drinks/kitchen succeed
   await loginAsVolunteer(world);
   await world.page.goto(`${BASE_URL}/eu/pin?slug=${slug}`, { waitUntil: 'domcontentloaded' });
-  // Select mode and wait for the button to visibly change state
-  await world.page.getByRole('button', { name: mode, disabled: false }).click();
-  // Wait for the mode button to appear selected (UI state change, not network)
-  await world.page.waitForTimeout(100);
-  // Enter PIN digits one by one via keypad buttons
-  for (const digit of pin) {
-    await world.page.getByRole('button', { name: digit, exact: true }).click();
+  // Wait for JS to load so React event handlers are attached (PIN page is a Client Component)
+  await world.page.waitForLoadState('load');
+  // Small extra delay for React hydration to complete after JS loads
+  await world.page.waitForTimeout(300);
+
+  // Select mode with retry — click until confirm button text reflects the chosen mode
+  for (let mAttempt = 0; mAttempt < 5; mAttempt++) {
+    await world.page.getByRole('button', { name: mode, disabled: false }).click();
+    const modeSelected = await world.page
+      .waitForFunction(
+        (m) => {
+          const buttons = [...document.querySelectorAll('button')];
+          return buttons.some(
+            (b) => b.textContent?.includes('Sartu') && b.textContent?.includes(m)
+          );
+        },
+        mode,
+        { timeout: 1_500 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    if (modeSelected) break;
+    await world.page.waitForTimeout(300);
   }
+
+  // Enter PIN digits one by one; retry the full sequence if confirm stays disabled
+  for (let attempt = 0; attempt < 3; attempt++) {
+    // Clear any partially-entered PIN by pressing backspace 4 times first (if retrying)
+    if (attempt > 0) {
+      for (let b = 0; b < 4; b++) {
+        await world.page
+          .getByRole('button', { name: '⌫', exact: true })
+          .click()
+          .catch(() => {});
+      }
+      await world.page.waitForTimeout(200);
+    }
+    for (const digit of pin) {
+      await world.page.getByRole('button', { name: digit, exact: true }).click();
+    }
+    // Confirm button becomes enabled when 4 digits are entered (proxy for hydration)
+    const enabled = await world.page
+      .waitForFunction(
+        () => {
+          const buttons = [...document.querySelectorAll('button')];
+          const confirmBtn = buttons.find((b) => b.textContent?.includes('Sartu'));
+          return confirmBtn && !(confirmBtn as HTMLButtonElement).disabled;
+        },
+        { timeout: 2_000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    if (enabled) break;
+    await world.page.waitForTimeout(300);
+  }
+
   // Press confirm
   await world.page.getByRole('button', { name: /Sartu|Baieztatu|Confirm/i }).click();
   await world.page.waitForTimeout(1_500);
@@ -174,6 +222,38 @@ When('I submit the counter order', async function (this: E2eWorld) {
 Then('the counter main view is shown', async function (this: E2eWorld) {
   // After creating an order, the new-order panel closes and the main counter reappears
   await this.page.waitForSelector('text=+ Eskaera berria', { timeout: 5_000 });
+});
+
+// ── Counter ready section / handoff steps ───────────────────────────────────────
+
+Then('the page shows a ready tickets section', async function (this: E2eWorld) {
+  await this.page.waitForSelector('text=PREST JASOTZEKO', { timeout: 8_000 });
+});
+
+Then('the page shows a kitchen in-progress section', async function (this: E2eWorld) {
+  await this.page.waitForSelector('text=SUKALDEAN', { timeout: 8_000 });
+});
+
+When(
+  'I click the mark-ready button on the first in-preparation ticket',
+  async function (this: E2eWorld) {
+    await this.page.waitForSelector('text=SUKALDEAN', { timeout: 8_000 });
+    await this.page.getByRole('button', { name: '→ Prest' }).first().click();
+    await this.page.waitForTimeout(500);
+  }
+);
+
+Then('the page shows a mark-ready confirmation dialog', async function (this: E2eWorld) {
+  await this.page.waitForSelector('text=prest?', { timeout: 5_000 });
+});
+
+When('I confirm the order is ready', async function (this: E2eWorld) {
+  await this.page.getByRole('button', { name: /Bai, prest dago/i }).click();
+  await this.page.waitForTimeout(500);
+});
+
+Then('the handoff card is shown', async function (this: E2eWorld) {
+  await this.page.waitForSelector('text=Eman kode hau bezeroari', { timeout: 5_000 });
 });
 
 // ── KDS / overview steps ──────────────────────────────────────────────────────

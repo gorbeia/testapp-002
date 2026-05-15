@@ -15,10 +15,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
   const { role, associationId: sessionAssociationId } = session.user as SessionUser;
 
-  if (role !== 'ADMIN') {
-    return new Response('Forbidden', { status: 403 });
-  }
-
   const { slug }: { slug: string } = await params;
   const txosna = await txosnaRepo.findBySlug(slug);
   if (!txosna) {
@@ -26,6 +22,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   }
 
   if (txosna.associationId !== sessionAssociationId) {
+    return new Response('Forbidden', { status: 403 });
+  }
+
+  // Volunteers get a limited view (only the fields the counter page needs)
+  if (role === 'VOLUNTEER') {
+    return NextResponse.json({
+      mobileTrackingEnabled: txosna.mobileTrackingEnabled,
+      printingEnabled: txosna.printingEnabled,
+      waitMinutes: txosna.waitMinutes,
+    });
+  }
+
+  if (role !== 'ADMIN') {
     return new Response('Forbidden', { status: 403 });
   }
 

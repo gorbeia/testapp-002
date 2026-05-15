@@ -168,6 +168,10 @@ Then('the page shows a {string} input', async function (this: E2eWorld, inputLab
 Then(
   'the page shows an invoice table with columns for invoice number, order, date, total, status',
   async function (this: E2eWorld) {
+    // Wait for loading state to resolve (page fetches invoice data client-side)
+    await this.page
+      .waitForFunction(() => !document.body.innerText.includes('Kargatzen...'), { timeout: 10_000 })
+      .catch(() => {});
     const body = await this.page.evaluate(() => document.body.innerText);
     // Check for some of the column headers (Basque or English)
     const hasCols =

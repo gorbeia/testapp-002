@@ -13,6 +13,14 @@ Feature: Customer order status page
     When I take a screenshot "41-order-status-fiscal-invoice"
 
   @e2e
+  Scenario: Order status page renders for a confirmed order without fiscal invoice
+    Given I navigate to "/eu/order/order-4"
+    Then the page shows an order number
+    And the page shows progress steps including "Jasota"
+    And there are no JavaScript errors in the console
+    When I take a screenshot "08-order-status-mobile"
+
+  @e2e
   Scenario: TicketBAI invoice section appears on order with invoice
     Given I navigate to "/eu/order/order-1"
     Then the page shows a "Txartel argia" section

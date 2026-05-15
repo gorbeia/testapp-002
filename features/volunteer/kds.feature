@@ -16,3 +16,4 @@ Feature: Kitchen Display System
     Given I am on the KDS page via PIN "1234" and post "plantxa"
     Then the page header contains "plantxa"
     And there are no JavaScript errors in the console
+    When I take a screenshot "11-kds-desktop"

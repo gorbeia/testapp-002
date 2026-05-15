@@ -10,3 +10,4 @@ Feature: Pickup proof page
     Then the page shows a large order number
     And the page shows a verification code in monospace
     And there are no JavaScript errors in the console
+    When I take a screenshot "09-pickup-proof-mobile"

@@ -33,3 +33,10 @@ Feature: Order tracking by verification code
     Then the page shows a "Txartel argia" section with invoice reference
     And there are no JavaScript errors in the console
     When I take a screenshot "43-track-status-with-invoice"
+
+  @e2e
+  Scenario: Receipt page renders with order details and print button
+    Given I navigate to "/eu/aste-nagusia-2026/track/JO42/receipt"
+    Then the page shows a "Guztira" section
+    And there are no JavaScript errors in the console
+    When I take a screenshot "40-track-receipt-mobile"
