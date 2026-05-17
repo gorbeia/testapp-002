@@ -368,10 +368,10 @@ export default function TxosnakPage() {
               }}
             >
               {[
-                { label: 'Hasiera', href: `/eu/txosnak/${tx.id}`, icon: '📊' },
-                { label: 'Menua', href: `/eu/txosnak/${tx.id}/menu`, icon: '🍽' },
-                { label: 'Konfigurazioa', href: `/eu/txosnak/${tx.id}/settings`, icon: '⚙️' },
-                { label: 'Txostena', href: `/eu/txosnak/${tx.id}/reports`, icon: '📈' },
+                { label: 'Hasiera', href: `/eu/txosnak/${tx.slug}`, icon: '📊' },
+                { label: 'Menua', href: `/eu/txosnak/${tx.slug}/menu`, icon: '🍽' },
+                { label: 'Konfigurazioa', href: `/eu/txosnak/${tx.slug}/settings`, icon: '⚙️' },
+                { label: 'Txostena', href: `/eu/txosnak/${tx.slug}/reports`, icon: '📈' },
               ].map((l) => (
                 <Link
                   key={l.href}
