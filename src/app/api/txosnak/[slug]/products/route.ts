@@ -8,13 +8,42 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  if (!prisma) return new Response('Service unavailable', { status: 503 });
-
   const session = await auth();
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const associationId = (session.user as any).associationId as string;
   const { slug } = await params;
+
+  if (!prisma) {
+    const { txosnaRepo, catalogRepo } = await import('@/lib/store');
+    const txosna = await txosnaRepo.findById(slug);
+    if (!txosna || txosna.associationId !== associationId) {
+      return new Response('Not found', { status: 404 });
+    }
+    const cats = await catalogRepo.listCategories(associationId);
+    const categories = await Promise.all(
+      cats.map(async (cat) => {
+        const products = await catalogRepo.listProducts(cat.id);
+        return {
+          id: cat.id,
+          name: cat.name,
+          type: cat.type,
+          displayOrder: cat.displayOrder,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          products: products.map((p: any) => ({
+            ...p,
+            customerImageUrl: p.imageUrl,
+            ingredients: Array.isArray(p.removableIngredients)
+              ? p.removableIngredients.join(', ') || null
+              : null,
+            txosnaProduct: null,
+          })),
+        };
+      })
+    );
+    return Response.json(categories);
+  }
 
   // Verify txosna belongs to this association (slug is actually the txosna ID for admin routes)
   const txosna = await prisma.txosna.findFirst({ where: { id: slug, associationId } });
