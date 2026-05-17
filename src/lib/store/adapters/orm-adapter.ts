@@ -244,6 +244,80 @@ export class ORMStorageAdapter implements StorageInterface {
           products: cat.products.map(this.mapProductToStored.bind(this)),
         }));
       },
+
+      findCategory: async (id: string) => {
+        const cat = await this.prisma.category.findUnique({ where: { id } });
+        return cat ? this.mapCategoryToStored(cat) : null;
+      },
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      createCategory: async (data: any) => {
+        const cat = await this.prisma.category.create({ data });
+        return this.mapCategoryToStored(cat);
+      },
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      updateCategory: async (id: string, patch: any) => {
+        const cat = await this.prisma.category.update({ where: { id }, data: patch });
+        return this.mapCategoryToStored(cat);
+      },
+
+      deleteCategory: async (id: string) => {
+        await this.prisma.category.delete({ where: { id } });
+      },
+
+      reorderCategories: async (_associationId: string, ids: string[]) => {
+        await this.prisma.$transaction(
+          ids.map((id: string, index: number) =>
+            this.prisma.category.update({ where: { id }, data: { displayOrder: index } })
+          )
+        );
+      },
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      createProduct: async (data: any) => {
+        const product = await this.prisma.product.create({ data });
+        return this.mapProductToStored(product);
+      },
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      updateProduct: async (id: string, patch: any) => {
+        const product = await this.prisma.product.update({ where: { id }, data: patch });
+        return this.mapProductToStored(product);
+      },
+
+      deleteProduct: async (id: string) => {
+        await this.prisma.product.delete({ where: { id } });
+      },
+
+      reorderProducts: async (_categoryId: string, ids: string[]) => {
+        await this.prisma.$transaction(
+          ids.map((id: string, index: number) =>
+            this.prisma.product.update({ where: { id }, data: { displayOrder: index } })
+          )
+        );
+      },
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      upsertTxosnaProduct: async (txosnaId: string, productId: string, data: any) => {
+        const tp = await this.prisma.txosnaProduct.upsert({
+          where: { txosnaId_productId: { txosnaId, productId } },
+          create: { txosnaId, productId, available: true, soldOut: false, ...data },
+          update: data,
+        });
+        return {
+          txosnaId: tp.txosnaId,
+          productId: tp.productId,
+          available: tp.available,
+          soldOut: tp.soldOut,
+          priceOverride: tp.priceOverride ? Number(tp.priceOverride) : null,
+          preparationInstructions: tp.preparationInstructions,
+        };
+      },
+
+      deleteTxosnaProduct: async (txosnaId: string, productId: string) => {
+        await this.prisma.txosnaProduct.deleteMany({ where: { txosnaId, productId } });
+      },
     };
   }
 

@@ -24,14 +24,17 @@ import {
 import type {
   AssociationRepository,
   CatalogRepository,
+  CreateModifierInput,
   CreateOrderInput,
   CreatePaymentProviderInput,
   CreateTxosnaInput,
+  CreateVariantGroupInput,
   CreateVolunteerInput,
   OrderRepository,
   PaymentProviderRepository,
   StoredAssociation,
   StoredCategory,
+  StoredModifier,
   StoredOrder,
   StoredPaymentProvider,
   StoredProduct,
@@ -41,11 +44,14 @@ import type {
   StoredTicketBaiInvoice,
   StoredTxosna,
   StoredTxosnaProduct,
+  StoredVariantGroup,
+  StoredVatType,
   StoredVolunteer,
   TicketBaiConfigRepository,
   TicketBaiInvoiceRepository,
   TicketRepository,
   TxosnaRepository,
+  VatTypeRepository,
   VolunteerRepository,
 } from './types';
 
@@ -62,6 +68,7 @@ const tickets = new Map<string, StoredTicket>();
 const volunteers = new Map<string, StoredVolunteer>();
 /** Highest order number issued per txosna. */
 const orderCounters = new Map<string, number>();
+const vatTypes = new Map<string, StoredVatType>();
 const paymentProviders = new Map<string, StoredPaymentProvider>();
 const ticketBaiConfigs = new Map<string, StoredTicketBaiConfig>();
 const ticketBaiInvoices = new Map<string, StoredTicketBaiInvoice>();
@@ -76,6 +83,33 @@ function newId(): string {
 
 function now(): Date {
   return new Date();
+}
+
+function buildVariantGroups(groups: CreateVariantGroupInput[] | undefined): StoredVariantGroup[] {
+  return (groups ?? []).map((vg, vgi) => ({
+    id: newId(),
+    name: vg.name,
+    displayOrder: vg.displayOrder ?? vgi,
+    options: (vg.options ?? []).map((opt, oi) => ({
+      id: newId(),
+      name: opt.name,
+      priceDelta: opt.priceDelta ?? 0,
+      allergens: opt.allergens ?? [],
+      displayOrder: opt.displayOrder ?? oi,
+      kitchenPost: null,
+    })),
+  }));
+}
+
+function buildModifiers(modifiers: CreateModifierInput[] | undefined): StoredModifier[] {
+  return (modifiers ?? []).map((mod, mi) => ({
+    id: newId(),
+    name: mod.name,
+    price: mod.price ?? 0,
+    allergens: mod.allergens ?? [],
+    displayOrder: mod.displayOrder ?? mi,
+    kitchenPost: null,
+  }));
 }
 
 function applyTxosnaOverride(product: StoredProduct, txosnaId: string): StoredProductView {
@@ -561,6 +595,159 @@ export const catalogRepo: CatalogRepository = {
 
     return result;
   },
+
+  async findCategory(id) {
+    return categories.get(id) ?? null;
+  },
+
+  async createCategory({ name, type, associationId }) {
+    const maxOrder = Math.max(
+      -1,
+      ...[...categories.values()]
+        .filter((c) => c.associationId === associationId)
+        .map((c) => c.displayOrder)
+    );
+    const cat: StoredCategory = {
+      id: newId(),
+      name,
+      type,
+      displayOrder: maxOrder + 1,
+      associationId,
+    };
+    categories.set(cat.id, cat);
+    return cat;
+  },
+
+  async updateCategory(id, patch) {
+    const cat = categories.get(id);
+    if (!cat) throw new Error(`Category not found: ${id}`);
+    const updated = { ...cat, ...patch };
+    categories.set(id, updated);
+    return updated;
+  },
+
+  async deleteCategory(id) {
+    categories.delete(id);
+  },
+
+  async reorderCategories(_associationId, ids) {
+    ids.forEach((id, index) => {
+      const cat = categories.get(id);
+      if (cat) categories.set(id, { ...cat, displayOrder: index });
+    });
+  },
+
+  async createProduct(data) {
+    const maxOrder = Math.max(
+      -1,
+      ...[...products.values()]
+        .filter((p) => p.categoryId === data.categoryId)
+        .map((p) => p.displayOrder)
+    );
+    const product: StoredProduct = {
+      id: newId(),
+      categoryId: data.categoryId,
+      name: data.name,
+      description: data.description ?? null,
+      defaultPrice: data.defaultPrice,
+      imageUrl: data.customerImageUrl ?? null,
+      allergens: data.allergens ?? [],
+      dietaryFlags: data.dietaryFlags ?? [],
+      ageRestricted: data.ageRestricted ?? false,
+      requiresPreparation: data.requiresPreparation ?? false,
+      available: true,
+      splittable: data.splittable ?? false,
+      splitMaxWays: 2,
+      removableIngredients: data.ingredients
+        ? data.ingredients
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [],
+      preparationInstructions: data.preparationInstructions ?? null,
+      displayOrder: data.displayOrder ?? maxOrder + 1,
+      kitchenPost: null,
+      variantGroups: buildVariantGroups(data.variantGroups),
+      modifiers: buildModifiers(data.modifiers),
+    };
+    products.set(product.id, product);
+    return product;
+  },
+
+  async updateProduct(id, patch) {
+    const existing = products.get(id);
+    if (!existing) throw new Error(`Product not found: ${id}`);
+    const updated: StoredProduct = {
+      ...existing,
+      ...(patch.name !== undefined && { name: patch.name }),
+      ...(patch.categoryId !== undefined && { categoryId: patch.categoryId }),
+      ...(patch.defaultPrice !== undefined && { defaultPrice: patch.defaultPrice }),
+      ...(patch.description !== undefined && { description: patch.description }),
+      ...(patch.customerImageUrl !== undefined && { imageUrl: patch.customerImageUrl }),
+      ...(patch.allergens !== undefined && { allergens: patch.allergens }),
+      ...(patch.dietaryFlags !== undefined && { dietaryFlags: patch.dietaryFlags }),
+      ...(patch.ageRestricted !== undefined && { ageRestricted: patch.ageRestricted }),
+      ...(patch.splittable !== undefined && { splittable: patch.splittable }),
+      ...(patch.requiresPreparation !== undefined && {
+        requiresPreparation: patch.requiresPreparation,
+      }),
+      ...(patch.displayOrder !== undefined && { displayOrder: patch.displayOrder }),
+      ...(patch.ingredients !== undefined && {
+        removableIngredients: patch.ingredients
+          ? patch.ingredients
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
+      }),
+      ...(patch.preparationInstructions !== undefined && {
+        preparationInstructions: patch.preparationInstructions,
+      }),
+      ...(patch.variantGroups !== undefined && {
+        variantGroups: buildVariantGroups(patch.variantGroups),
+      }),
+      ...(patch.modifiers !== undefined && { modifiers: buildModifiers(patch.modifiers) }),
+    };
+    products.set(id, updated);
+    return updated;
+  },
+
+  async deleteProduct(id) {
+    products.delete(id);
+    for (const key of txosnaProducts.keys()) {
+      if (key.endsWith(`:${id}`)) txosnaProducts.delete(key);
+    }
+  },
+
+  async reorderProducts(_categoryId, ids) {
+    ids.forEach((id, index) => {
+      const p = products.get(id);
+      if (p) products.set(id, { ...p, displayOrder: index });
+    });
+  },
+
+  async upsertTxosnaProduct(txosnaId, productId, data) {
+    const key = `${txosnaId}:${productId}`;
+    const existing = txosnaProducts.get(key);
+    const tp: StoredTxosnaProduct = {
+      txosnaId,
+      productId,
+      available: data.available ?? existing?.available ?? true,
+      soldOut: data.soldOut ?? existing?.soldOut ?? false,
+      priceOverride:
+        data.priceOverride !== undefined ? data.priceOverride : (existing?.priceOverride ?? null),
+      preparationInstructions:
+        data.preparationInstructions !== undefined
+          ? data.preparationInstructions
+          : (existing?.preparationInstructions ?? null),
+    };
+    txosnaProducts.set(key, tp);
+    return tp;
+  },
+
+  async deleteTxosnaProduct(txosnaId, productId) {
+    txosnaProducts.delete(`${txosnaId}:${productId}`);
+  },
 };
 
 // ── AssociationRepository ─────────────────────────────────────────────────────
@@ -942,6 +1129,53 @@ export function resetDemoAssociation() {
   seedDemoData();
 }
 
+// ── VatTypeRepository ─────────────────────────────────────────────────────────
+
+export const vatTypeRepo: VatTypeRepository = {
+  async list(associationId) {
+    return [...vatTypes.values()]
+      .filter((v) => v.associationId === associationId)
+      .sort((a, b) => a.percentage - b.percentage);
+  },
+
+  async findById(id) {
+    return vatTypes.get(id) ?? null;
+  },
+
+  async findByLabel(associationId, label) {
+    return (
+      [...vatTypes.values()].find((v) => v.associationId === associationId && v.label === label) ??
+      null
+    );
+  },
+
+  async create({ associationId, label, percentage }) {
+    const t = now();
+    const vt: StoredVatType = {
+      id: newId(),
+      associationId,
+      label,
+      percentage,
+      createdAt: t,
+      updatedAt: t,
+    };
+    vatTypes.set(vt.id, vt);
+    return vt;
+  },
+
+  async update(id, patch) {
+    const vt = vatTypes.get(id);
+    if (!vt) throw new Error(`VatType not found: ${id}`);
+    const updated = { ...vt, ...patch, updatedAt: now() };
+    vatTypes.set(id, updated);
+    return updated;
+  },
+
+  async delete(id) {
+    vatTypes.delete(id);
+  },
+};
+
 // ── Reset (for tests) ─────────────────────────────────────────────────────────
 
 export function resetStore() {
@@ -950,6 +1184,7 @@ export function resetStore() {
   categories.clear();
   products.clear();
   txosnaProducts.clear();
+  vatTypes.clear();
   orders.clear();
   tickets.clear();
   volunteers.clear();

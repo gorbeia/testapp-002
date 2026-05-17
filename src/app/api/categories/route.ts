@@ -1,25 +1,28 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { catalogRepo } from '@/lib/store';
 import type { NextRequest } from 'next/server';
 
 export async function GET() {
   const session = await auth();
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const associationId = (session.user as any).associationId as string;
 
   if (!prisma) {
-    const { catalogRepo } = await import('@/lib/store');
     const cats = await catalogRepo.listCategories(associationId);
     const categories = await Promise.all(
-      cats.map(async (cat: any) => {
+      cats.map(async (cat) => {
         const products = await catalogRepo.listProducts(cat.id);
         return {
           ...cat,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           products: products.map((p: any) => ({
             ...p,
-            defaultPrice: p.defaultPrice,
             customerImageUrl: p.imageUrl,
-            ingredients: p.removableIngredients.join(', ') || null,
+            ingredients: Array.isArray(p.removableIngredients)
+              ? p.removableIngredients.join(', ') || null
+              : null,
           })),
         };
       })
@@ -50,11 +53,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  if (!prisma) return new Response('Service unavailable', { status: 503 });
-
   const session = await auth();
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { role, associationId } = session.user as any;
   if (role !== 'ADMIN') return new Response('Forbidden', { status: 403 });
 
@@ -65,7 +67,11 @@ export async function POST(request: NextRequest) {
     return new Response('name and type are required', { status: 400 });
   }
 
-  // Auto-assign displayOrder as max + 1
+  if (!prisma) {
+    const category = await catalogRepo.createCategory({ name, type, associationId });
+    return Response.json(category, { status: 201 });
+  }
+
   const max = await prisma.category.findFirst({
     where: { associationId },
     orderBy: { displayOrder: 'desc' },

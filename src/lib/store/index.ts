@@ -19,6 +19,7 @@ import {
   ticketBaiInvoiceRepo,
   ticketRepo,
   txosnaRepo,
+  vatTypeRepo,
   volunteerRepo,
 } from './memory';
 
@@ -33,6 +34,7 @@ export {
   ticketBaiInvoiceRepo,
   ticketRepo,
   txosnaRepo,
+  vatTypeRepo,
   volunteerRepo,
 };
 
@@ -55,11 +57,16 @@ export type {
   CategoryType,
   CounterSetup,
   CounterType,
+  CreateCategoryInput,
+  CreateModifierInput,
   CreateOrderInput,
   CreateOrderLineInput,
   CreatePaymentProviderInput,
+  CreateProductInput,
   CreateTicketInput,
   CreateTxosnaInput,
+  CreateVariantGroupInput,
+  CreateVariantOptionInput,
   CreateVolunteerInput,
   OrderFilter,
   OrderRepository,
@@ -83,6 +90,7 @@ export type {
   StoredTxosnaProduct,
   StoredVariantGroup,
   StoredVariantOption,
+  StoredVatType,
   StoredVolunteer,
   TicketBaiConfigRepository,
   TicketBaiInvoiceLine,
@@ -95,6 +103,7 @@ export type {
   TicketStatus,
   TxosnaRepository,
   TxosnaStatus,
+  VatTypeRepository,
   VolunteerRepository,
   VolunteerRole,
 } from './types';

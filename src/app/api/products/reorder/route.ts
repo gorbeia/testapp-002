@@ -1,13 +1,13 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { catalogRepo } from '@/lib/store';
 import type { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {
-  if (!prisma) return new Response('Service unavailable', { status: 503 });
-
   const session = await auth();
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { role, associationId } = session.user as any;
   if (role !== 'ADMIN') return new Response('Forbidden', { status: 403 });
 
@@ -16,7 +16,20 @@ export async function POST(request: NextRequest) {
     return new Response('ids array is required', { status: 400 });
   }
 
-  // Verify all ids belong to this association
+  if (!prisma) {
+    const cats = await catalogRepo.listCategories(associationId);
+    const allProducts = (
+      await Promise.all(cats.map((cat) => catalogRepo.listProducts(cat.id)))
+    ).flat();
+    const productIds = new Set(allProducts.map((p) => p.id));
+    if (ids.some((id: string) => !productIds.has(id))) {
+      return new Response('One or more product ids not found', { status: 404 });
+    }
+    const categoryId = allProducts.find((p) => p.id === ids[0])?.categoryId ?? '';
+    await catalogRepo.reorderProducts(categoryId, ids);
+    return new Response(null, { status: 204 });
+  }
+
   const products = await prisma.product.findMany({
     where: { id: { in: ids }, category: { associationId } },
     select: { id: true },
