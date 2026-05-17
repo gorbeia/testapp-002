@@ -1,4 +1,4 @@
-@e2e-only
+@e2e-only @mobile
 Feature: Public txosna menu
   As a customer
   I want to browse the txosna menu in a browser

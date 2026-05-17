@@ -1,4 +1,4 @@
-@e2e-only
+@e2e-only @mobile
 Feature: Self-service checkout flow
   As a customer at the festival
   I want to add items to my cart and place an order

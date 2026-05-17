@@ -1,4 +1,4 @@
-@e2e-only
+@e2e-only @mobile
 Feature: Order tracking by verification code
   As a customer
   I want to look up my order by entering a short code

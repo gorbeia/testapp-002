@@ -1,3 +1,4 @@
+@mobile
 Feature: Self-service order
   As a customer at the festival
   I want to place my own order and pay with cash

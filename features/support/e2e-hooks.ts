@@ -6,8 +6,13 @@ import type { E2eWorld } from '../step-definitions/e2e/world';
 // Browser + network steps need more time than in-memory integration steps
 setDefaultTimeout(30_000);
 
-Before({ tags: '@e2e' }, async function (this: E2eWorld) {
-  await this.openBrowser();
+Before({ tags: '@e2e and @mobile' }, async function (this: E2eWorld) {
+  await this.openBrowser(true);
+  this.trackConsoleErrors();
+});
+
+Before({ tags: '@e2e and not @mobile' }, async function (this: E2eWorld) {
+  await this.openBrowser(false);
   this.trackConsoleErrors();
 });
 

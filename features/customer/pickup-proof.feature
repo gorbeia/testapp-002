@@ -1,4 +1,4 @@
-@e2e-only
+@e2e-only @mobile
 Feature: Pickup proof page
   As a customer
   I want to show my pickup proof to the volunteer

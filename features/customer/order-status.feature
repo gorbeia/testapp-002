@@ -1,4 +1,4 @@
-@e2e-only
+@e2e-only @mobile
 Feature: Customer order status page
   As a customer
   I want to view my order status in a browser
