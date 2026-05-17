@@ -1,5 +1,4 @@
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 import { catalogRepo } from '@/lib/store';
 import type { NextRequest } from 'next/server';
 
@@ -16,34 +15,15 @@ export async function POST(request: NextRequest) {
     return new Response('ids array is required', { status: 400 });
   }
 
-  if (!prisma) {
-    const cats = await catalogRepo.listCategories(associationId);
-    const allProducts = (
-      await Promise.all(cats.map((cat) => catalogRepo.listProducts(cat.id)))
-    ).flat();
-    const productIds = new Set(allProducts.map((p) => p.id));
-    if (ids.some((id: string) => !productIds.has(id))) {
-      return new Response('One or more product ids not found', { status: 404 });
-    }
-    const categoryId = allProducts.find((p) => p.id === ids[0])?.categoryId ?? '';
-    await catalogRepo.reorderProducts(categoryId, ids);
-    return new Response(null, { status: 204 });
-  }
-
-  const products = await prisma.product.findMany({
-    where: { id: { in: ids }, category: { associationId } },
-    select: { id: true },
-  });
-
-  if (products.length !== ids.length) {
+  const cats = await catalogRepo.listCategories(associationId);
+  const allProducts = (
+    await Promise.all(cats.map((cat) => catalogRepo.listProducts(cat.id)))
+  ).flat();
+  const productIds = new Set(allProducts.map((p) => p.id));
+  if (ids.some((id: string) => !productIds.has(id))) {
     return new Response('One or more product ids not found', { status: 404 });
   }
-
-  await prisma.$transaction(
-    ids.map((id: string, index: number) =>
-      prisma!.product.update({ where: { id }, data: { displayOrder: index } })
-    )
-  );
-
+  const categoryId = allProducts.find((p) => p.id === ids[0])?.categoryId ?? '';
+  await catalogRepo.reorderProducts(categoryId, ids);
   return new Response(null, { status: 204 });
 }

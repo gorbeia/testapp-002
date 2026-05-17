@@ -111,6 +111,7 @@ Given(
       preparationInstructions: null,
       displayOrder: 99,
       kitchenPost: null,
+      vatTypeId: null,
       variantGroups: [],
       modifiers: [],
     });
@@ -151,6 +152,7 @@ Given(
       preparationInstructions: null,
       displayOrder: 99,
       kitchenPost: null,
+      vatTypeId: null,
       variantGroups: [],
       modifiers: [],
     });
