@@ -424,8 +424,78 @@ export interface VolunteerRepository {
   ): Promise<StoredVolunteer>;
 }
 
+export interface StoredVatType {
+  id: string;
+  associationId: string;
+  label: string;
+  percentage: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateCategoryInput {
+  name: string;
+  type: CategoryType;
+  associationId: string;
+}
+
+export interface CreateVariantOptionInput {
+  name: string;
+  priceDelta?: number;
+  allergens?: string[];
+  displayOrder?: number;
+}
+
+export interface CreateVariantGroupInput {
+  name: string;
+  displayOrder?: number;
+  options: CreateVariantOptionInput[];
+}
+
+export interface CreateModifierInput {
+  name: string;
+  price?: number;
+  allergens?: string[];
+  displayOrder?: number;
+}
+
+/** Input shape for creating or updating products — uses API/Prisma field names. */
+export interface CreateProductInput {
+  name: string;
+  categoryId: string;
+  defaultPrice: number;
+  description?: string | null;
+  customerImageUrl?: string | null;
+  allergens?: string[];
+  dietaryFlags?: string[];
+  ageRestricted?: boolean;
+  splittable?: boolean;
+  requiresPreparation?: boolean;
+  displayOrder?: number;
+  ingredients?: string | null;
+  preparationInstructions?: string | null;
+  vatTypeId?: string | null;
+  variantGroups?: CreateVariantGroupInput[];
+  modifiers?: CreateModifierInput[];
+}
+
+export interface VatTypeRepository {
+  list(associationId: string): Promise<StoredVatType[]>;
+  findById(id: string): Promise<StoredVatType | null>;
+  findByLabel(associationId: string, label: string): Promise<StoredVatType | null>;
+  create(data: {
+    associationId: string;
+    label: string;
+    percentage: number;
+  }): Promise<StoredVatType>;
+  update(id: string, patch: { label?: string; percentage?: number }): Promise<StoredVatType>;
+  delete(id: string): Promise<void>;
+}
+
 export interface CatalogRepository {
+  // ── Reads ──
   listCategories(associationId: string): Promise<StoredCategory[]>;
+  findCategory(id: string): Promise<StoredCategory | null>;
   listProducts(categoryId: string): Promise<StoredProduct[]>;
   getProduct(productId: string): Promise<StoredProduct | null>;
   /** Product merged with txosna-level overrides. */
@@ -434,4 +504,32 @@ export interface CatalogRepository {
   listProductViews(
     txosnaId: string
   ): Promise<{ category: StoredCategory; products: StoredProductView[] }[]>;
+
+  // ── Category writes ──
+  createCategory(data: CreateCategoryInput): Promise<StoredCategory>;
+  updateCategory(
+    id: string,
+    patch: Partial<Pick<StoredCategory, 'name' | 'type' | 'displayOrder'>>
+  ): Promise<StoredCategory>;
+  deleteCategory(id: string): Promise<void>;
+  reorderCategories(associationId: string, ids: string[]): Promise<void>;
+
+  // ── Product writes ──
+  createProduct(data: CreateProductInput): Promise<StoredProduct>;
+  updateProduct(id: string, patch: Partial<CreateProductInput>): Promise<StoredProduct>;
+  deleteProduct(id: string): Promise<void>;
+  reorderProducts(categoryId: string, ids: string[]): Promise<void>;
+
+  // ── TxosnaProduct writes ──
+  upsertTxosnaProduct(
+    txosnaId: string,
+    productId: string,
+    data: Partial<
+      Pick<
+        StoredTxosnaProduct,
+        'available' | 'soldOut' | 'priceOverride' | 'preparationInstructions'
+      >
+    >
+  ): Promise<StoredTxosnaProduct>;
+  deleteTxosnaProduct(txosnaId: string, productId: string): Promise<void>;
 }

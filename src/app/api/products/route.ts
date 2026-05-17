@@ -1,10 +1,18 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { catalogRepo } from '@/lib/store';
+import type { StoredProduct } from '@/lib/store';
 import type { NextRequest } from 'next/server';
 
-export async function GET(request: NextRequest) {
-  if (!prisma) return new Response('Service unavailable', { status: 503 });
+function shapeProduct(p: StoredProduct) {
+  return {
+    ...p,
+    customerImageUrl: p.imageUrl,
+    ingredients: p.removableIngredients.join(', ') || null,
+  };
+}
 
+export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
 
@@ -12,6 +20,20 @@ export async function GET(request: NextRequest) {
   const associationId = (session.user as any).associationId as string;
   const { searchParams } = request.nextUrl;
   const categoryId = searchParams.get('categoryId');
+
+  if (!prisma) {
+    if (categoryId) {
+      const cat = await catalogRepo.findCategory(categoryId);
+      if (!cat || cat.associationId !== associationId) return Response.json([]);
+      const products = await catalogRepo.listProducts(categoryId);
+      return Response.json(products.map(shapeProduct));
+    }
+    const cats = await catalogRepo.listCategories(associationId);
+    const products = (
+      await Promise.all(cats.map((cat) => catalogRepo.listProducts(cat.id)))
+    ).flat();
+    return Response.json(products.map(shapeProduct));
+  }
 
   const products = await prisma.product.findMany({
     where: {
@@ -33,8 +55,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!prisma) return new Response('Service unavailable', { status: 503 });
-
   const session = await auth();
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
 
@@ -62,26 +82,45 @@ export async function POST(request: NextRequest) {
     vatTypeId,
   } = body;
 
-  // Get association config to check if TicketBAI is enabled
-  const association = await prisma.association.findUnique({
-    where: { id: associationId },
-  });
+  if (!name || !categoryId || defaultPrice === undefined) {
+    return new Response('name, categoryId, and defaultPrice are required', { status: 400 });
+  }
+
+  if (!prisma) {
+    const cat = await catalogRepo.findCategory(categoryId);
+    if (!cat || cat.associationId !== associationId) {
+      return new Response('Category not found', { status: 404 });
+    }
+    const product = await catalogRepo.createProduct({
+      name,
+      categoryId,
+      defaultPrice,
+      description,
+      customerImageUrl,
+      allergens,
+      dietaryFlags,
+      ageRestricted,
+      splittable,
+      requiresPreparation,
+      displayOrder,
+      ingredients,
+      preparationInstructions,
+      vatTypeId,
+      variantGroups,
+      modifiers,
+    });
+    return Response.json(shapeProduct(product), { status: 201 });
+  }
+
+  const association = await prisma.association.findUnique({ where: { id: associationId } });
 
   if (association?.ticketBaiEnabled && !vatTypeId) {
     return new Response('vatTypeId is required when TicketBAI is enabled', { status: 400 });
   }
 
-  if (!name || !categoryId || defaultPrice === undefined) {
-    return new Response('name, categoryId, and defaultPrice are required', { status: 400 });
-  }
-
-  // Verify categoryId belongs to this association
-  const category = await prisma.category.findFirst({
-    where: { id: categoryId, associationId },
-  });
+  const category = await prisma.category.findFirst({ where: { id: categoryId, associationId } });
   if (!category) return new Response('Category not found', { status: 404 });
 
-  // Auto-assign displayOrder if not provided
   let order = displayOrder;
   if (order === undefined) {
     const max = await prisma.product.findFirst({

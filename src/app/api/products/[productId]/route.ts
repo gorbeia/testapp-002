@@ -1,25 +1,36 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { catalogRepo } from '@/lib/store';
+import type { StoredProduct } from '@/lib/store';
 import type { NextRequest } from 'next/server';
 
-async function getProductForAssociation(productId: string, associationId: string) {
-  return prisma!.product.findFirst({
-    where: { id: productId, category: { associationId } },
-  });
+function shapeProduct(p: StoredProduct) {
+  return {
+    ...p,
+    customerImageUrl: p.imageUrl,
+    ingredients: p.removableIngredients.join(', ') || null,
+  };
 }
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ productId: string }> }
 ) {
-  if (!prisma) return new Response('Service unavailable', { status: 503 });
-
   const session = await auth();
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const associationId = (session.user as any).associationId as string;
   const { productId } = await params;
+
+  if (!prisma) {
+    const product = await catalogRepo.getProduct(productId);
+    if (!product) return new Response('Not found', { status: 404 });
+    const cat = await catalogRepo.findCategory(product.categoryId);
+    if (!cat || cat.associationId !== associationId)
+      return new Response('Not found', { status: 404 });
+    return Response.json(shapeProduct(product));
+  }
 
   const product = await prisma.product.findFirst({
     where: { id: productId, category: { associationId } },
@@ -42,18 +53,14 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ productId: string }> }
 ) {
-  if (!prisma) return new Response('Service unavailable', { status: 503 });
-
   const session = await auth();
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { role, associationId } = session.user as any;
   if (role !== 'ADMIN') return new Response('Forbidden', { status: 403 });
 
   const { productId } = await params;
-  const existing = await getProductForAssociation(productId, associationId);
-  if (!existing) return new Response('Not found', { status: 404 });
-
   const body = await request.json();
   const {
     name,
@@ -74,13 +81,41 @@ export async function PATCH(
     vatTypeId,
   } = body;
 
-  // Get association to check TicketBAI
-  const association = await prisma.association.findUnique({
-    where: { id: associationId },
+  if (!prisma) {
+    const existing = await catalogRepo.getProduct(productId);
+    if (!existing) return new Response('Not found', { status: 404 });
+    const cat = await catalogRepo.findCategory(existing.categoryId);
+    if (!cat || cat.associationId !== associationId)
+      return new Response('Not found', { status: 404 });
+    const updated = await catalogRepo.updateProduct(productId, {
+      name,
+      categoryId,
+      defaultPrice,
+      description,
+      customerImageUrl,
+      allergens,
+      dietaryFlags,
+      ageRestricted,
+      splittable,
+      requiresPreparation,
+      displayOrder,
+      ingredients,
+      preparationInstructions,
+      variantGroups,
+      modifiers,
+      vatTypeId,
+    });
+    return Response.json(shapeProduct(updated));
+  }
+
+  const existing = await prisma.product.findFirst({
+    where: { id: productId, category: { associationId } },
   });
+  if (!existing) return new Response('Not found', { status: 404 });
+
+  const association = await prisma.association.findUnique({ where: { id: associationId } });
 
   if (association?.ticketBaiEnabled && vatTypeId === null && existing.vatTypeId) {
-    // Checking if user is explicitly clearing VAT type when TicketBAI is on
     return new Response('vatTypeId cannot be removed when TicketBAI is enabled', { status: 400 });
   }
 
@@ -88,21 +123,16 @@ export async function PATCH(
     return new Response('vatTypeId is required when TicketBAI is enabled', { status: 400 });
   }
 
-  // If categoryId provided, verify it belongs to the association
   if (categoryId) {
     const category = await prisma.category.findFirst({ where: { id: categoryId, associationId } });
     if (!category) return new Response('Category not found', { status: 404 });
   }
 
-  // Replace nested data in a transaction
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const product = await prisma.$transaction(async (tx: any) => {
-    // Delete and recreate variant groups + options
     if (variantGroups !== undefined) {
       await tx.variantGroup.deleteMany({ where: { productId } });
     }
-
-    // Delete and recreate modifiers
     if (modifiers !== undefined) {
       await tx.modifier.deleteMany({ where: { productId } });
     }
@@ -175,19 +205,30 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ productId: string }> }
 ) {
-  if (!prisma) return new Response('Service unavailable', { status: 503 });
-
   const session = await auth();
   if (!session?.user) return new Response('Unauthorized', { status: 401 });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { role, associationId } = session.user as any;
   if (role !== 'ADMIN') return new Response('Forbidden', { status: 403 });
 
   const { productId } = await params;
-  const existing = await getProductForAssociation(productId, associationId);
+
+  if (!prisma) {
+    const existing = await catalogRepo.getProduct(productId);
+    if (!existing) return new Response('Not found', { status: 404 });
+    const cat = await catalogRepo.findCategory(existing.categoryId);
+    if (!cat || cat.associationId !== associationId)
+      return new Response('Not found', { status: 404 });
+    await catalogRepo.deleteProduct(productId);
+    return new Response(null, { status: 204 });
+  }
+
+  const existing = await prisma.product.findFirst({
+    where: { id: productId, category: { associationId } },
+  });
   if (!existing) return new Response('Not found', { status: 404 });
 
-  // Reject if referenced by any OrderLine
   const orderLineCount = await prisma.orderLine.count({ where: { productId } });
   if (orderLineCount > 0) {
     return new Response('Product has existing orders and cannot be deleted', { status: 409 });
