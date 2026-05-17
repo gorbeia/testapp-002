@@ -337,13 +337,13 @@ export default function TxosnaDashboard() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[
-            { label: 'Mostradore', href: '/eu/counter', icon: '🧾' },
-            { label: 'Sukalde kudeaketa', href: '/eu/kitchen-manager', icon: '👨‍🍳' },
-            { label: 'Sukalde pantaila (KDS)', href: '/eu/kitchen', icon: '📺' },
-            { label: 'Edariak', href: '/eu/drinks', icon: '🍹' },
+            { label: 'Mostradore', href: `/eu/pin?slug=${txosnaId}`, icon: '🧾' },
+            { label: 'Sukalde kudeaketa', href: `/eu/pin?slug=${txosnaId}`, icon: '👨‍🍳' },
+            { label: 'Sukalde pantaila (KDS)', href: `/eu/pin?slug=${txosnaId}`, icon: '📺' },
+            { label: 'Edariak', href: `/eu/pin?slug=${txosnaId}`, icon: '🍹' },
           ].map((a) => (
             <Link
-              key={a.href}
+              key={a.label}
               href={a.href}
               target="_blank"
               rel="noreferrer"
