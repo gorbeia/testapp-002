@@ -50,7 +50,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   function addItem(item: CartItem) {
     setItems((prev) => {
       const existing = prev.find(
-        (i) => i.productId === item.productId && i.selectedVariant === item.selectedVariant
+        (i) =>
+          i.productId === item.productId &&
+          i.selectedVariant === item.selectedVariant &&
+          i.selectedModifiers.length === item.selectedModifiers.length &&
+          item.selectedModifiers.every((m) => i.selectedModifiers.includes(m))
       );
       if (existing) {
         return prev.map((i) =>
