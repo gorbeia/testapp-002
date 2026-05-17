@@ -1,4 +1,4 @@
-@e2e-only
+@e2e-only @mobile
 Feature: Customer order status page
   As a customer
   I want to view my order status in a browser
@@ -11,6 +11,14 @@ Feature: Customer order status page
     And the page shows progress steps including "Jasota"
     And there are no JavaScript errors in the console
     When I take a screenshot "41-order-status-fiscal-invoice"
+
+  @e2e
+  Scenario: Order status page renders for a confirmed order without fiscal invoice
+    Given I navigate to "/eu/order/order-4"
+    Then the page shows an order number
+    And the page shows progress steps including "Jasota"
+    And there are no JavaScript errors in the console
+    When I take a screenshot "08-order-status-mobile"
 
   @e2e
   Scenario: TicketBAI invoice section appears on order with invoice

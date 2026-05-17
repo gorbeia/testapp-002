@@ -1,7 +1,10 @@
 import { setWorldConstructor, World, IWorldOptions } from '@cucumber/cucumber';
-import { chromium, Browser, BrowserContext, Page } from 'playwright';
+import { chromium, Browser, BrowserContext, Page, devices } from 'playwright';
 import fs from 'fs';
 import path from 'path';
+
+// Generic mobile phone — iPhone 14 profile at 2× DPR for reasonable screenshot file sizes
+const MOBILE_CONTEXT = { ...devices['iPhone 14'], deviceScaleFactor: 2 };
 
 export const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:3000';
 
@@ -16,9 +19,9 @@ export class E2eWorld extends World {
     super(options);
   }
 
-  async openBrowser() {
+  async openBrowser(isMobile = false) {
     this.browser = await chromium.launch({ headless: true });
-    this.context = await this.browser.newContext();
+    this.context = await this.browser.newContext(isMobile ? MOBILE_CONTEXT : {});
     this.page = await this.context.newPage();
   }
 

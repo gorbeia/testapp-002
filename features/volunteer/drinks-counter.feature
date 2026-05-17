@@ -9,3 +9,4 @@ Feature: Drinks counter screen
     Given I am on the drinks counter page via PIN "1234"
     Then the page shows "Edariak" heading
     And there are no JavaScript errors in the console
+    When I take a screenshot "12-counter-drinks"

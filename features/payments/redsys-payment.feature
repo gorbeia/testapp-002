@@ -41,7 +41,7 @@ Feature: Online payment via Redsys
     When I POST a Redsys webhook notification with an invalid signature for session "0042ABCD"
     Then the response status is 400
 
-  @e2e @smoke
+  @e2e @smoke @redsys
   Scenario: Redsys redirect page renders a correctly signed payment form
     Given a PENDING_PAYMENT order "order-redsys-1" exists
     And a Redsys payment provider is configured for the txosna

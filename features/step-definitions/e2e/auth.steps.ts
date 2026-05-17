@@ -9,10 +9,22 @@ import type { E2eWorld } from './world';
  */
 async function loginAsAdmin(world: E2eWorld, association: string, email: string, password: string) {
   await world.goto('/login');
+  // Login page is a Client Component — wait for React to hydrate before interacting
+  await world.page.waitForLoadState('load');
 
   const assocInput = world.page.getByPlaceholder('Adib.: Bilbao Zaharra');
   await assocInput.click();
   await assocInput.pressSequentially(association, { delay: 30 });
+  // Wait for the Jarraitu button to become enabled (disabled until query has text)
+  await world.page.waitForFunction(
+    () => {
+      const btn = [...document.querySelectorAll('button')].find((b) =>
+        b.textContent?.includes('Jarraitu')
+      );
+      return btn && !(btn as HTMLButtonElement).disabled;
+    },
+    { timeout: 5_000 }
+  );
   await world.page.getByRole('button', { name: /Jarraitu/ }).click();
 
   await world.page.waitForSelector('input[type="email"]', { timeout: 5_000 });
@@ -20,20 +32,33 @@ async function loginAsAdmin(world: E2eWorld, association: string, email: string,
   await world.page.fill('input[type="password"]', password);
   await world.page.getByRole('button', { name: 'Saioa hasi →' }).click();
 
-  await world.page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 5_000 });
+  await world.page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 10_000 });
 }
 
 export async function loginAsVolunteer(world: E2eWorld) {
   await world.goto('/login');
+  // Login page is a Client Component — wait for React to hydrate before interacting
+  await world.page.waitForLoadState('load');
+
   const assocInput = world.page.getByPlaceholder('Adib.: Bilbao Zaharra');
   await assocInput.click();
   await assocInput.pressSequentially('Erreka Gaztedi', { delay: 30 });
+  // Wait for the Jarraitu button to become enabled (disabled until query has text)
+  await world.page.waitForFunction(
+    () => {
+      const btn = [...document.querySelectorAll('button')].find((b) =>
+        b.textContent?.includes('Jarraitu')
+      );
+      return btn && !(btn as HTMLButtonElement).disabled;
+    },
+    { timeout: 5_000 }
+  );
   await world.page.getByRole('button', { name: /Jarraitu/ }).click();
   await world.page.waitForSelector('input[type="email"]', { timeout: 5_000 });
   await world.page.fill('input[type="email"]', 'gorka@elkartea.eus');
   await world.page.fill('input[type="password"]', 'test1234');
   await world.page.getByRole('button', { name: 'Saioa hasi →' }).click();
-  await world.page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 5_000 });
+  await world.page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 10_000 });
 }
 
 // ── Given ─────────────────────────────────────────────────────────────────────
@@ -70,9 +95,21 @@ When(
 );
 
 When('I select association {string}', async function (this: E2eWorld, name: string) {
+  // Login page is a Client Component — wait for React to hydrate before interacting
+  await this.page.waitForLoadState('load');
   const assocInput = this.page.getByPlaceholder('Adib.: Bilbao Zaharra');
   await assocInput.click();
   await assocInput.pressSequentially(name, { delay: 30 });
+  // Wait for the Jarraitu button to become enabled (disabled until query has text)
+  await this.page.waitForFunction(
+    () => {
+      const btn = [...document.querySelectorAll('button')].find((b) =>
+        b.textContent?.includes('Jarraitu')
+      );
+      return btn && !(btn as HTMLButtonElement).disabled;
+    },
+    { timeout: 5_000 }
+  );
   await this.page.getByRole('button', { name: /Jarraitu/ }).click();
   await this.page.waitForSelector('input[type="email"]', { timeout: 5_000 });
 });

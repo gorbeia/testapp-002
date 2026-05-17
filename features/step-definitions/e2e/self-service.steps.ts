@@ -51,13 +51,26 @@ When('I navigate to the menu for {string}', async function (this: E2eWorld, slug
 });
 
 When('I add {string} to my cart', async function (this: E2eWorld, productName: string) {
-  // Click the product card containing the product name
-  await this.page
-    .locator(`[data-testid="product-card"]:has-text("${productName}")`)
-    .first()
-    .click();
+  await this.page.waitForSelector(`[data-testid="product-card"]:has-text("${productName}")`, {
+    timeout: 8_000,
+  });
+  // Ensure React has hydrated the click handlers (page is a Client Component)
+  await this.page.waitForLoadState('load');
+  // Retry click up to 3 times in case React hydration completes mid-click
+  for (let i = 0; i < 3; i++) {
+    await this.page
+      .locator(`[data-testid="product-card"]:has-text("${productName}")`)
+      .first()
+      .click();
+    const appeared = await this.page
+      .waitForSelector('button:has-text("Saskira gehitu")', { timeout: 4_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (appeared) break;
+    await this.page.waitForTimeout(300);
+  }
   // ProductSheet opens — click "Saskira gehitu"
-  await this.page.waitForSelector('button:has-text("Saskira gehitu")', { timeout: 6_000 });
+  await this.page.waitForSelector('button:has-text("Saskira gehitu")', { timeout: 5_000 });
   await this.page.getByRole('button', { name: /Saskira gehitu/i }).click();
   await this.page.waitForTimeout(400);
 });
