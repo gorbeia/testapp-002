@@ -29,3 +29,15 @@ Feature: Txosna product listing
     Given I am authenticated as an ADMIN for association "assoc-2"
     When I request the product list for txosna "txosna-1"
     Then the response status is 404
+
+  @integration-only
+  Scenario: A product enabled in the txosna management page appears in the customer catalog
+    Given product "enabled-prod" is enabled for txosna "txosna-1"
+    When I request the catalog for "aste-nagusia-2026"
+    Then product "enabled-prod" appears in the catalog response
+
+  @integration-only
+  Scenario: A product disabled in the txosna management page is excluded from the customer catalog
+    Given product "disabled-prod" is disabled for txosna "txosna-1"
+    When I request the catalog for "aste-nagusia-2026"
+    Then product "disabled-prod" is not in the response
