@@ -207,9 +207,9 @@ Faktura jaulkitzen denean, "**Txartel argia / Faktura**" sekzio bat agertzen da 
 
 > **Oharra**: Bezero guztiek erabili dezakete — txartelez, eskudiruz edo online ordaindu. CONFIRMED egoerara iristen denetik aurrera frogagirria deskargatzeko aukera dago.
 
-#### Ordenatze Taula (Order Board)
+#### Eskaera Taula (Order Board)
 
-![Ordenatze taula TVan](../screenshots/10-order-board-tv.png)
+![Eskaera taula TVan](../screenshots/10-order-board-tv.png)
 
 **Pantaila handietan erakusteko**:
 
