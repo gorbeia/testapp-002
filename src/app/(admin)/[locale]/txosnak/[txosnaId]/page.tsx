@@ -336,36 +336,28 @@ export default function TxosnaDashboard() {
           Leiho berrian irekitzen dira
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {[
-            { label: 'Mostradore', href: `/eu/pin?slug=${txosnaId}`, icon: '🧾' },
-            { label: 'Sukalde kudeaketa', href: `/eu/pin?slug=${txosnaId}`, icon: '👨‍🍳' },
-            { label: 'Sukalde pantaila (KDS)', href: `/eu/pin?slug=${txosnaId}`, icon: '📺' },
-            { label: 'Edariak', href: `/eu/pin?slug=${txosnaId}`, icon: '🍹' },
-          ].map((a) => (
-            <Link
-              key={a.label}
-              href={a.href}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '9px 12px',
-                borderRadius: 8,
-                border: '1px solid #e85d2f44',
-                background: 'var(--adm-surface-hi)',
-                textDecoration: 'none',
-                fontSize: 13,
-                color: 'var(--adm-text-pri)',
-                fontWeight: 500,
-              }}
-            >
-              <span>{a.icon}</span>
-              <span style={{ flex: 1 }}>{a.label}</span>
-              <span style={{ fontSize: 11, color: 'var(--adm-text-sec)' }}>↗</span>
-            </Link>
-          ))}
+          <Link
+            href={`/eu/pin?slug=${txosnaId}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '9px 12px',
+              borderRadius: 8,
+              border: '1px solid #e85d2f44',
+              background: 'var(--adm-surface-hi)',
+              textDecoration: 'none',
+              fontSize: 13,
+              color: 'var(--adm-text-pri)',
+              fontWeight: 500,
+            }}
+          >
+            <span>🔐</span>
+            <span style={{ flex: 1 }}>Boluntario sarbidea (PIN)</span>
+            <span style={{ fontSize: 11, color: 'var(--adm-text-sec)' }}>↗</span>
+          </Link>
         </div>
       </div>
     </div>
