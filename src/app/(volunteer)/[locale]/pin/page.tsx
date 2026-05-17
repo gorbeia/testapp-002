@@ -18,9 +18,10 @@ export default function PinPage() {
   const [selectedMode, setSelectedMode] = useState(MODES[0]);
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
-  const [txosnaName, setTxosnaName] = useState('Txosna');
+  const [txosnaName, setTxosnaName] = useState<string | null>(null);
   const [slug, setSlug] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [txosnaLoading, setTxosnaLoading] = useState(false);
   // Post selection step: non-null when PIN validated and kitchen mode + posts configured
   const [pendingKitchenPosts, setPendingKitchenPosts] = useState<string[] | null>(null);
 
@@ -28,12 +29,14 @@ export default function PinPage() {
     const urlSlug = searchParams.get('slug');
     if (urlSlug) {
       setSlug(urlSlug);
+      setTxosnaLoading(true);
       fetch(`/api/txosnak/${urlSlug}`)
         .then((r) => r.json())
         .then((data) => {
           if (data.name) setTxosnaName(data.name);
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => setTxosnaLoading(false));
     }
   }, [searchParams]);
 
@@ -101,7 +104,7 @@ export default function PinPage() {
         <div style={{ width: '100%', maxWidth: 360 }}>
           <div className="text-center mb-6">
             <div className="text-sm mb-1" style={{ color: 'var(--ops-text-sec)' }}>
-              {txosnaName}
+              {txosnaName ?? '—'}
             </div>
             <div
               className="text-xl font-black"
@@ -183,12 +186,22 @@ export default function PinPage() {
           <div className="text-sm mb-1" style={{ color: 'var(--ops-text-sec)' }}>
             Txosna
           </div>
-          <div
-            className="text-xl font-black"
-            style={{ fontFamily: 'var(--font-nunito), sans-serif', color: 'var(--ops-text-pri)' }}
-          >
-            {txosnaName}
-          </div>
+          {txosnaLoading ? (
+            <div
+              className="h-7 rounded-lg mx-auto animate-pulse"
+              style={{ width: 140, background: 'var(--ops-border-hi)' }}
+            />
+          ) : (
+            <div
+              className="text-xl font-black"
+              style={{
+                fontFamily: 'var(--font-nunito), sans-serif',
+                color: txosnaName ? 'var(--ops-text-pri)' : 'var(--ops-text-dim)',
+              }}
+            >
+              {txosnaName ?? '—'}
+            </div>
+          )}
         </div>
 
         <div
