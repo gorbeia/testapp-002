@@ -41,3 +41,9 @@ Feature: Txosna product listing
     Given product "disabled-prod" is disabled for txosna "txosna-1"
     When I request the catalog for "aste-nagusia-2026"
     Then product "disabled-prod" is not in the response
+
+  @integration-only
+  Scenario: An enabled product is available in the food counter
+    Given product "counter-prod" is enabled for txosna "txosna-1"
+    When I request the catalog for "aste-nagusia-2026"
+    Then product "counter-prod" is available in the food counter catalog

@@ -88,6 +88,18 @@ Then(
   }
 );
 
+Then(
+  'product {string} is available in the food counter catalog',
+  function (this: IntegrationWorld, productId: string) {
+    const body = this.lastBody as Array<{ type: string; products: Array<{ id: string }> }>;
+    const foodProducts = body.filter((c) => c.type === 'FOOD').flatMap((c) => c.products);
+    assert.ok(
+      foodProducts.some((p) => p.id === productId),
+      `product "${productId}" should appear in a FOOD category of the catalog`
+    );
+  }
+);
+
 Then('each product in the response has a txosnaProduct field', function (this: IntegrationWorld) {
   const body = this.lastBody as Array<{ products: Array<Record<string, unknown>> }>;
   assert.ok(Array.isArray(body), 'response should be an array of categories');
