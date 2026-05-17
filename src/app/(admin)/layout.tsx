@@ -314,7 +314,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         >
           <ThemeToggle variant="admin" />
           <Link
-            href="/eu/pin"
+            href={activeTxosnaId ? `/eu/pin?slug=${activeTxosnaId}` : '/eu/pin'}
             style={{
               fontSize: 12,
               color: 'var(--adm-sidebar-label)',
