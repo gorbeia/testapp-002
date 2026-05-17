@@ -186,15 +186,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
           {/* Txosnak list */}
           {txosnak.map((tx) => {
-            const txBase = `/eu/txosnak/${tx.id}`;
-            const isTxActive = activeTxosnaId === tx.id;
-            const isOpen = expanded[tx.id] || isTxActive;
+            const txBase = `/eu/txosnak/${tx.slug}`;
+            const isTxActive = activeTxosnaId === tx.slug;
+            const isOpen = expanded[tx.slug] || isTxActive;
 
             return (
-              <div key={tx.id}>
+              <div key={tx.slug}>
                 {/* Txosna row */}
                 <button
-                  onClick={() => toggle(tx.id)}
+                  onClick={() => toggle(tx.slug)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',

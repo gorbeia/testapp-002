@@ -4,7 +4,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
   const { slug } = await params;
   const txosna = await txosnaRepo.findBySlug(slug);
 
-  if (!txosna || txosna.status === 'CLOSED') {
+  if (!txosna) {
     return Response.json({ error: 'Not found' }, { status: 404 });
   }
 
