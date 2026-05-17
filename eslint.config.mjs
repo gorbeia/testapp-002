@@ -99,6 +99,6 @@ export default [
 
   // Ignored files
   {
-    ignores: [".next/", "node_modules/", "dist/", "out/", ".husky/", "prototypes/", ".claude/"],
+    ignores: [".next/", "node_modules/", "dist/", "out/", ".husky/", "prototypes/", ".claude/", "prisma/"],
   },
 ];
