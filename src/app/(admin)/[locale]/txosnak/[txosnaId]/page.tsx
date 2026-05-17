@@ -63,6 +63,7 @@ function StatCard({
 }
 
 interface TxosnaData {
+  slug: string;
   name: string;
   status: 'OPEN' | 'PAUSED' | 'CLOSED';
   waitMinutes?: number | null;
@@ -115,7 +116,7 @@ export default function TxosnaDashboard() {
   const openTickets =
     (report?.ticketsByStatus?.RECEIVED ?? 0) + (report?.ticketsByStatus?.IN_PREPARATION ?? 0);
   const readyTickets = report?.ticketsByStatus?.READY ?? 0;
-  const base = `/eu/txosnak/${txosnaId}`;
+  const base = `/eu/txosnak/${txosna.slug}`;
 
   return (
     <div style={{ padding: '32px 32px 60px', background: 'var(--adm-bg)', minHeight: '100vh' }}>
@@ -283,8 +284,8 @@ export default function TxosnaDashboard() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[
-            { label: 'Bezero interfazea', href: `/eu/t/${txosnaId}`, icon: '🛒' },
-            { label: 'Eskaera jarraipena', href: `/eu/${txosnaId}/track`, icon: '📍' },
+            { label: 'Bezero interfazea', href: `/eu/t/${txosna.slug}`, icon: '🛒' },
+            { label: 'Eskaera jarraipena', href: `/eu/${txosna.slug}/track`, icon: '📍' },
           ].map((a) => (
             <Link
               key={a.href}
@@ -337,7 +338,7 @@ export default function TxosnaDashboard() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <Link
-            href={`/eu/pin?slug=${txosnaId}`}
+            href={`/eu/pin?slug=${txosna.slug}`}
             target="_blank"
             rel="noreferrer"
             style={{
