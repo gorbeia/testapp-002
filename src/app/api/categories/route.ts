@@ -1,5 +1,4 @@
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 import { catalogRepo } from '@/lib/store';
 import type { NextRequest } from 'next/server';
 
@@ -9,46 +8,20 @@ export async function GET() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const associationId = (session.user as any).associationId as string;
 
-  if (!prisma) {
-    const cats = await catalogRepo.listCategories(associationId);
-    const categories = await Promise.all(
-      cats.map(async (cat) => {
-        const products = await catalogRepo.listProducts(cat.id);
-        return {
-          ...cat,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          products: products.map((p: any) => ({
-            ...p,
-            customerImageUrl: p.imageUrl,
-            ingredients: Array.isArray(p.removableIngredients)
-              ? p.removableIngredients.join(', ') || null
-              : null,
-          })),
-        };
-      })
-    );
-    return Response.json(categories);
-  }
-
-  const categories = await prisma.category.findMany({
-    where: { associationId },
-    orderBy: { displayOrder: 'asc' },
-    include: {
-      products: {
-        orderBy: { displayOrder: 'asc' },
-        include: {
-          variantGroups: {
-            orderBy: { displayOrder: 'asc' },
-            include: {
-              options: { orderBy: { displayOrder: 'asc' } },
-            },
-          },
-          modifiers: { orderBy: { displayOrder: 'asc' } },
-        },
-      },
-    },
-  });
-
+  const cats = await catalogRepo.listCategories(associationId);
+  const categories = await Promise.all(
+    cats.map(async (cat) => {
+      const products = await catalogRepo.listProducts(cat.id);
+      return {
+        ...cat,
+        products: products.map((p) => ({
+          ...p,
+          customerImageUrl: p.imageUrl,
+          ingredients: p.removableIngredients.join(', ') || null,
+        })),
+      };
+    })
+  );
   return Response.json(categories);
 }
 
@@ -67,25 +40,6 @@ export async function POST(request: NextRequest) {
     return new Response('name and type are required', { status: 400 });
   }
 
-  if (!prisma) {
-    const category = await catalogRepo.createCategory({ name, type, associationId });
-    return Response.json(category, { status: 201 });
-  }
-
-  const max = await prisma.category.findFirst({
-    where: { associationId },
-    orderBy: { displayOrder: 'desc' },
-    select: { displayOrder: true },
-  });
-
-  const category = await prisma.category.create({
-    data: {
-      name,
-      type,
-      displayOrder: (max?.displayOrder ?? -1) + 1,
-      associationId,
-    },
-  });
-
+  const category = await catalogRepo.createCategory({ name, type, associationId });
   return Response.json(category, { status: 201 });
 }

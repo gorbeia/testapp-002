@@ -1,5 +1,4 @@
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 import { catalogRepo } from '@/lib/store';
 import type { NextRequest } from 'next/server';
 
@@ -16,30 +15,11 @@ export async function POST(request: NextRequest) {
     return new Response('ids array is required', { status: 400 });
   }
 
-  if (!prisma) {
-    const allCats = await catalogRepo.listCategories(associationId);
-    const catIds = new Set(allCats.map((c) => c.id));
-    if (ids.some((id: string) => !catIds.has(id))) {
-      return new Response('One or more category ids not found', { status: 404 });
-    }
-    await catalogRepo.reorderCategories(associationId, ids);
-    return new Response(null, { status: 204 });
-  }
-
-  const categories = await prisma.category.findMany({
-    where: { id: { in: ids }, associationId },
-    select: { id: true },
-  });
-
-  if (categories.length !== ids.length) {
+  const allCats = await catalogRepo.listCategories(associationId);
+  const catIds = new Set(allCats.map((c) => c.id));
+  if (ids.some((id: string) => !catIds.has(id))) {
     return new Response('One or more category ids not found', { status: 404 });
   }
-
-  await prisma.$transaction(
-    ids.map((id: string, index: number) =>
-      prisma!.category.update({ where: { id }, data: { displayOrder: index } })
-    )
-  );
-
+  await catalogRepo.reorderCategories(associationId, ids);
   return new Response(null, { status: 204 });
 }

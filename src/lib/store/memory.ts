@@ -192,6 +192,7 @@ export function seedMockData() {
       preparationInstructions: mp.preparationInstructions,
       displayOrder: MOCK_PRODUCTS.indexOf(mp),
       kitchenPost: mp.kitchenPost ?? null,
+      vatTypeId: null,
       variantGroups: mp.variantGroups.map((vg, vgi) => ({
         id: vg.id,
         name: vg.name,
@@ -667,6 +668,7 @@ export const catalogRepo: CatalogRepository = {
       preparationInstructions: data.preparationInstructions ?? null,
       displayOrder: data.displayOrder ?? maxOrder + 1,
       kitchenPost: null,
+      vatTypeId: data.vatTypeId ?? null,
       variantGroups: buildVariantGroups(data.variantGroups),
       modifiers: buildModifiers(data.modifiers),
     };
@@ -703,6 +705,7 @@ export const catalogRepo: CatalogRepository = {
       ...(patch.preparationInstructions !== undefined && {
         preparationInstructions: patch.preparationInstructions,
       }),
+      ...(patch.vatTypeId !== undefined && { vatTypeId: patch.vatTypeId ?? null }),
       ...(patch.variantGroups !== undefined && {
         variantGroups: buildVariantGroups(patch.variantGroups),
       }),
@@ -724,6 +727,10 @@ export const catalogRepo: CatalogRepository = {
       const p = products.get(id);
       if (p) products.set(id, { ...p, displayOrder: index });
     });
+  },
+
+  async listTxosnaProducts(txosnaId) {
+    return [...txosnaProducts.values()].filter((tp) => tp.txosnaId === txosnaId);
   },
 
   async upsertTxosnaProduct(txosnaId, productId, data) {
@@ -903,6 +910,7 @@ export function seedDemoData() {
       preparationInstructions: dp.preparationInstructions,
       displayOrder: i,
       kitchenPost: dp.kitchenPost ?? null,
+      vatTypeId: null,
       variantGroups: dp.variantGroups.map((vg, vgi) => ({
         id: vg.id,
         name: vg.name,
@@ -1173,6 +1181,10 @@ export const vatTypeRepo: VatTypeRepository = {
 
   async delete(id) {
     vatTypes.delete(id);
+  },
+
+  async countProducts(vatTypeId) {
+    return [...products.values()].filter((p) => p.vatTypeId === vatTypeId).length;
   },
 };
 

@@ -102,6 +102,7 @@ export interface StoredProduct {
   preparationInstructions: string | null;
   displayOrder: number;
   kitchenPost: string | null;
+  vatTypeId: string | null;
   variantGroups: StoredVariantGroup[];
   modifiers: StoredModifier[];
 }
@@ -337,6 +338,8 @@ export interface CreateTxosnaInput {
   name: string;
   slug: string;
   pinHash?: string;
+  /** Required by the ORM backend (maps to Event.id). Ignored in memory mode. */
+  eventId?: string;
 }
 
 export interface TxosnaRepository {
@@ -490,6 +493,7 @@ export interface VatTypeRepository {
   }): Promise<StoredVatType>;
   update(id: string, patch: { label?: string; percentage?: number }): Promise<StoredVatType>;
   delete(id: string): Promise<void>;
+  countProducts(vatTypeId: string): Promise<number>;
 }
 
 export interface CatalogRepository {
@@ -519,6 +523,9 @@ export interface CatalogRepository {
   updateProduct(id: string, patch: Partial<CreateProductInput>): Promise<StoredProduct>;
   deleteProduct(id: string): Promise<void>;
   reorderProducts(categoryId: string, ids: string[]): Promise<void>;
+
+  // ── TxosnaProduct reads ──
+  listTxosnaProducts(txosnaId: string): Promise<StoredTxosnaProduct[]>;
 
   // ── TxosnaProduct writes ──
   upsertTxosnaProduct(
