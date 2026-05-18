@@ -78,6 +78,7 @@ jobs:
       - name: Assemble bundle
         run: |
           # Copy static assets into standalone so it is fully self-contained
+          mkdir -p .next/standalone/.next
           cp -r .next/static   .next/standalone/.next/static
           cp -r public         .next/standalone/public
 
