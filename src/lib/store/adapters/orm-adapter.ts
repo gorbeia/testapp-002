@@ -269,6 +269,7 @@ export class ORMStorageAdapter {
       id: r.id,
       associationId: r.associationId,
       providerType: r.providerType,
+      territory: r.territory ?? null,
       series: r.series,
       credentials:
         typeof r.credentials === 'string'
@@ -961,11 +962,13 @@ export class ORMStorageAdapter {
           create: {
             associationId,
             providerType: data.providerType ?? 'MOCK',
+            territory: data.territory ?? null,
             series: data.series ?? 'TB',
             credentials: credentialsJson ?? '{}',
           },
           update: {
             ...(data.providerType !== undefined && { providerType: data.providerType }),
+            ...(data.territory !== undefined && { territory: data.territory }),
             ...(data.series !== undefined && { series: data.series }),
             ...(credentialsJson !== undefined && { credentials: credentialsJson }),
             updatedAt: new Date(),

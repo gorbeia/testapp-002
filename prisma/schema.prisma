@@ -93,6 +93,13 @@ enum TicketBaiProviderType {
   MOCK
 }
 
+enum TicketBaiTerritory {
+  ARABA
+  BIZKAIA
+  GIPUZKOA
+  VERIFACTU
+}
+
 enum TicketBaiInvoiceStatus {
   PENDING
   SUBMITTED
@@ -426,6 +433,7 @@ model TxosnaPaymentProvider {
 model TicketBaiConfig {
   id            String                @id @default(cuid())
   providerType  TicketBaiProviderType @default(MOCK)
+  territory     TicketBaiTerritory?
   series        String                @default("TB")
   credentials   Json                  @default("{}")
   createdAt     DateTime              @default(now())
