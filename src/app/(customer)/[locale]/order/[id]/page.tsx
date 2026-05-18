@@ -317,6 +317,22 @@ export default function OrderStatusPage() {
             automatikoki eguneratzen da. Freskatzen ez bada, berritzen saia zaitez.
           </div>
         )}
+
+        {order.verificationCode && (
+          <div
+            style={{
+              fontSize: 11,
+              color: 'var(--cust-text-sec, #bbb)',
+              textAlign: 'center',
+              marginTop: 16,
+            }}
+          >
+            Kodea:{' '}
+            <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>
+              {order.verificationCode}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
