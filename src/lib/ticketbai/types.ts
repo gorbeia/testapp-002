@@ -22,6 +22,12 @@ export interface VatBreakdown {
   vatAmount: number;
 }
 
+export interface PreviousInvoiceRef {
+  series: string;
+  invoiceNumber: number;
+  issuedAt: Date;
+}
+
 export interface IssueInvoiceInput {
   orderId: string;
   orderNumber: number;
@@ -35,6 +41,8 @@ export interface IssueInvoiceInput {
   vatBreakdown: VatBreakdown[];
   /** Hash from the previous invoice in the chain. Null for the first invoice. */
   previousChainId: string | null;
+  /** Metadata for the previous invoice, needed to populate the XML chain block. */
+  previousInvoice?: PreviousInvoiceRef | null;
 }
 
 export interface IssueInvoiceResult {
