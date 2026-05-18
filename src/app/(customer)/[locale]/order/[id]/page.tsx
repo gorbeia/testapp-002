@@ -15,6 +15,7 @@ import {
   type FiscalInvoiceData,
 } from '@/components/order-status/fiscal-invoice-card';
 import { ReceiptDownload } from '@/components/order-status/receipt-download';
+import { VerificationCodeLabel } from '@/components/order-status/verification-code-label';
 
 interface OrderWithTickets {
   id: string;
@@ -318,21 +319,7 @@ export default function OrderStatusPage() {
           </div>
         )}
 
-        {order.verificationCode && (
-          <div
-            style={{
-              fontSize: 11,
-              color: 'var(--cust-text-sec, #bbb)',
-              textAlign: 'center',
-              marginTop: 16,
-            }}
-          >
-            Kodea:{' '}
-            <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>
-              {order.verificationCode}
-            </span>
-          </div>
-        )}
+        {order.verificationCode && <VerificationCodeLabel code={order.verificationCode} />}
       </div>
     </div>
   );
