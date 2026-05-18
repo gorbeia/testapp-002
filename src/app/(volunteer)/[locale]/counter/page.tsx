@@ -1218,40 +1218,130 @@ export default function CounterPage() {
                 marginBottom: 20,
               }}
             >
-              {selectedOrder.lines.map((line, i) => (
-                <div
-                  key={i}
-                  style={{
-                    padding: '6px 0',
-                    borderBottom:
-                      i < selectedOrder.lines.length - 1 ? '1px solid var(--ops-border)' : 'none',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 14, color: 'var(--ops-text-pri)' }}>
-                      {line.quantity}× {line.productName}
-                    </span>
-                    <span style={{ fontSize: 14, fontWeight: 600 }}>
-                      {(line.quantity * line.unitPrice).toFixed(2)} €
-                    </span>
-                  </div>
-                  {line.selectedVariant && (
-                    <div style={{ fontSize: 12, color: 'var(--ops-text-sec)', marginLeft: 16 }}>
-                      {line.selectedVariant}
+              {(() => {
+                const groups = selectedOrder.lines.reduce<
+                  { productId: string; productName: string; indices: number[] }[]
+                >((acc, line, i) => {
+                  const g = acc.find((g) => g.productId === line.productId);
+                  if (g) g.indices.push(i);
+                  else
+                    acc.push({
+                      productId: line.productId,
+                      productName: line.productName,
+                      indices: [i],
+                    });
+                  return acc;
+                }, []);
+                return groups.map((group, gi) => {
+                  const isLastGroup = gi === groups.length - 1;
+                  if (group.indices.length === 1) {
+                    const line = selectedOrder.lines[group.indices[0]];
+                    return (
+                      <div
+                        key={group.productId + gi}
+                        style={{
+                          padding: '6px 0',
+                          borderBottom: isLastGroup ? 'none' : '1px solid var(--ops-border)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: 14, color: 'var(--ops-text-pri)' }}>
+                            {line.quantity}× {line.productName}
+                          </span>
+                          <span style={{ fontSize: 14, fontWeight: 600 }}>
+                            {(line.quantity * line.unitPrice).toFixed(2)} €
+                          </span>
+                        </div>
+                        {line.selectedVariant && (
+                          <div
+                            style={{ fontSize: 12, color: 'var(--ops-text-sec)', marginLeft: 16 }}
+                          >
+                            {line.selectedVariant}
+                          </div>
+                        )}
+                        {line.selectedModifiers.length > 0 && (
+                          <div
+                            style={{ fontSize: 12, color: 'var(--ops-text-sec)', marginLeft: 16 }}
+                          >
+                            {line.selectedModifiers.join(', ')}
+                          </div>
+                        )}
+                        {line.splitInstructions && (
+                          <div style={{ fontSize: 12, color: 'var(--ops-blue)', marginLeft: 16 }}>
+                            ⚡ {line.splitInstructions}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  const groupTotal = group.indices.reduce(
+                    (sum, i) =>
+                      sum + selectedOrder.lines[i].quantity * selectedOrder.lines[i].unitPrice,
+                    0
+                  );
+                  return (
+                    <div
+                      key={group.productId + gi}
+                      style={{ borderBottom: isLastGroup ? 'none' : '1px solid var(--ops-border)' }}
+                    >
+                      <div
+                        style={{
+                          padding: '6px 0',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <span
+                          style={{ fontSize: 14, fontWeight: 600, color: 'var(--ops-text-pri)' }}
+                        >
+                          {group.productName}
+                        </span>
+                        <span style={{ fontSize: 14, fontWeight: 600 }}>
+                          {groupTotal.toFixed(2)} €
+                        </span>
+                      </div>
+                      {group.indices.map((lineIdx, si) => {
+                        const line = selectedOrder.lines[lineIdx];
+                        const isLastSub = si === group.indices.length - 1;
+                        return (
+                          <div
+                            key={lineIdx}
+                            style={{
+                              padding: '4px 0 4px 16px',
+                              borderTop: '1px dashed var(--ops-border)',
+                              borderBottom: isLastSub ? 'none' : '1px dashed var(--ops-border)',
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: 13, color: 'var(--ops-text-pri)' }}>
+                                {line.quantity}×
+                              </span>
+                              <span style={{ fontSize: 13, fontWeight: 600 }}>
+                                {(line.quantity * line.unitPrice).toFixed(2)} €
+                              </span>
+                            </div>
+                            {line.selectedVariant && (
+                              <div style={{ fontSize: 12, color: 'var(--ops-text-sec)' }}>
+                                {line.selectedVariant}
+                              </div>
+                            )}
+                            {line.selectedModifiers.length > 0 && (
+                              <div style={{ fontSize: 12, color: 'var(--ops-text-sec)' }}>
+                                {line.selectedModifiers.join(', ')}
+                              </div>
+                            )}
+                            {line.splitInstructions && (
+                              <div style={{ fontSize: 12, color: 'var(--ops-blue)' }}>
+                                ⚡ {line.splitInstructions}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
-                  {line.selectedModifiers.length > 0 && (
-                    <div style={{ fontSize: 12, color: 'var(--ops-text-sec)', marginLeft: 16 }}>
-                      {line.selectedModifiers.join(', ')}
-                    </div>
-                  )}
-                  {line.splitInstructions && (
-                    <div style={{ fontSize: 12, color: 'var(--ops-blue)', marginLeft: 16 }}>
-                      ⚡ {line.splitInstructions}
-                    </div>
-                  )}
-                </div>
-              ))}
+                  );
+                });
+              })()}
               <div
                 style={{
                   display: 'flex',
