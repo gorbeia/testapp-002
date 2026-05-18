@@ -2,7 +2,11 @@ import assert from 'assert';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { NextRequest } from 'next/server';
 import { GET as productsGET } from '../../../src/app/api/txosnak/[slug]/products/route';
-import { _test_insertProduct, _test_upsertTxosnaProduct } from '../../../src/test/store-setup';
+import {
+  _test_insertProduct,
+  _test_upsertTxosnaProduct,
+  txosnaRepo,
+} from '../../../src/test/store-setup';
 import type { IntegrationWorld } from './world';
 
 function params(slug: string) {
@@ -48,10 +52,12 @@ function makeProduct(id: string) {
 
 Given(
   'product {string} is enabled for txosna {string}',
-  function (this: IntegrationWorld, productId: string, txosnaId: string) {
+  async function (this: IntegrationWorld, productId: string, slug: string) {
+    const txosna = await txosnaRepo.findBySlug(slug);
+    assert.ok(txosna, `txosna with slug "${slug}" not found`);
     _test_insertProduct(makeProduct(productId));
     _test_upsertTxosnaProduct({
-      txosnaId,
+      txosnaId: txosna.id,
       productId,
       priceOverride: null,
       available: true,
@@ -63,10 +69,12 @@ Given(
 
 Given(
   'product {string} is disabled for txosna {string}',
-  function (this: IntegrationWorld, productId: string, txosnaId: string) {
+  async function (this: IntegrationWorld, productId: string, slug: string) {
+    const txosna = await txosnaRepo.findBySlug(slug);
+    assert.ok(txosna, `txosna with slug "${slug}" not found`);
     _test_insertProduct(makeProduct(productId));
     _test_upsertTxosnaProduct({
-      txosnaId,
+      txosnaId: txosna.id,
       productId,
       priceOverride: null,
       available: false,

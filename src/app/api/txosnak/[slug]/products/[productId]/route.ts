@@ -16,15 +16,15 @@ export async function PUT(
   if (role !== 'ADMIN') return new Response('Forbidden', { status: 403 });
 
   const { slug, productId } = await params;
-  const txosnaId = slug;
 
   const body = await request.json();
   const { enabled, priceOverride, preparationInstructions } = body;
 
-  const txosna = await txosnaRepo.findById(txosnaId);
+  const txosna = await txosnaRepo.findBySlug(slug);
   if (!txosna || txosna.associationId !== associationId) {
     return new Response('Not found', { status: 404 });
   }
+  const txosnaId = txosna.id;
   const product = await catalogRepo.getProduct(productId);
   if (!product) return new Response('Product not found', { status: 404 });
   const cat = await catalogRepo.findCategory(product.categoryId);

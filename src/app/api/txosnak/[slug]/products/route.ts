@@ -15,7 +15,7 @@ export async function GET(
   const associationId = (session.user as any).associationId as string;
   const { slug } = await params;
 
-  const txosna = await txosnaRepo.findById(slug);
+  const txosna = await txosnaRepo.findBySlug(slug);
   if (!txosna || txosna.associationId !== associationId) {
     return new Response('Not found', { status: 404 });
   }
