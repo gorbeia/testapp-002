@@ -431,7 +431,7 @@ Each pending order shows: order number, customer name, items summary, time since
 
 On the order detail:
 
-- Full order with items, variants, modifiers, notes
+- Full order with items, variants, modifiers, notes — lines for the same product are grouped under a shared product header with combined subtotal, identical to the customer order summary (see §3 "Order summary display")
 - Age verification prompt if applicable (must acknowledge before proceeding)
 - Amount paid field (optional, for change calculation)
 - "Confirm payment" button — large, green
