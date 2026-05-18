@@ -5,69 +5,21 @@ import { OpsHeader } from '@/components/layout/ops-header';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LogoutButton } from '@/components/auth/logout-button';
 import { HandoffCard } from '@/components/counter/handoff-card';
-import { QrCode } from '@/components/qr-code';
-import type { StoredOrder } from '@/lib/store/types';
-
-interface CompletedOrderEntry {
-  orderNumber: number;
-  verificationCode: string;
-  customerName: string | null;
-  confirmedAt: number;
-}
-
-interface LocalProduct {
-  id: string;
-  categoryId: string;
-  name: string;
-  description: string | null;
-  price: number;
-  imageUrl: string | null;
-  allergens: string[];
-  dietaryFlags: ('V' | 'VG' | 'GF' | 'HL')[];
-  ageRestricted: boolean;
-  requiresPreparation: boolean;
-  available: boolean;
-  soldOut: boolean;
-  variantGroups: unknown[];
-  modifiers: unknown[];
-  removableIngredients: string[];
-  splitAllowed: boolean;
-  splitMaxWays: number;
-  preparationInstructions: string | null;
-}
-
-interface LocalOrderLine {
-  id: string;
-  productId: string;
-  productName: string;
-  quantity: number;
-  unitPrice: number;
-  selectedVariant: string | null;
-  selectedModifiers: string[];
-  splitInstructions: string | null;
-}
-
-interface LocalTicket {
-  id: string;
-  orderId: string;
-  orderNumber: number;
-  customerName: string | null;
-  counterType: string;
-  status: string;
-  lines: LocalOrderLine[];
-  notes: string | null;
-  elapsedMin: number;
-  isSlowOrder: boolean;
-  hasAlert: boolean;
-  flagged: boolean;
-}
+import { NewOrderSheet } from '@/components/counter/new-order-sheet';
+import { PendingOrderSheet } from '@/components/counter/pending-order-sheet';
+import { CompletedOrdersPanel } from '@/components/counter/completed-orders-panel';
 import { calcUnitPrice } from '@/lib/hooks/use-product-config';
 import type { MockProduct } from '@/lib/mock-data';
-import {
-  ProductConfigSheet,
-  type OrderItemConfig,
-} from '@/components/counter/product-config-sheet';
+import type { OrderItemConfig } from '@/components/counter/product-config-sheet';
 import { useSSE } from '@/hooks/useSSE';
+import type { StoredOrder } from '@/lib/store/types';
+import type {
+  CompletedOrderEntry,
+  LocalProduct,
+  LocalOrderLine,
+  LocalTicket,
+  PendingOrder,
+} from './_types';
 
 export default function CounterPage() {
   const nextOrderNumRef = useRef(50);
@@ -86,24 +38,13 @@ export default function CounterPage() {
 
   const [tickets, setTickets] = useState<LocalTicket[]>([]);
   const [foodProducts, setFoodProducts] = useState<LocalProduct[]>([]);
-  const [pendingOrders, setPendingOrders] = useState<
-    {
-      id: string;
-      orderNumber: number;
-      customerName: string | null;
-      lines: LocalOrderLine[];
-      total: number;
-      placedAt: number;
-    }[]
-  >([]);
+  const [pendingOrders, setPendingOrders] = useState<PendingOrder[]>([]);
 
-  // Read slug from sessionStorage and fetch initial data
   useEffect(() => {
     const storedSlug = typeof window !== 'undefined' ? sessionStorage.getItem('txosna_slug') : null;
     if (!storedSlug) return;
     setSlug(storedSlug);
 
-    // Fetch txosna name and settings
     fetch(`/api/txosnak/${storedSlug}`)
       .then((r) => r.json())
       .then((d) => {
@@ -118,7 +59,6 @@ export default function CounterPage() {
       })
       .catch(() => {});
 
-    // Fetch FOOD tickets (active statuses)
     fetch(
       `/api/txosnak/${storedSlug}/tickets?counterType=FOOD&status=RECEIVED,IN_PREPARATION,READY`
     )
@@ -139,7 +79,6 @@ export default function CounterPage() {
       )
       .catch(() => {});
 
-    // Fetch pending (PENDING_PAYMENT) orders
     fetch(`/api/txosnak/${storedSlug}/orders?status=PENDING_PAYMENT`)
       .then((r) => r.json())
       .then((orders: StoredOrder[]) => {
@@ -156,7 +95,6 @@ export default function CounterPage() {
       })
       .catch(() => {});
 
-    // Fetch food catalog
     fetch(`/api/txosnak/${storedSlug}/catalog`)
       .then((r) => r.json())
       .then(
@@ -175,7 +113,6 @@ export default function CounterPage() {
       .catch(() => {});
   }, []);
 
-  // SSE: refresh tickets/orders on real-time events
   useSSE(slug, {
     'order:confirmed': () => {
       if (!slug) return;
@@ -253,7 +190,6 @@ export default function CounterPage() {
     )[ticket.status];
     if (!next) return;
 
-    // Optimistic update
     setTickets((prev) =>
       prev
         .map((t) => {
@@ -263,13 +199,11 @@ export default function CounterPage() {
         .filter((t) => t.status !== 'COMPLETED')
     );
 
-    // Persist to API
     fetch(`/api/tickets/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: next }),
     }).catch(() => {
-      // Revert optimistic update on failure
       setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status: ticket.status } : t)));
     });
   };
@@ -285,8 +219,6 @@ export default function CounterPage() {
         return;
       }
 
-      // On success, remove from pending and optionally add to tickets
-      // (in a real implementation, you'd fetch updated tickets from SSE or API)
       const order = pendingOrders.find((o) => o.id === orderId);
       if (order) {
         const newTicket: LocalTicket = {
@@ -330,7 +262,6 @@ export default function CounterPage() {
         selectedVariantOptionId: null,
         selectedModifierIds: [],
         splitInstructions: item.splitWays > 1 ? `${item.splitWays}tan banatu` : null,
-        // Denormalised for in-memory store compatibility
         productName: product.name,
         unitPrice,
         selectedVariant: item.variant,
@@ -373,7 +304,6 @@ export default function CounterPage() {
             ].slice(0, 20)
           );
         }
-        // Refetch tickets to show new ticket from API
         const data = (await fetch(
           `/api/txosnak/${slug}/tickets?counterType=FOOD&status=RECEIVED,IN_PREPARATION,READY`
         ).then((r) => r.json())) as {
@@ -443,342 +373,30 @@ export default function CounterPage() {
   const selectedOrder = pendingOrders.find((o) => o.id === showOrderDetail);
   const change = selectedOrder && amountPaid ? parseFloat(amountPaid) - selectedOrder.total : 0;
 
-  // ── Full-page new order view ────────────────────────────────────────────────
   if (showNewOrder) {
     return (
-      <div
-        className="ops-theme"
-        style={{ minHeight: '100vh', fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)' }}
-      >
-        <OpsHeader
-          title="Eskaera berria"
-          left={
-            <button
-              onClick={() => {
-                setShowNewOrder(false);
-                setNewOrder({ customerName: '', items: [] });
-              }}
-              style={{
-                fontSize: 13,
-                color: 'var(--ops-text-sec)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '4px 2px',
-              }}
-            >
-              ← Atzera
-            </button>
-          }
-          right={
-            newOrder.items.length > 0 ? (
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono, monospace)',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  color: 'var(--ops-orange)',
-                }}
-              >
-                {currentTotal.toFixed(2)} €
-              </span>
-            ) : undefined
-          }
-        />
-
-        <div
-          style={{ padding: '14px 14px 120px', display: 'flex', flexDirection: 'column', gap: 20 }}
-        >
-          {/* Customer name */}
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: 11,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: 'var(--ops-text-sec)',
-                marginBottom: 8,
-              }}
-            >
-              Bezeroaren izena *
-            </label>
-            <input
-              value={newOrder.customerName}
-              onChange={(e) => setNewOrder((prev) => ({ ...prev, customerName: e.target.value }))}
-              placeholder="Izena"
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: 10,
-                border: `1px solid ${newOrder.customerName.trim() ? 'var(--ops-border)' : 'var(--ops-red)'}`,
-                background: 'var(--ops-surface)',
-                color: 'var(--ops-text-pri)',
-                fontSize: 15,
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          {/* Quick product grid */}
-          <div>
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: 'var(--ops-text-sec)',
-                marginBottom: 10,
-              }}
-            >
-              GEHITU PRODUKTUA
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-              {foodProducts.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => openProductConfig(p, undefined, undefined, true)}
-                  style={{
-                    background: 'var(--ops-surface)',
-                    border: '1px solid var(--ops-border)',
-                    borderRadius: 10,
-                    padding: '12px 6px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div style={{ fontSize: 22, marginBottom: 4 }}>🍔</div>
-                  <div
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: 'var(--ops-text-pri)',
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    + {p.name}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--ops-text-dim)', marginTop: 2 }}>
-                    {p.price.toFixed(2)} €
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Items list */}
-          {newOrder.items.length > 0 && (
-            <div>
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: 'var(--ops-text-sec)',
-                  marginBottom: 10,
-                }}
-              >
-                PRODUKTUAK
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {newOrder.items.map((item, index) => {
-                  const product = foodProducts.find((p) => p.id === item.productId)!;
-                  const unitPrice = calcUnitPrice(
-                    product as unknown as MockProduct,
-                    item.variant,
-                    item.modifiers
-                  );
-                  return (
-                    <div
-                      key={index}
-                      style={{
-                        background: 'var(--ops-surface)',
-                        border: '1px solid var(--ops-border)',
-                        borderRadius: 12,
-                        padding: '14px',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          marginBottom: 6,
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span
-                            style={{
-                              fontFamily: 'var(--font-mono, monospace)',
-                              fontSize: 16,
-                              fontWeight: 700,
-                              color: 'var(--ops-orange)',
-                            }}
-                          >
-                            {item.qty}×
-                          </span>
-                          <span
-                            style={{ fontSize: 15, fontWeight: 600, color: 'var(--ops-text-pri)' }}
-                          >
-                            {product.name}
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button
-                            onClick={() => openProductConfig(product, item, index, true)}
-                            style={{
-                              padding: '4px 10px',
-                              borderRadius: 6,
-                              border: '1px solid var(--ops-border)',
-                              background: 'transparent',
-                              cursor: 'pointer',
-                              fontSize: 12,
-                              color: 'var(--ops-text-sec)',
-                            }}
-                          >
-                            ✎
-                          </button>
-                          <button
-                            onClick={() => removeItem(index)}
-                            style={{
-                              padding: '4px 10px',
-                              borderRadius: 6,
-                              border: '1px solid var(--ops-red)',
-                              background: 'transparent',
-                              color: 'var(--ops-red)',
-                              cursor: 'pointer',
-                              fontSize: 12,
-                            }}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
-                      {item.variant && (
-                        <div style={{ fontSize: 12, color: 'var(--ops-text-sec)', marginLeft: 32 }}>
-                          {item.variant}
-                        </div>
-                      )}
-                      {item.modifiers.length > 0 && (
-                        <div style={{ fontSize: 12, color: 'var(--ops-text-sec)', marginLeft: 32 }}>
-                          {item.modifiers.join(', ')}
-                        </div>
-                      )}
-                      {item.notes && (
-                        <div
-                          style={{
-                            fontSize: 12,
-                            color: 'var(--ops-orange)',
-                            marginLeft: 32,
-                            marginTop: 4,
-                          }}
-                        >
-                          📝 {item.notes}
-                        </div>
-                      )}
-                      {item.splitWays > 1 && (
-                        <div style={{ fontSize: 12, color: 'var(--ops-blue)', marginLeft: 32 }}>
-                          ⚡ {item.splitWays}tan banatu
-                        </div>
-                      )}
-                      <div
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 700,
-                          color: 'var(--ops-text-pri)',
-                          marginLeft: 32,
-                          marginTop: 6,
-                        }}
-                      >
-                        {(unitPrice * item.qty).toFixed(2)} €
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Sticky bottom bar */}
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            padding: '12px 14px 28px',
-            background: 'var(--ops-bg)',
-            borderTop: '1px solid var(--ops-border)',
-          }}
-        >
-          {newOrder.items.length > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: 10,
-                paddingLeft: 4,
-                paddingRight: 4,
-              }}
-            >
-              <span style={{ fontSize: 15, color: 'var(--ops-text-sec)' }}>Guztira</span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono, monospace)',
-                  fontSize: 18,
-                  fontWeight: 800,
-                  color: 'var(--ops-text-pri)',
-                }}
-              >
-                {currentTotal.toFixed(2)} €
-              </span>
-            </div>
-          )}
-          {(() => {
-            const ready = newOrder.items.length > 0 && newOrder.customerName.trim().length > 0;
-            const label =
-              newOrder.items.length === 0
-                ? 'Gehitu produktuak'
-                : !newOrder.customerName.trim()
-                  ? 'Sartu izena lehenik'
-                  : `✓ Sortu eta bidali sukaldera — ${currentTotal.toFixed(2)} €`;
-            return (
-              <button
-                onClick={createOrder}
-                disabled={!ready}
-                style={{
-                  width: '100%',
-                  background: ready ? 'var(--ops-green)' : 'var(--ops-surface-hi)',
-                  border: 'none',
-                  borderRadius: 12,
-                  padding: '16px',
-                  color: ready ? '#0a0a0a' : 'var(--ops-text-dim)',
-                  fontSize: 16,
-                  fontWeight: 700,
-                  cursor: ready ? 'pointer' : 'not-allowed',
-                }}
-              >
-                {label}
-              </button>
-            );
-          })()}
-        </div>
-
-        {selectedProduct && (
-          <ProductConfigSheet
-            product={selectedProduct as unknown as MockProduct}
-            existingConfig={editingItemIndex !== null ? newOrder.items[editingItemIndex] : null}
-            onSave={saveProductConfig}
-            onClose={() => {
-              setSelectedProduct(null);
-              setEditingItemIndex(null);
-            }}
-          />
-        )}
-      </div>
+      <NewOrderSheet
+        foodProducts={foodProducts}
+        newOrder={newOrder}
+        setNewOrder={setNewOrder}
+        currentTotal={currentTotal}
+        selectedProduct={selectedProduct}
+        editingItemIndex={editingItemIndex}
+        onBack={() => {
+          setShowNewOrder(false);
+          setNewOrder({ customerName: '', items: [] });
+          setSelectedProduct(null);
+          setEditingItemIndex(null);
+        }}
+        onCreateOrder={createOrder}
+        onOpenProductConfig={openProductConfig}
+        onSaveProductConfig={saveProductConfig}
+        onCloseProductConfig={() => {
+          setSelectedProduct(null);
+          setEditingItemIndex(null);
+        }}
+        onRemoveItem={removeItem}
+      />
     );
   }
 
@@ -1139,411 +757,31 @@ export default function CounterPage() {
         })()}
 
       {selectedOrder && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.7)',
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'flex-end',
-          }}
-          onClick={() => {
+        <PendingOrderSheet
+          order={selectedOrder}
+          amountPaid={amountPaid}
+          setAmountPaid={setAmountPaid}
+          change={change}
+          formatElapsed={formatElapsed}
+          onClose={() => {
             setShowOrderDetail(null);
             setAmountPaid('');
           }}
-        >
-          <div
-            style={{
-              background: 'var(--ops-surface)',
-              borderRadius: '20px 20px 0 0',
-              padding: '24px 20px 40px',
-              width: '100%',
-              maxWidth: 480,
-              margin: '0 auto',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{
-                width: 40,
-                height: 4,
-                background: 'var(--ops-border)',
-                borderRadius: 99,
-                margin: '0 auto 20px',
-              }}
-            />
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'baseline',
-                marginBottom: 4,
-              }}
-            >
-              <h2
-                style={{
-                  fontFamily: 'var(--font-mono, monospace)',
-                  fontSize: 24,
-                  fontWeight: 800,
-                  color: 'var(--ops-text-pri)',
-                }}
-              >
-                #{selectedOrder.orderNumber}
-              </h2>
-              <span
-                style={{
-                  fontSize: 12,
-                  background: 'var(--ops-red)',
-                  color: '#fff',
-                  padding: '2px 10px',
-                  borderRadius: 99,
-                }}
-              >
-                Telefonoa • {formatElapsed(selectedOrder.placedAt)}
-              </span>
-            </div>
-            <div style={{ fontSize: 16, color: 'var(--ops-text-sec)', marginBottom: 20 }}>
-              {selectedOrder.customerName}
-            </div>
-
-            <div
-              style={{
-                background: 'var(--ops-surface-hi)',
-                borderRadius: 10,
-                padding: '14px',
-                marginBottom: 20,
-              }}
-            >
-              {(() => {
-                const groups = selectedOrder.lines.reduce<
-                  { productId: string; productName: string; indices: number[] }[]
-                >((acc, line, i) => {
-                  const g = acc.find((g) => g.productId === line.productId);
-                  if (g) g.indices.push(i);
-                  else
-                    acc.push({
-                      productId: line.productId,
-                      productName: line.productName,
-                      indices: [i],
-                    });
-                  return acc;
-                }, []);
-                return groups.map((group, gi) => {
-                  const isLastGroup = gi === groups.length - 1;
-                  if (group.indices.length === 1) {
-                    const line = selectedOrder.lines[group.indices[0]];
-                    return (
-                      <div
-                        key={group.productId + gi}
-                        style={{
-                          padding: '6px 0',
-                          borderBottom: isLastGroup ? 'none' : '1px solid var(--ops-border)',
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: 14, color: 'var(--ops-text-pri)' }}>
-                            {line.quantity}× {line.productName}
-                          </span>
-                          <span style={{ fontSize: 14, fontWeight: 600 }}>
-                            {(line.quantity * line.unitPrice).toFixed(2)} €
-                          </span>
-                        </div>
-                        {line.selectedVariant && (
-                          <div
-                            style={{ fontSize: 12, color: 'var(--ops-text-sec)', marginLeft: 16 }}
-                          >
-                            {line.selectedVariant}
-                          </div>
-                        )}
-                        {line.selectedModifiers.length > 0 && (
-                          <div
-                            style={{ fontSize: 12, color: 'var(--ops-text-sec)', marginLeft: 16 }}
-                          >
-                            {line.selectedModifiers.join(', ')}
-                          </div>
-                        )}
-                        {line.splitInstructions && (
-                          <div style={{ fontSize: 12, color: 'var(--ops-blue)', marginLeft: 16 }}>
-                            ⚡ {line.splitInstructions}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-                  const groupTotal = group.indices.reduce(
-                    (sum, i) =>
-                      sum + selectedOrder.lines[i].quantity * selectedOrder.lines[i].unitPrice,
-                    0
-                  );
-                  return (
-                    <div
-                      key={group.productId + gi}
-                      style={{ borderBottom: isLastGroup ? 'none' : '1px solid var(--ops-border)' }}
-                    >
-                      <div
-                        style={{
-                          padding: '6px 0',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <span
-                          style={{ fontSize: 14, fontWeight: 600, color: 'var(--ops-text-pri)' }}
-                        >
-                          {group.productName}
-                        </span>
-                        <span style={{ fontSize: 14, fontWeight: 600 }}>
-                          {groupTotal.toFixed(2)} €
-                        </span>
-                      </div>
-                      {group.indices.map((lineIdx, si) => {
-                        const line = selectedOrder.lines[lineIdx];
-                        const isLastSub = si === group.indices.length - 1;
-                        return (
-                          <div
-                            key={lineIdx}
-                            style={{
-                              padding: '4px 0 4px 16px',
-                              borderTop: '1px dashed var(--ops-border)',
-                              borderBottom: isLastSub ? 'none' : '1px dashed var(--ops-border)',
-                            }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span style={{ fontSize: 13, color: 'var(--ops-text-pri)' }}>
-                                {line.quantity}×
-                              </span>
-                              <span style={{ fontSize: 13, fontWeight: 600 }}>
-                                {(line.quantity * line.unitPrice).toFixed(2)} €
-                              </span>
-                            </div>
-                            {line.selectedVariant && (
-                              <div style={{ fontSize: 12, color: 'var(--ops-text-sec)' }}>
-                                {line.selectedVariant}
-                              </div>
-                            )}
-                            {line.selectedModifiers.length > 0 && (
-                              <div style={{ fontSize: 12, color: 'var(--ops-text-sec)' }}>
-                                {line.selectedModifiers.join(', ')}
-                              </div>
-                            )}
-                            {line.splitInstructions && (
-                              <div style={{ fontSize: 12, color: 'var(--ops-blue)' }}>
-                                ⚡ {line.splitInstructions}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                });
-              })()}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginTop: 12,
-                  paddingTop: 12,
-                  borderTop: '2px solid var(--ops-border)',
-                }}
-              >
-                <span style={{ fontSize: 16, fontWeight: 700 }}>Guztira:</span>
-                <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--ops-orange)' }}>
-                  {selectedOrder.total.toFixed(2)} €
-                </span>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  color: 'var(--ops-text-sec)',
-                  marginBottom: 6,
-                }}
-              >
-                Ordaindutakoa (trukerako)
-              </label>
-              <input
-                type="number"
-                value={amountPaid}
-                onChange={(e) => setAmountPaid(e.target.value)}
-                placeholder="0.00"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: 8,
-                  border: '1px solid var(--ops-border)',
-                  background: 'var(--ops-bg)',
-                  color: 'var(--ops-text-pri)',
-                  fontSize: 18,
-                  fontWeight: 700,
-                }}
-              />
-              {change > 0 && (
-                <div style={{ marginTop: 8, fontSize: 14, color: 'var(--ops-green)' }}>
-                  Trukea: {change.toFixed(2)} €
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={() => {
-                  setShowOrderDetail(null);
-                  setAmountPaid('');
-                }}
-                style={{
-                  flex: 1,
-                  background: 'var(--ops-surface-hi)',
-                  border: '1px solid var(--ops-border)',
-                  borderRadius: 10,
-                  padding: '14px',
-                  color: 'var(--ops-text-pri)',
-                  fontSize: 14,
-                  cursor: 'pointer',
-                }}
-              >
-                Utzi
-              </button>
-              <button
-                onClick={() => confirmPayment(selectedOrder.id)}
-                style={{
-                  flex: 2,
-                  background: 'var(--ops-green)',
-                  border: 'none',
-                  borderRadius: 10,
-                  padding: '14px',
-                  color: '#0a0a0a',
-                  fontSize: 16,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                ✓ Ordaindu · Sukaldera bidali
-              </button>
-            </div>
-          </div>
-        </div>
+          onConfirmPayment={confirmPayment}
+        />
       )}
 
-      {/* Completed orders panel */}
-      {mobileTrackingEnabled && completedOrders.length > 0 && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: 'var(--ops-surface)',
-            borderTop: '2px solid var(--ops-border)',
-            zIndex: 200,
-          }}
-        >
-          <button
-            onClick={() => setCompletedPanelOpen((o) => !o)}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              background: 'none',
-              border: 'none',
-              color: 'var(--ops-text-pri)',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <span>Bukatutako eskaerak ({completedOrders.length})</span>
-            <span>{completedPanelOpen ? '▴' : '▾'}</span>
-          </button>
-          {completedPanelOpen && (
-            <div style={{ maxHeight: 320, overflowY: 'auto', padding: '0 12px 12px' }}>
-              {completedOrders.map((o) => {
-                const trackUrl =
-                  typeof window !== 'undefined'
-                    ? `${window.location.origin}/eu/${slug}/track/${o.verificationCode}`
-                    : '';
-                return (
-                  <div
-                    key={o.orderNumber}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: '10px 0',
-                      borderBottom: '1px solid var(--ops-border)',
-                    }}
-                  >
-                    <div style={{ flex: 1, fontSize: 13 }}>
-                      <span style={{ fontWeight: 700 }}>#{o.orderNumber}</span>
-                      {o.customerName && <span style={{ opacity: 0.7 }}> · {o.customerName}</span>}
-                      <br />
-                      <span style={{ fontFamily: 'monospace', fontSize: 15, fontWeight: 600 }}>
-                        {o.verificationCode}
-                      </span>
-                    </div>
-                    <div
-                      onClick={() =>
-                        setExpandedQr(expandedQr === o.verificationCode ? null : o.verificationCode)
-                      }
-                      style={{ cursor: 'pointer' }}
-                      title="QR handitu"
-                    >
-                      <QrCode value={trackUrl} size={48} />
-                    </div>
-                    <a
-                      href={trackUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ fontSize: 18, textDecoration: 'none' }}
-                      title="Ireki jarraipena"
-                    >
-                      ↗
-                    </a>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+      {mobileTrackingEnabled && completedOrders.length > 0 && slug && (
+        <CompletedOrdersPanel
+          completedOrders={completedOrders}
+          completedPanelOpen={completedPanelOpen}
+          setCompletedPanelOpen={setCompletedPanelOpen}
+          expandedQr={expandedQr}
+          setExpandedQr={setExpandedQr}
+          slug={slug}
+        />
       )}
 
-      {/* Expanded QR overlay */}
-      {expandedQr && slug && (
-        <div
-          onClick={() => setExpandedQr(null)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.85)',
-            zIndex: 900,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <QrCode
-            value={
-              typeof window !== 'undefined'
-                ? `${window.location.origin}/eu/${slug}/track/${expandedQr}`
-                : ''
-            }
-            size={280}
-          />
-        </div>
-      )}
-
-      {/* Handoff card */}
       {handoffOrder && slug && (
         <HandoffCard
           orderNumber={handoffOrder.orderNumber}

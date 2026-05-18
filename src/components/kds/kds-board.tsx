@@ -8,6 +8,7 @@ import { OverflowMenu } from './overflow-menu';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LogoutButton } from '@/components/auth/logout-button';
 import { useSSE } from '@/hooks/useSSE';
+import { useWidth } from '@/lib/hooks/use-width';
 
 const NEW_ORDER_POOL = [
   {
@@ -43,17 +44,6 @@ const NEW_ORDER_POOL = [
     notes: 'Burgerrak ondo eginda',
   },
 ];
-
-function useWidth() {
-  const [w, setW] = useState(900);
-  useEffect(() => {
-    setW(window.innerWidth);
-    const f = () => setW(window.innerWidth);
-    window.addEventListener('resize', f);
-    return () => window.removeEventListener('resize', f);
-  }, []);
-  return w;
-}
 
 const COL_DEFS = [
   { status: 'RECEIVED' as const, label: 'Jasota', accent: 'var(--ops-blue, #3b82f6)' },
@@ -98,7 +88,7 @@ function toKdsTicket(t: {
 }
 
 export default function KdsBoard() {
-  const width = useWidth();
+  const width = useWidth(900);
   const isMobile = width < 640;
   const isTablet = width >= 640 && width < 1024;
 
