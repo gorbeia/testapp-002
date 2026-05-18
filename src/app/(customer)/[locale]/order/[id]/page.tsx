@@ -5,7 +5,11 @@ import { useParams } from 'next/navigation';
 import { CustomerHeader } from '@/components/layout/customer-header';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { OrderNumberHeading } from '@/components/order-status/order-number-heading';
-import { OrderProgressSteps } from '@/components/order-status/order-progress-steps';
+import { OrderReadyBanner } from '@/components/order-status/order-ready-banner';
+import {
+  TicketStatusCards,
+  type TicketSummary,
+} from '@/components/order-status/ticket-status-cards';
 import {
   FiscalInvoiceCard,
   type FiscalInvoiceData,
@@ -27,13 +31,7 @@ interface OrderWithTickets {
   expiresAt?: string | null;
   cancellationReason?: string | null;
   fiscalReceiptRef?: string | null;
-  tickets: {
-    id: string;
-    counterType: string;
-    status: string;
-    readyAt: string | null;
-    completedAt: string | null;
-  }[];
+  tickets: TicketSummary[];
 }
 
 function TicketBaiSection({ orderId }: { orderId: string }) {
@@ -168,12 +166,9 @@ export default function OrderStatusPage() {
   const isOnlinePending = isPending && order.paymentMethod === 'ONLINE';
   const isCancelled = order.status === 'CANCELLED';
 
-  const ticketStatuses = order.tickets?.map((t) => t.status) ?? [];
-  const allReady =
-    ticketStatuses.length > 0 && ticketStatuses.every((s) => s === 'READY' || s === 'COMPLETED');
-  const anyInPrep = ticketStatuses.some((s) => s === 'IN_PREPARATION');
-  const currentStep = allReady ? 2 : anyInPrep ? 1 : order.status === 'CONFIRMED' ? 0 : -1;
-  const isReady = allReady;
+  const tickets = order.tickets ?? [];
+  const isReady =
+    tickets.length > 0 && tickets.every((t) => t.status === 'READY' || t.status === 'COMPLETED');
 
   return (
     <div className="cust-theme" style={{ minHeight: '100vh', background: 'var(--cust-bg)' }}>
@@ -181,6 +176,7 @@ export default function OrderStatusPage() {
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 16px 60px' }}>
         <OrderNumberHeading
           orderNumber={order.orderNumber}
+          customerName={order.customerName}
           isCancelled={isCancelled}
           isReady={isReady}
           isPending={isPending}
@@ -278,9 +274,9 @@ export default function OrderStatusPage() {
           </div>
         )}
 
-        {!isPending && !isCancelled && (
-          <OrderProgressSteps currentStep={currentStep} isReady={isReady} />
-        )}
+        <TicketStatusCards tickets={tickets} pendingPayment={isPending} />
+
+        {isReady && <OrderReadyBanner />}
 
         {isReady && orderId && (
           <>
