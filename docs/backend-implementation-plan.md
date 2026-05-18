@@ -1,5 +1,26 @@
 # Backend Implementation Plan
 
+## Implementation Status
+
+| Phase | Description                            | Status                                                                      |
+| ----- | -------------------------------------- | --------------------------------------------------------------------------- |
+| 0     | Repository contracts + in-memory store | Done ✅                                                                     |
+| 1     | Txosna metadata + catalog read         | Done ✅                                                                     |
+| 2     | Counter order creation                 | Done ✅                                                                     |
+| 3     | KDS ticket lifecycle                   | Done ✅                                                                     |
+| 4     | Customer order status + SSE            | Done ✅                                                                     |
+| 5     | Self-service orders                    | Done ✅                                                                     |
+| 6     | Volunteer management + PIN auth        | Done ✅                                                                     |
+| 7     | Txosna settings                        | Done ✅                                                                     |
+| 8     | Reports                                | Done ✅                                                                     |
+| 9     | Online payments (Stripe + Redsys)      | Done ✅                                                                     |
+| 10    | Prisma storage backend                 | In progress — ORM adapter exists; default is still `STORAGE_BACKEND=memory` |
+| 11    | Demo provisioning                      | Done ✅                                                                     |
+| 12    | Mobile order tracking                  | Done ✅                                                                     |
+| 13    | TicketBAI fiscal invoices              | Done ✅                                                                     |
+
+---
+
 ## Strategy
 
 All phases use the same **in-memory store** as the storage layer. The in-memory store is the implementation used for integration tests: tests import the store directly, seed it, call API handlers, and assert on store state or HTTP responses — no database required at any point.
