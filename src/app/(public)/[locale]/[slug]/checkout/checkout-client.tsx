@@ -68,7 +68,7 @@ export function CheckoutClient({ txosna }: CheckoutClientProps) {
             quantity: item.quantity,
             selectedVariantOptionId: item.selectedVariantOptionId ?? null,
             selectedModifierIds: item.selectedModifierIds ?? [],
-            splitInstructions: null,
+            splitInstructions: (item.splitWays ?? 1) > 1 ? `${item.splitWays}tan banatu` : null,
           })),
         }),
       });
@@ -292,6 +292,11 @@ export function CheckoutClient({ txosna }: CheckoutClientProps) {
                           {item.selectedModifiers.join(', ')}
                         </div>
                       )}
+                      {(item.splitWays ?? 1) > 1 && (
+                        <div style={{ fontSize: 12, color: 'var(--cust-text-sec, #6b7280)' }}>
+                          ⚡ {item.splitWays}tan banatuta
+                        </div>
+                      )}
                     </button>
                     <span
                       style={{
@@ -446,6 +451,7 @@ export function CheckoutClient({ txosna }: CheckoutClientProps) {
                             {item.selectedVariant ?? '—'}
                             {item.selectedModifiers.length > 0 &&
                               `, ${item.selectedModifiers.join(', ')}`}
+                            {(item.splitWays ?? 1) > 1 && ` · ⚡ ${item.splitWays}tan banatuta`}
                             <span
                               style={{
                                 fontSize: 11,

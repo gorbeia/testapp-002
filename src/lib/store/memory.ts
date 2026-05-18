@@ -658,7 +658,7 @@ export const catalogRepo: CatalogRepository = {
       requiresPreparation: data.requiresPreparation ?? false,
       available: true,
       splittable: data.splittable ?? false,
-      splitMaxWays: 2,
+      splitMaxWays: data.splitMaxWays ?? (data.splittable ? 2 : 1),
       removableIngredients: data.ingredients
         ? data.ingredients
             .split(',')
@@ -690,6 +690,7 @@ export const catalogRepo: CatalogRepository = {
       ...(patch.dietaryFlags !== undefined && { dietaryFlags: patch.dietaryFlags }),
       ...(patch.ageRestricted !== undefined && { ageRestricted: patch.ageRestricted }),
       ...(patch.splittable !== undefined && { splittable: patch.splittable }),
+      ...(patch.splitMaxWays !== undefined && { splitMaxWays: patch.splitMaxWays }),
       ...(patch.requiresPreparation !== undefined && {
         requiresPreparation: patch.requiresPreparation,
       }),
