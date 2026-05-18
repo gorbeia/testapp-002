@@ -473,6 +473,7 @@ export interface CreateProductInput {
   dietaryFlags?: string[];
   ageRestricted?: boolean;
   splittable?: boolean;
+  splitMaxWays?: number;
   requiresPreparation?: boolean;
   displayOrder?: number;
   ingredients?: string | null;

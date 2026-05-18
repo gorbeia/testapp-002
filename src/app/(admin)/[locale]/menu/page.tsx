@@ -36,6 +36,7 @@ interface Product {
   dietaryFlags: string[];
   ageRestricted: boolean;
   splittable: boolean;
+  splitMaxWays: number;
   requiresPreparation: boolean;
   displayOrder: number;
   ingredients: string | null;
@@ -67,6 +68,7 @@ interface ProductForm {
   ageRestricted: boolean;
   requiresPreparation: boolean;
   splittable: boolean;
+  splitMaxWays: number;
   allergens: string[];
   dietaryFlags: string[];
   variantGroups: VariantGroup[];
@@ -116,6 +118,7 @@ function emptyForm(categoryId: string, defaultVatTypeId?: string): ProductForm {
     ageRestricted: false,
     requiresPreparation: false,
     splittable: false,
+    splitMaxWays: 1,
     allergens: [],
     dietaryFlags: [],
     variantGroups: [],
@@ -136,6 +139,7 @@ function fromProduct(p: Product): ProductForm {
     ageRestricted: p.ageRestricted,
     requiresPreparation: p.requiresPreparation,
     splittable: p.splittable,
+    splitMaxWays: p.splitMaxWays ?? 1,
     allergens: p.allergens,
     dietaryFlags: p.dietaryFlags,
     variantGroups: p.variantGroups.map((vg) => ({
@@ -163,6 +167,7 @@ function formToPayload(data: ProductForm) {
     ageRestricted: data.ageRestricted,
     requiresPreparation: data.requiresPreparation,
     splittable: data.splittable,
+    splitMaxWays: data.splitMaxWays,
     allergens: data.allergens,
     dietaryFlags: data.dietaryFlags,
     ingredients: removableNames.join(', ') || null,
@@ -697,11 +702,6 @@ function ProductModal({
                     hint: 'KDS-era bidaltzen da',
                   },
                   { key: 'ageRestricted' as const, label: 'Adin muga', hint: '+18 produktua' },
-                  {
-                    key: 'splittable' as const,
-                    label: 'Zatiketa onartu',
-                    hint: 'Hainbat pertsonaren artean zatitu daiteke',
-                  },
                 ].map(({ key, label, hint }) => (
                   <label
                     key={key}
@@ -730,6 +730,65 @@ function ProductModal({
                     />
                   </label>
                 ))}
+
+                {/* Split options segmented control */}
+                <div
+                  style={{
+                    padding: '10px 14px',
+                    background: 'var(--adm-surface-hi)',
+                    border: '1px solid var(--adm-border)',
+                    borderRadius: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: 'var(--adm-text-pri)',
+                      marginBottom: 4,
+                    }}
+                  >
+                    Zatiketa
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--adm-text-sec)', marginBottom: 8 }}>
+                    Bezeroek zenbat zatitan banatu dezaketen
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      borderRadius: 6,
+                      overflow: 'hidden',
+                      border: '1px solid var(--adm-border)',
+                    }}
+                  >
+                    {([1, 2, 3, 4] as const).map((n, i) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() =>
+                          setForm((f) => ({
+                            ...f,
+                            splittable: n > 1,
+                            splitMaxWays: n,
+                          }))
+                        }
+                        style={{
+                          flex: 1,
+                          padding: '6px 0',
+                          fontSize: 13,
+                          fontWeight: form.splitMaxWays === n ? 600 : 400,
+                          background: form.splitMaxWays === n ? '#e85d2f' : 'transparent',
+                          color: form.splitMaxWays === n ? '#fff' : 'var(--adm-text-sec)',
+                          border: 'none',
+                          borderLeft: i > 0 ? '1px solid var(--adm-border)' : 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {n === 1 ? 'Ez' : `${n} zati`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Allergens */}

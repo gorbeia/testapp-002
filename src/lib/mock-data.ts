@@ -137,6 +137,8 @@ export interface CartItem {
   selectedVariantOptionId: string | null;
   selectedModifiers: string[];
   selectedModifierIds: string[];
+  splitWays?: number;
+  splitMaxWays?: number;
 }
 
 // ── Data ───────────────────────────────────────────────────────────────────

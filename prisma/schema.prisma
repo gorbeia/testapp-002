@@ -193,6 +193,7 @@ model Product {
   dietaryFlags            String[] // "vegetarian" | "vegan" | "gluten_free"
   ageRestricted           Boolean  @default(false)
   splittable              Boolean  @default(false)
+  splitMaxWays            Int      @default(1)
   requiresPreparation     Boolean  @default(false)
   displayOrder            Int      @default(0)
   ingredients             String?

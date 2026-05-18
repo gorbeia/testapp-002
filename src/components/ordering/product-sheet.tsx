@@ -19,6 +19,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
   );
   const [mods, setMods] = useState<string[]>([]);
   const [modIds, setModIds] = useState<string[]>([]);
+  const [splitWays, setSplitWays] = useState(1);
 
   const toggleMod = (name: string, id: string) => {
     setMods((prev) => (prev.includes(name) ? prev.filter((m) => m !== name) : [...prev, name]));
@@ -35,6 +36,8 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
       selectedVariantOptionId: variantId,
       selectedModifiers: mods,
       selectedModifierIds: modIds,
+      splitWays,
+      splitMaxWays: product.splitMaxWays,
     });
     onClose();
   };
@@ -239,6 +242,64 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
                   </label>
                 ))}
             </div>
+          </div>
+        )}
+
+        {/* Split — BANATU */}
+        {product.splittable && product.splitMaxWays > 1 && (
+          <div style={{ marginBottom: 20 }}>
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                color: 'var(--cust-text-sec, #6b7280)',
+                marginBottom: 8,
+              }}
+            >
+              Banatu
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                borderRadius: 10,
+                overflow: 'hidden',
+                border: '1px solid var(--cust-border, #e5e7eb)',
+              }}
+            >
+              {Array.from({ length: product.splitMaxWays }, (_, i) => i + 1).map((n, i) => (
+                <button
+                  key={n}
+                  onClick={() => setSplitWays(n)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 0',
+                    fontSize: 14,
+                    fontWeight: splitWays === n ? 700 : 400,
+                    background: splitWays === n ? 'var(--cust-primary, #e85d2f)' : 'transparent',
+                    color: splitWays === n ? '#fff' : 'var(--cust-text-sec, #6b7280)',
+                    border: 'none',
+                    borderLeft: i > 0 ? '1px solid var(--cust-border, #e5e7eb)' : 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {n === 1 ? 'Osoa' : `${n} zati`}
+                </button>
+              ))}
+            </div>
+            {splitWays > 1 && (
+              <div
+                style={{
+                  marginTop: 6,
+                  fontSize: 13,
+                  color: 'var(--cust-text-sec, #6b7280)',
+                }}
+              >
+                ⚡ {splitWays} pertsonatan banatuko da
+              </div>
+            )}
           </div>
         )}
 
