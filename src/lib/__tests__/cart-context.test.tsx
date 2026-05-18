@@ -85,6 +85,70 @@ describe('CartProvider', () => {
     expect(items).toHaveLength(2);
   });
 
+  it('addItem: does NOT merge items with same variant but different modifiers', async () => {
+    function ModHarness() {
+      const cart = useCart();
+      return (
+        <div>
+          <div data-testid="items">{JSON.stringify(cart.items)}</div>
+          <button
+            onClick={() =>
+              cart.addItem(makeItem({ selectedVariant: 'Grande', selectedModifiers: ['Ketchup'] }))
+            }
+          >
+            add-ketchup
+          </button>
+          <button
+            onClick={() =>
+              cart.addItem(makeItem({ selectedVariant: 'Grande', selectedModifiers: ['Mustard'] }))
+            }
+          >
+            add-mustard
+          </button>
+        </div>
+      );
+    }
+    render(
+      <CartProvider>
+        <ModHarness />
+      </CartProvider>
+    );
+    await userEvent.click(screen.getByText('add-ketchup'));
+    await userEvent.click(screen.getByText('add-mustard'));
+    const items = JSON.parse(screen.getByTestId('items').textContent!);
+    expect(items).toHaveLength(2);
+    expect(items[0].selectedModifiers).toEqual(['Ketchup']);
+    expect(items[1].selectedModifiers).toEqual(['Mustard']);
+  });
+
+  it('addItem: merges items with same variant AND same modifiers', async () => {
+    function ModHarness() {
+      const cart = useCart();
+      return (
+        <div>
+          <div data-testid="items">{JSON.stringify(cart.items)}</div>
+          <button
+            onClick={() =>
+              cart.addItem(makeItem({ selectedVariant: 'Grande', selectedModifiers: ['Ketchup'] }))
+            }
+          >
+            add-ketchup
+          </button>
+        </div>
+      );
+    }
+    render(
+      <CartProvider>
+        <ModHarness />
+      </CartProvider>
+    );
+    await userEvent.click(screen.getByText('add-ketchup'));
+    await userEvent.click(screen.getByText('add-ketchup'));
+    const items = JSON.parse(screen.getByTestId('items').textContent!);
+    expect(items).toHaveLength(1);
+    expect(items[0].quantity).toBe(2);
+  });
+
   it('removeItem: removes by productId', async () => {
     renderCart();
     await userEvent.click(screen.getByText('add-default'));

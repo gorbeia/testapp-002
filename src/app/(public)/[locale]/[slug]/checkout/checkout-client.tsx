@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -17,6 +17,20 @@ export function CheckoutClient({ txosna }: CheckoutClientProps) {
   const router = useRouter();
   const params = useParams();
   const { items, total, clear, updateItem, removeAt } = useCart();
+
+  const groupedItems = useMemo(() => {
+    const groups: { productId: string; productName: string; indices: number[] }[] = [];
+    items.forEach((item, i) => {
+      const g = groups.find((g) => g.productId === item.productId);
+      if (g) {
+        g.indices.push(i);
+      } else {
+        groups.push({ productId: item.productId, productName: item.productName, indices: [i] });
+      }
+    });
+    return groups;
+  }, [items]);
+
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -155,139 +169,314 @@ export function CheckoutClient({ txosna }: CheckoutClientProps) {
             marginBottom: 16,
           }}
         >
-          {items.map((item, i) => (
-            <div
-              key={i}
-              style={{
-                padding: '13px 16px',
-                borderBottom:
-                  i < items.length - 1 ? '1px solid var(--cust-border, #e5e7eb)' : 'none',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                {/* Qty stepper */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                  <button
-                    onClick={() =>
-                      item.quantity <= 1
-                        ? removeAt(i)
-                        : updateItem(i, { quantity: item.quantity - 1 })
-                    }
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      border: '1.5px solid var(--cust-border, #e5e7eb)',
-                      background: 'transparent',
-                      fontSize: 16,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: item.quantity <= 1 ? '#ef4444' : 'var(--cust-text-sec, #6b7280)',
-                      lineHeight: 1,
-                    }}
-                  >
-                    {item.quantity <= 1 ? '🗑' : '−'}
-                  </button>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono, monospace)',
-                      fontSize: 15,
-                      fontWeight: 700,
-                      minWidth: 18,
-                      textAlign: 'center',
-                      color: 'var(--cust-text-pri, #111)',
-                    }}
-                  >
-                    {item.quantity}
-                  </span>
-                  <button
-                    onClick={() => updateItem(i, { quantity: item.quantity + 1 })}
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      border: 'none',
-                      background: 'var(--cust-primary, #e85d2f)',
-                      fontSize: 16,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#fff',
-                      lineHeight: 1,
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
+          {groupedItems.map((group, gi) => {
+            const isLastGroup = gi === groupedItems.length - 1;
 
-                {/* Name + details */}
-                <button
-                  onClick={() => setEditingIndex(i)}
+            if (group.indices.length === 1) {
+              const i = group.indices[0];
+              const item = items[i];
+              return (
+                <div
+                  key={group.productId + i}
                   style={{
-                    flex: 1,
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    padding: 0,
-                    minWidth: 0,
+                    padding: '13px 16px',
+                    borderBottom: isLastGroup ? 'none' : '1px solid var(--cust-border, #e5e7eb)',
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: 'var(--cust-text-pri, #111)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                  >
-                    {item.productName}
-                    <span
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                      <button
+                        onClick={() =>
+                          item.quantity <= 1
+                            ? removeAt(i)
+                            : updateItem(i, { quantity: item.quantity - 1 })
+                        }
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: '50%',
+                          border: '1.5px solid var(--cust-border, #e5e7eb)',
+                          background: 'transparent',
+                          fontSize: 16,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: item.quantity <= 1 ? '#ef4444' : 'var(--cust-text-sec, #6b7280)',
+                          lineHeight: 1,
+                        }}
+                      >
+                        {item.quantity <= 1 ? '🗑' : '−'}
+                      </button>
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-mono, monospace)',
+                          fontSize: 15,
+                          fontWeight: 700,
+                          minWidth: 18,
+                          textAlign: 'center',
+                          color: 'var(--cust-text-pri, #111)',
+                        }}
+                      >
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() => updateItem(i, { quantity: item.quantity + 1 })}
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: '50%',
+                          border: 'none',
+                          background: 'var(--cust-primary, #e85d2f)',
+                          fontSize: 16,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#fff',
+                          lineHeight: 1,
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => setEditingIndex(i)}
                       style={{
-                        fontSize: 11,
-                        color: 'var(--cust-primary, #e85d2f)',
-                        fontWeight: 500,
-                        background: 'rgba(232,93,47,0.08)',
-                        borderRadius: 4,
-                        padding: '1px 5px',
+                        flex: 1,
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        padding: 0,
+                        minWidth: 0,
                       }}
                     >
-                      Editatu
+                      <div
+                        style={{
+                          fontSize: 15,
+                          fontWeight: 600,
+                          color: 'var(--cust-text-pri, #111)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        {item.productName}
+                        <span
+                          style={{
+                            fontSize: 11,
+                            color: 'var(--cust-primary, #e85d2f)',
+                            fontWeight: 500,
+                            background: 'rgba(232,93,47,0.08)',
+                            borderRadius: 4,
+                            padding: '1px 5px',
+                          }}
+                        >
+                          Editatu
+                        </span>
+                      </div>
+                      {item.selectedVariant && (
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: 'var(--cust-text-sec, #6b7280)',
+                            marginTop: 1,
+                          }}
+                        >
+                          {item.selectedVariant}
+                        </div>
+                      )}
+                      {item.selectedModifiers.length > 0 && (
+                        <div style={{ fontSize: 12, color: 'var(--cust-text-sec, #6b7280)' }}>
+                          {item.selectedModifiers.join(', ')}
+                        </div>
+                      )}
+                    </button>
+                    <span
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 700,
+                        color: 'var(--cust-text-pri, #111)',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {(item.unitPrice * item.quantity).toFixed(2)} €
                     </span>
                   </div>
-                  {item.selectedVariant && (
-                    <div
-                      style={{ fontSize: 12, color: 'var(--cust-text-sec, #6b7280)', marginTop: 1 }}
-                    >
-                      {item.selectedVariant}
-                    </div>
-                  )}
-                  {item.selectedModifiers.length > 0 && (
-                    <div style={{ fontSize: 12, color: 'var(--cust-text-sec, #6b7280)' }}>
-                      {item.selectedModifiers.join(', ')}
-                    </div>
-                  )}
-                </button>
+                </div>
+              );
+            }
 
-                {/* Line total */}
-                <span
+            const groupTotal = group.indices.reduce(
+              (sum, i) => sum + items[i].unitPrice * items[i].quantity,
+              0
+            );
+            return (
+              <div
+                key={group.productId}
+                style={{
+                  borderBottom: isLastGroup ? 'none' : '1px solid var(--cust-border, #e5e7eb)',
+                }}
+              >
+                {/* Group header */}
+                <div
                   style={{
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: 'var(--cust-text-pri, #111)',
-                    flexShrink: 0,
+                    padding: '10px 16px 6px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   }}
                 >
-                  {(item.unitPrice * item.quantity).toFixed(2)} €
-                </span>
+                  <span
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 700,
+                      color: 'var(--cust-text-pri, #111)',
+                    }}
+                  >
+                    {group.productName}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 700,
+                      color: 'var(--cust-text-pri, #111)',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {groupTotal.toFixed(2)} €
+                  </span>
+                </div>
+
+                {/* Sub-rows */}
+                {group.indices.map((i, si) => {
+                  const item = items[i];
+                  const isLastSub = si === group.indices.length - 1;
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        padding: '8px 16px 8px 32px',
+                        borderTop: '1px dashed var(--cust-border, #e5e7eb)',
+                        borderBottom: isLastSub ? 'none' : '1px dashed var(--cust-border, #e5e7eb)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div
+                          style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}
+                        >
+                          <button
+                            onClick={() =>
+                              item.quantity <= 1
+                                ? removeAt(i)
+                                : updateItem(i, { quantity: item.quantity - 1 })
+                            }
+                            style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              border: '1.5px solid var(--cust-border, #e5e7eb)',
+                              background: 'transparent',
+                              fontSize: 14,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color:
+                                item.quantity <= 1 ? '#ef4444' : 'var(--cust-text-sec, #6b7280)',
+                              lineHeight: 1,
+                            }}
+                          >
+                            {item.quantity <= 1 ? '🗑' : '−'}
+                          </button>
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-mono, monospace)',
+                              fontSize: 14,
+                              fontWeight: 700,
+                              minWidth: 16,
+                              textAlign: 'center',
+                              color: 'var(--cust-text-pri, #111)',
+                            }}
+                          >
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateItem(i, { quantity: item.quantity + 1 })}
+                            style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              border: 'none',
+                              background: 'var(--cust-primary, #e85d2f)',
+                              fontSize: 14,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#fff',
+                              lineHeight: 1,
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
+                        <button
+                          onClick={() => setEditingIndex(i)}
+                          style={{
+                            flex: 1,
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            padding: 0,
+                            minWidth: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: 13,
+                              color: 'var(--cust-text-sec, #6b7280)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}
+                          >
+                            {item.selectedVariant ?? '—'}
+                            {item.selectedModifiers.length > 0 &&
+                              `, ${item.selectedModifiers.join(', ')}`}
+                            <span
+                              style={{
+                                fontSize: 11,
+                                color: 'var(--cust-primary, #e85d2f)',
+                                fontWeight: 500,
+                                background: 'rgba(232,93,47,0.08)',
+                                borderRadius: 4,
+                                padding: '1px 5px',
+                              }}
+                            >
+                              Editatu
+                            </span>
+                          </div>
+                        </button>
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: 'var(--cust-text-sec, #6b7280)',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {(item.unitPrice * item.quantity).toFixed(2)} €
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Total row */}
           <div

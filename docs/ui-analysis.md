@@ -159,6 +159,35 @@ Tapping "View order" opens the order summary:
 
 - List of all items with variants, modifiers, and prices
 - Order total
+
+#### Cart deduplication rules
+
+When the customer taps "Add to order" from the product sheet, the cart merges the new entry with an existing one **only if all three of these match**:
+
+| Field               | Must match                                |
+| ------------------- | ----------------------------------------- |
+| `productId`         | Same product                              |
+| `selectedVariant`   | Same variant option (or both null)        |
+| `selectedModifiers` | Same set of modifiers (order-independent) |
+
+If any of these differ, a **new separate cart line** is created. This means two burgers with the same variant but different modifiers — or the same modifiers but a different variant — always appear as independent lines, with their own quantity, price, and edit controls.
+
+Merging two identical items (all three fields match) increments the quantity on the existing line. It does **not** create a second line.
+
+#### Order summary display
+
+Items in the summary are grouped by product. When the cart contains multiple lines for the same product (different customisations), they are shown under a shared product name header:
+
+```
+Classic Burger                          €18.00
+  [−] 1 [+]  Cheddar, No Onion  Editatu  €9.00
+  [−] 1 [+]  Swiss, Extra Sauce Editatu  €9.00
+```
+
+The header shows the combined subtotal for that product. Each sub-row has its own quantity stepper (tap [+]/[−] to adjust that specific customisation) and an "Editatu" (Edit) button that opens the edit sheet for that line only.
+
+When only one line exists for a product, no grouping header is shown — it renders as a flat row identical to the pre-grouping layout.
+
 - Order notes field (single text input)
 - Name field (required — clearly explained: "So we can call you when your order is ready")
 - Push notification permission toggle ("Notify me when ready") — explains what this means
