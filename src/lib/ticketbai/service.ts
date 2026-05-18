@@ -67,6 +67,13 @@ export async function issueTicketBaiInvoice(
     total: order.total,
     vatBreakdown,
     previousChainId: previousInvoice?.chainId ?? null,
+    previousInvoice: previousInvoice
+      ? {
+          series: previousInvoice.series,
+          invoiceNumber: previousInvoice.invoiceNumber,
+          issuedAt: previousInvoice.issuedAt,
+        }
+      : null,
   };
 
   const provider = createTicketBaiProvider(config);
