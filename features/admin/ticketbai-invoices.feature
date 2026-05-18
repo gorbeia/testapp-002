@@ -13,7 +13,7 @@ Feature: TicketBAI invoice issuance
     When I issue a TicketBAI invoice for the first order of txosna "txosna-1"
     Then a TicketBAI invoice exists for that order
     And the invoice series is "TB"
-    And the invoice qrUrl starts with "https://tbai.eus/qr"
+    And the invoice qrUrl starts with "https://batuz.eus/QRTBAI/"
 
   @integration-only
   Scenario: Invoice numbers increment for sequential orders
