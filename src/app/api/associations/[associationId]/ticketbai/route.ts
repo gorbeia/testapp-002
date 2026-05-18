@@ -1,10 +1,14 @@
 import { auth } from '@/lib/auth';
 import { ticketBaiConfigRepo } from '@/lib/store';
-import type { TicketBaiProviderType } from '@/lib/store/types';
-import { createTicketBaiProvider } from '@/lib/ticketbai';
+import type { TicketBaiProviderType, TicketBaiTerritory } from '@/lib/store/types';
+import { createTicketBaiProvider, TICKETBAI_TERRITORIES } from '@/lib/ticketbai';
 import { NextResponse } from 'next/server';
 
-const DEFAULT_CONFIG = { providerType: 'MOCK' as TicketBaiProviderType, series: 'TB' };
+const DEFAULT_CONFIG = {
+  providerType: 'MOCK' as TicketBaiProviderType,
+  territory: null as TicketBaiTerritory | null,
+  series: 'TB',
+};
 
 async function resolveSession(
   associationId: string
@@ -42,8 +46,9 @@ export async function PATCH(
   if (resolved.role !== 'ADMIN') return new Response('Forbidden', { status: 403 });
 
   const body = await request.json();
-  const { providerType, series, credentials } = body as {
+  const { providerType, territory, series, credentials } = body as {
     providerType?: TicketBaiProviderType;
+    territory?: TicketBaiTerritory;
     series?: string;
     credentials?: Record<string, string>;
   };
@@ -52,12 +57,17 @@ export async function PATCH(
     return NextResponse.json({ error: `Unknown providerType: ${providerType}` }, { status: 422 });
   }
 
+  if (territory !== undefined && !TICKETBAI_TERRITORIES.includes(territory)) {
+    return NextResponse.json({ error: `Unknown territory: ${territory}` }, { status: 422 });
+  }
+
   if (series !== undefined && (typeof series !== 'string' || series.trim() === '')) {
     return NextResponse.json({ error: 'series must be a non-empty string' }, { status: 422 });
   }
 
   const config = await ticketBaiConfigRepo.upsert(associationId, {
     ...(providerType !== undefined && { providerType }),
+    ...(territory !== undefined && { territory }),
     ...(series !== undefined && { series: series.trim() }),
     ...(credentials !== undefined && { credentials }),
   });

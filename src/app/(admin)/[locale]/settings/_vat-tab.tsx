@@ -93,6 +93,7 @@ export function VatTab() {
   const [formPercentage, setFormPercentage] = useState('');
   const [error, setError] = useState('');
   const [associationId, setAssociationId] = useState('');
+  const [tbaiTerritory, setTbaiTerritory] = useState<string>('');
   const [tbaiSeries, setTbaiSeries] = useState('TB');
   const [tbaiSaved, setTbaiSaved] = useState(false);
   const [tbaiError, setTbaiError] = useState('');
@@ -129,6 +130,7 @@ export function VatTab() {
           if (tbaiRes.ok) {
             const tbai = await tbaiRes.json();
             if (tbai.series) setTbaiSeries(tbai.series);
+            if (tbai.territory) setTbaiTerritory(tbai.territory);
           }
         }
       } catch (err) {
@@ -219,11 +221,19 @@ export function VatTab() {
 
   const handleSaveTbaiConfig = async () => {
     setTbaiError('');
+    if (!tbaiTerritory) {
+      setTbaiError('Lurraldearen hautaketa derrigorrezkoa da');
+      return;
+    }
     try {
       const resp = await fetch(`/api/associations/${associationId}/ticketbai`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ series: tbaiSeries.trim() || 'TB', providerType: 'MOCK' }),
+        body: JSON.stringify({
+          series: tbaiSeries.trim() || 'TB',
+          territory: tbaiTerritory,
+          providerType: 'MOCK',
+        }),
       });
       if (!resp.ok) throw new Error(`Errorea (${resp.status})`);
       setTbaiSaved(true);
@@ -281,6 +291,33 @@ export function VatTab() {
           </div>
 
           <div>
+            <FormLabel>Lurraldea *</FormLabel>
+            <FormHint>TicketBAI erabiltzen den zerga lurraldea</FormHint>
+            <select
+              value={tbaiTerritory}
+              onChange={(e) => setTbaiTerritory(e.target.value)}
+              style={{
+                marginTop: 8,
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: 8,
+                border: tbaiTerritory ? '1px solid var(--adm-border)' : '1px solid #ef4444',
+                background: 'var(--adm-surface)',
+                color: tbaiTerritory ? 'var(--adm-text-pri)' : 'var(--adm-text-sec)',
+                fontSize: 14,
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="">— Hautatu lurraldea —</option>
+              <option value="ARABA">TicketBAI Araba</option>
+              <option value="BIZKAIA">TicketBAI Bizkaia</option>
+              <option value="GIPUZKOA">TicketBAI Gipuzkoa</option>
+              <option value="VERIFACTU">Verifactu</option>
+            </select>
+          </div>
+
+          <div>
             <FormLabel>Faktura seriea</FormLabel>
             <FormHint>Faktura zenbakien aurrizki gisa erabiliko da (adib. &quot;TB&quot;)</FormHint>
             <input
@@ -303,21 +340,23 @@ export function VatTab() {
             />
           </div>
 
-          <div>
-            <FormLabel>Hornitzaile mota</FormLabel>
-            <div
-              style={{
-                padding: '10px 12px',
-                borderRadius: 8,
-                border: '1px solid var(--adm-border)',
-                background: 'var(--adm-surface)',
-                color: 'var(--adm-text-sec)',
-                fontSize: 14,
-              }}
-            >
-              Mock (Proba modua) — hornitzaile gehiago laster
+          {tbaiTerritory && (
+            <div>
+              <FormLabel>Hornitzaile mota</FormLabel>
+              <div
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--adm-border)',
+                  background: 'var(--adm-surface)',
+                  color: 'var(--adm-text-sec)',
+                  fontSize: 14,
+                }}
+              >
+                Mock (Proba modua) — hornitzaile gehiago laster
+              </div>
             </div>
-          </div>
+          )}
 
           {tbaiError && <div style={{ fontSize: 12, color: '#ef4444' }}>{tbaiError}</div>}
 

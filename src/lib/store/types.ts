@@ -200,12 +200,14 @@ export interface StoredVolunteer {
 // ── TicketBAI ─────────────────────────────────────────────────────────────────
 
 export type TicketBaiProviderType = 'MOCK';
+export type TicketBaiTerritory = 'ARABA' | 'BIZKAIA' | 'GIPUZKOA' | 'VERIFACTU';
 export type TicketBaiInvoiceStatus = 'PENDING' | 'SUBMITTED' | 'ACCEPTED' | 'REJECTED' | 'MOCK';
 
 export interface StoredTicketBaiConfig {
   id: string;
   associationId: string;
   providerType: TicketBaiProviderType;
+  territory: TicketBaiTerritory | null;
   series: string;
   credentials: Record<string, string>;
   createdAt: Date;
