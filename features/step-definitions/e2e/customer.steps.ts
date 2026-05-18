@@ -51,7 +51,7 @@ Then('the page shows an order number', async function (this: E2eWorld) {
 });
 
 Then(
-  'the page shows progress steps including {string}',
+  'the page shows ticket status including {string}',
   async function (this: E2eWorld, step: string) {
     await this.page.waitForSelector(`text=${step}`, { timeout: 5_000 });
   }

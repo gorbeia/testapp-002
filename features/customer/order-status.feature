@@ -8,7 +8,7 @@ Feature: Customer order status page
   Scenario: Order status page renders for a known order
     Given I navigate to "/eu/order/order-1"
     Then the page shows an order number
-    And the page shows progress steps including "Jasota"
+    And the page shows ticket status including "Janaria"
     And there are no JavaScript errors in the console
     When I take a screenshot "41-order-status-fiscal-invoice"
 
@@ -16,7 +16,7 @@ Feature: Customer order status page
   Scenario: Order status page renders for a confirmed order without fiscal invoice
     Given I navigate to "/eu/order/order-4"
     Then the page shows an order number
-    And the page shows progress steps including "Jasota"
+    And the page shows ticket status including "Janaria"
     And there are no JavaScript errors in the console
     When I take a screenshot "08-order-status-mobile"
 

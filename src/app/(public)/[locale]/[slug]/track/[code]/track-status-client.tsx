@@ -8,6 +8,7 @@ import {
   type TicketSummary,
 } from '@/components/order-status/ticket-status-cards';
 import { OrderReadyBanner } from '@/components/order-status/order-ready-banner';
+import { VerificationCodeLabel } from '@/components/order-status/verification-code-label';
 import {
   FiscalInvoiceCard,
   type FiscalInvoiceData,
@@ -110,16 +111,7 @@ export function TrackStatusClient({
 
         <ReceiptDownload href={`/${locale}/${slug}/track/${encodeURIComponent(code)}/receipt`} />
 
-        <div
-          style={{
-            fontSize: 11,
-            color: 'var(--cust-text-sec, #bbb)',
-            textAlign: 'center',
-            marginTop: 16,
-          }}
-        >
-          Kodea: <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{code}</span>
-        </div>
+        <VerificationCodeLabel code={code} />
       </div>
     </div>
   );
